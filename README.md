@@ -30,6 +30,7 @@ USAGE
 <!-- commands -->
 * [`iroots hello [FILE]`](#iroots-hello-file)
 * [`iroots help [COMMAND]`](#iroots-help-command)
+* [`iroots new [FILE]`](#iroots-new-file)
 
 ## `iroots hello [FILE]`
 
@@ -67,4 +68,20 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.6/src/commands/help.ts)_
+
+## `iroots new [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ iroots new [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/new.ts](https://github.com/itinerisltd/iroots/blob/v0.0.0/src/commands/new.ts)_
 <!-- commandsstop -->
