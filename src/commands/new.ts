@@ -161,7 +161,7 @@ export default class New extends Command {
     for (let placeholder of placeholders) {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
-        answer = await cli.prompt(`What is ${placeholder}?`, { type: 'mask' }) as string
+        answer = await cli.prompt(`What is ${placeholder}?`, {type: 'mask'}) as string
       }
 
       qAndAs = [...qAndAs, {
