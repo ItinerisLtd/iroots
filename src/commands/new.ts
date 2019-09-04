@@ -71,13 +71,12 @@ export default class New extends Command {
 
   async run() {
     const {flags} = this.parse(New)
-    const { site, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
     }
     fs.ensureDirSync(site)
-
 
     this.log('Cloning Bedrock...')
     await git.clone(bedrock_template_remote, {
@@ -88,6 +87,9 @@ export default class New extends Command {
       cwd: site,
     })
     await git.renameCurrentBranch('master', {
+      cwd: `${site}/bedrock`,
+    })
+    await git.removeRemote('upstream', {
       cwd: `${site}/bedrock`,
     })
     await git.addRemote('origin', bedrock_remote, {
@@ -104,7 +106,6 @@ export default class New extends Command {
       cwd: `${site}/bedrock`,
     })
 
-
     this.log('Cloning Trellis...')
     await git.clone(trellis_template_remote, {
       dir: 'trellis',
@@ -116,14 +117,15 @@ export default class New extends Command {
     await git.renameCurrentBranch('master', {
       cwd: `${site}/trellis`,
     })
+    await git.removeRemote('upstream', {
+      cwd: `${site}/trellis`,
+    })
     await git.addRemote('origin', trellis_remote, {
       cwd: `${site}/trellis`,
     })
 
-
     this.log(`Writing vault password into ${site}/trellis/.vault_pass ...`)
     fs.writeFileSync(`${site}/trellis/.vault_pass`, trellis_template_vault_pass)
-
 
     this.log('Decrypting vault.yml...')
     await anisble.vaultDecrypt('group_vars/all/vault.yml', {
@@ -139,10 +141,8 @@ export default class New extends Command {
       cwd: `${site}/trellis`,
     })
 
-
     this.log('Looking for files to perform search and replace...')
     const yamls = await globby([`${site}/trellis/hosts/*`, `${site}/trellis/group_vars/*/*.yml`])
-
 
     this.log('Searching for placeholders...')
     let placeholderMatches: string[] = []
@@ -156,13 +156,12 @@ export default class New extends Command {
     })
     let placeholders = [...new Set(placeholderMatches)].sort()
 
-
     this.log('Q&A...')
     let qAndAs: QAndA[] = []
     for (let placeholder of placeholders) {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
-        answer = await cli.prompt(`What is ${placeholder}?`, { type: 'mask' }) as string
+        answer = await cli.prompt(`What is ${placeholder}?`, {type: 'mask'}) as string
       }
 
       qAndAs = [...qAndAs, {
@@ -170,7 +169,6 @@ export default class New extends Command {
         to: answer,
       }]
     }
-
 
     this.log('Searching and replacing...')
     for (let {from, to} of qAndAs) {
@@ -188,14 +186,9 @@ export default class New extends Command {
       to: () => crypto.randomBytes(64).toString('hex'),
     })
 
-
     this.log(`Rekeying ${site}/trellis/.vault_pass ...`)
     fs.removeSync(`${site}/trellis/.vault_pass`)
-    const vaultPass = crypto.randomBytes(64).toString('hex')
-      + crypto.randomBytes(64).toString('hex')
-      + crypto.randomBytes(64).toString('hex')
-      + crypto.randomBytes(64).toString('hex')
-      + crypto.randomBytes(64).toString('hex')
+    const vaultPass = crypto.randomBytes(256).toString('hex')
     fs.writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
     await anisble.vaultEncrypt('group_vars/all/vault.yml', {
       cwd: `${site}/trellis`,
@@ -210,7 +203,6 @@ export default class New extends Command {
       cwd: `${site}/trellis`,
     })
 
-
     this.log('Commiting Trellis changes...')
     await git.add('.', {
       cwd: `${site}/trellis`,
@@ -218,7 +210,6 @@ export default class New extends Command {
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/trellis`,
     })
-
 
     this.log('Pushing Trellis changes...')
     await git.push('origin', 'master', {
