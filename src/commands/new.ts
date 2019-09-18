@@ -95,16 +95,6 @@ export default class New extends Command {
     await git.addRemote('origin', bedrock_remote, {
       cwd: `${site}/bedrock`,
     })
-    this.log('Pushing to Bedrock...')
-    await git.push('origin', 'master', {
-      cwd: `${site}/bedrock`,
-    })
-    await git.push('origin', 'master:staging', {
-      cwd: `${site}/bedrock`,
-    })
-    await git.push('origin', 'master:production', {
-      cwd: `${site}/bedrock`,
-    })
 
     this.log('Cloning Trellis...')
     await git.clone(trellis_template_remote, {
@@ -214,10 +204,24 @@ export default class New extends Command {
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/trellis`,
     })
+    await git.commit('iRoots: Search and replace placeholders', {
+      cwd: `${site}/bedrock`,
+    })
 
     this.log('Pushing Trellis changes...')
     await git.push('origin', 'master', {
       cwd: `${site}/trellis`,
+    })
+
+    this.log('Pushing to Bedrock...')
+    await git.push('origin', 'master', {
+      cwd: `${site}/bedrock`,
+    })
+    await git.push('origin', 'master:staging', {
+      cwd: `${site}/bedrock`,
+    })
+    await git.push('origin', 'master:production', {
+      cwd: `${site}/bedrock`,
     })
 
     this.log('Installing galaxy roles...')
