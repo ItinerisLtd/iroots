@@ -142,7 +142,11 @@ export default class New extends Command {
     })
 
     this.log('Looking for files to perform search and replace...')
-    const yamls = await globby([`${site}/trellis/hosts/*`, `${site}/trellis/group_vars/*/*.yml`])
+    const yamls = await globby([
+      `${site}/trellis/hosts/*`,
+      `${site}/trellis/group_vars/*/*.yml`,
+      `${site}/bedrock/config/*`,
+    ])
 
     this.log('Searching for placeholders...')
     let placeholderMatches: string[] = []
