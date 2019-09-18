@@ -217,7 +217,7 @@ export default class New extends Command {
     })
 
     this.log('Installing galaxy roles...')
-    await anisble.galaxyInstall('requirements.yml', {
+    await anisble.galaxyInstall('galaxy.yml', {
       cwd: `${site}/trellis`,
     })
 
