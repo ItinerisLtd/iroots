@@ -204,6 +204,10 @@ export default class New extends Command {
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/trellis`,
     })
+    this.log('Commiting bedrock changes...')
+    await git.add('.', {
+      cwd: `${site}/bedrock`,
+    })
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/bedrock`,
     })
