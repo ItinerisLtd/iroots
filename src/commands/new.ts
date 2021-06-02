@@ -5,7 +5,6 @@ import * as fs from 'fs-extra'
 import * as globby from 'globby'
 import * as replace from 'replace-in-file'
 
-import * as anisble from '../lib/anisble'
 import * as git from '../lib/git'
 import * as trellis from '../lib/trellis'
 
@@ -118,16 +117,16 @@ export default class New extends Command {
     fs.writeFileSync(`${site}/trellis/.vault_pass`, trellis_template_vault_pass)
 
     this.log('Decrypting vault.yml...')
-    await anisble.vaultDecrypt('group_vars/all/vault.yml', {
+    await trellis.vaultDecrypt('all', {
       cwd: `${site}/trellis`,
     })
-    await anisble.vaultDecrypt('group_vars/development/vault.yml', {
+    await trellis.vaultDecrypt('development', {
       cwd: `${site}/trellis`,
     })
-    await anisble.vaultDecrypt('group_vars/production/vault.yml', {
+    await trellis.vaultDecrypt('production', {
       cwd: `${site}/trellis`,
     })
-    await anisble.vaultDecrypt('group_vars/staging/vault.yml', {
+    await trellis.vaultDecrypt('staging', {
       cwd: `${site}/trellis`,
     })
 
@@ -184,16 +183,16 @@ export default class New extends Command {
     fs.removeSync(`${site}/trellis/.vault_pass`)
     const vaultPass = crypto.randomBytes(256).toString('hex')
     fs.writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
-    await anisble.vaultEncrypt('group_vars/all/vault.yml', {
+    await trellis.vaultEncrypt('all', {
       cwd: `${site}/trellis`,
     })
-    await anisble.vaultEncrypt('group_vars/development/vault.yml', {
+    await trellis.vaultEncrypt('development', {
       cwd: `${site}/trellis`,
     })
-    await anisble.vaultEncrypt('group_vars/production/vault.yml', {
+    await trellis.vaultEncrypt('production', {
       cwd: `${site}/trellis`,
     })
-    await anisble.vaultEncrypt('group_vars/staging/vault.yml', {
+    await trellis.vaultEncrypt('staging', {
       cwd: `${site}/trellis`,
     })
 
@@ -229,15 +228,15 @@ export default class New extends Command {
     })
 
     this.log('Installing galaxy roles...')
-    await anisble.galaxyInstall('galaxy.yml', {
+    await trellis.galaxyInstall({
       cwd: `${site}/trellis`,
     })
 
     this.log('Deploying...')
-    await trellis.deploy('staging', site, {
+    await trellis.deploy('staging', {
       cwd: `${site}/trellis`,
     })
-    await trellis.deploy('production', site, {
+    await trellis.deploy('production', {
       cwd: `${site}/trellis`,
     })
   }
