@@ -1,7 +1,10 @@
 import * as execa from 'execa'
 
 export async function init(options?: execa.Options) {
-  return execa('trellis', ['init'], options);
+  const subprocess = execa('trellis', ['init'], options);
+  subprocess.stdout.pipe(process.stdout);
+
+  return subprocess
 }
 
 export async function vaultDecrypt(env: string, options?: execa.Options) {
