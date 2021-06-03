@@ -218,7 +218,8 @@ export default class New extends Command {
       cwd: `${site}/trellis`,
     })
     const trelliaAliasString = `_:
-  inherit: wp-cli.trellis-alias.yml`
+  inherit: wp-cli.trellis-alias.yml
+`
     fs.appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
 
     this.log('Committing SSH Aliases...')
