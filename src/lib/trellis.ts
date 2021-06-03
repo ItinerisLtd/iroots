@@ -16,6 +16,10 @@ export async function vaultEncrypt(env: string, options?: execa.Options) {
   return execa('trellis', ['vault', 'encrypt', env], options)
 }
 
+export async function alias(options?: execa.Options) {
+  return execa('trellis', ['alias'], options)
+}
+
 export async function galaxyInstall(options?: execa.Options) {
   return execa('trellis', ['galaxy', 'install'], options)
 }

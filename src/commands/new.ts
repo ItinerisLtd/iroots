@@ -213,6 +213,23 @@ export default class New extends Command {
       cwd: `${site}/bedrock`,
     })
 
+    this.log('Creating SSH Aliases...')
+    await trellis.alias({
+      cwd: `${site}/trellis`,
+    })
+    const trelliaAliasString = `_:
+  inherit: wp-cli.trellis-alias.yml
+`
+    fs.appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
+
+    this.log('Committing SSH Aliases...')
+    await git.add('-A', {
+      cwd: `${site}/bedrock`,
+    })
+    await git.commit('iRoots: Add SSH aliases', {
+      cwd: `${site}/bedrock`,
+    })
+
     this.log('Pushing Trellis changes to new repo...')
     await git.push('origin', 'master', {
       cwd: `${site}/trellis`,
