@@ -77,7 +77,7 @@ export default class New extends Command {
     }
     fs.ensureDirSync(site)
 
-    this.log('Cloning Bedrock...')
+    this.log('Cloning Bedrock template repo...')
     await git.clone(bedrock_template_remote, {
       dir: 'bedrock',
       branch: bedrock_template_branch,
@@ -95,7 +95,7 @@ export default class New extends Command {
       cwd: `${site}/bedrock`,
     })
 
-    this.log('Cloning Trellis...')
+    this.log('Cloning Trellis template repo...')
     await git.clone(trellis_template_remote, {
       dir: 'trellis',
       branch: trellis_template_branch,
@@ -113,7 +113,7 @@ export default class New extends Command {
       cwd: `${site}/trellis`,
     })
 
-    this.log(`Writing vault password into ${site}/trellis/.vault_pass ...`)
+    this.log(`Writing template vault password into \`${site}/trellis/.vault_pass...\``)
     fs.writeFileSync(`${site}/trellis/.vault_pass`, trellis_template_vault_pass)
 
     this.log('Decrypting vault.yml...')
@@ -179,13 +179,10 @@ export default class New extends Command {
       to: () => crypto.randomBytes(64).toString('hex'),
     })
 
-    this.log(`Rekeying ${site}/trellis/.vault_pass ...`)
+    this.log(`Rekeying ${site}/trellis/.vault_pass...`)
     fs.removeSync(`${site}/trellis/.vault_pass`)
     const vaultPass = crypto.randomBytes(256).toString('hex')
     fs.writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
-    await trellis.vaultEncrypt('all', {
-      cwd: `${site}/trellis`,
-    })
     await trellis.vaultEncrypt('development', {
       cwd: `${site}/trellis`,
     })
