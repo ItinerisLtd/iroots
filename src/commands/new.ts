@@ -184,7 +184,7 @@ export default class New extends Command {
       to: () => crypto.randomBytes(64).toString('hex'),
     })
 
-    this.log(`Rekeying ${site}/trellis/.vault_pass...`)
+    this.log(`Rekeying \`${site}/trellis/.vault_pass\`...`)
     fs.removeSync(`${site}/trellis/.vault_pass`)
     const vaultPass = crypto.randomBytes(256).toString('hex')
     fs.writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
@@ -205,7 +205,7 @@ export default class New extends Command {
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/trellis`,
     })
-    this.log('Commiting bedrock changes...')
+    this.log('Commiting Bedrock changes...')
     await git.add('.', {
       cwd: `${site}/bedrock`,
     })
@@ -213,12 +213,12 @@ export default class New extends Command {
       cwd: `${site}/bedrock`,
     })
 
-    this.log('Pushing Trellis changes...')
+    this.log('Pushing Trellis changes to new repo...')
     await git.push('origin', 'master', {
       cwd: `${site}/trellis`,
     })
 
-    this.log('Pushing to Bedrock...')
+    this.log('Pushing Bedrock changes to new repo...')
     await git.push('origin', 'master', {
       cwd: `${site}/bedrock`,
     })
@@ -229,15 +229,16 @@ export default class New extends Command {
       cwd: `${site}/bedrock`,
     })
 
-    this.log('Installing galaxy roles...')
+    this.log('Installing Ansible Galaxy roles...')
     await trellis.galaxyInstall({
       cwd: `${site}/trellis`,
     })
 
-    this.log('Deploying...')
+    this.log('Deploying to staging...')
     await trellis.deploy('staging', {
       cwd: `${site}/trellis`,
     })
+    this.log('Deploying to production...')
     await trellis.deploy('production', {
       cwd: `${site}/trellis`,
     })
