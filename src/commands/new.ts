@@ -116,6 +116,11 @@ export default class New extends Command {
     this.log(`Writing template vault password into \`${site}/trellis/.vault_pass...\``)
     fs.writeFileSync(`${site}/trellis/.vault_pass`, trellis_template_vault_pass)
 
+    this.log('Initializing Trellis project... (this may take some time, be patient)')
+    await trellis.init({
+      cwd: `${site}/trellis`,
+    })
+
     this.log('Decrypting vault.yml...')
     await trellis.vaultDecrypt('all', {
       cwd: `${site}/trellis`,
