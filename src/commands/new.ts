@@ -25,6 +25,13 @@ export default class New extends Command {
       env: 'IROOTS_NEW_SITE',
       required: true,
     }),
+    deploy: flags.boolean({
+      char: 'd',
+      description: 'whether to deploy or not',
+      env: 'IROOTS_NEW_DEPLOY',
+      default: true,
+      allowNo: true,
+    }),
     bedrock_remote: flags.string({
       char: 'b',
       description: 'bedrock remote',
@@ -70,7 +77,7 @@ export default class New extends Command {
 
   async run() {
     const {flags} = this.parse(New)
-    const {site, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -251,13 +258,15 @@ export default class New extends Command {
       cwd: `${site}/trellis`,
     })
 
-    this.log('Deploying to staging...')
-    await trellis.deploy('staging', {
-      cwd: `${site}/trellis`,
-    })
-    this.log('Deploying to production...')
-    await trellis.deploy('production', {
-      cwd: `${site}/trellis`,
-    })
+    if (deploy) {
+      this.log('Deploying to staging...')
+      await trellis.deploy('staging', {
+        cwd: `${site}/trellis`,
+      })
+      this.log('Deploying to production...')
+      await trellis.deploy('production', {
+        cwd: `${site}/trellis`,
+      })
+    }
   }
 }
