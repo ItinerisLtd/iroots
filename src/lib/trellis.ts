@@ -3,7 +3,7 @@ import * as execa from 'execa'
 export async function init(options?: execa.Options) {
   const subprocess = execa('trellis', ['init'], options);
   // This is to pipe the command output to the main output in realtime.
-  subprocess.stdout.pipe(process.stdout)
+  subprocess.stdout?.pipe(process.stdout)
 
   return subprocess
 }
