@@ -1,9 +1,9 @@
 import {Command, flags} from '@oclif/command'
 import cli from 'cli-ux'
-import * as crypto from 'crypto'
+import {randomBytes} from 'crypto'
 import * as fs from 'fs-extra'
 import * as globby from 'globby'
-import * as replace from 'replace-in-file'
+import {replaceInFile} from 'replace-in-file'
 
 import * as git from '../lib/git'
 import * as trellis from '../lib/trellis'
@@ -75,7 +75,7 @@ export default class New extends Command {
     }),
   }
 
-  async run() {
+  async run(): Promise<void> {
     const {flags} = this.parse(New)
     const {site, deploy, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
@@ -179,21 +179,21 @@ export default class New extends Command {
     for (let {from, to} of qAndAs) {
       const regex = new RegExp(from, 'img')
 
-      await replace({
+      await replaceInFile({
         files: yamls,
         from: regex,
         to,
       })
     }
-    await replace({
+    await replaceInFile({
       files: yamls,
       from: /"generateme"/g,
-      to: () => crypto.randomBytes(64).toString('hex'),
+      to: () => randomBytes(64).toString('hex'),
     })
 
     this.log(`Rekeying \`${site}/trellis/.vault_pass\`...`)
     fs.removeSync(`${site}/trellis/.vault_pass`)
-    const vaultPass = crypto.randomBytes(256).toString('hex')
+    const vaultPass = randomBytes(256).toString('hex')
     fs.writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
     await trellis.vaultEncrypt('development', {
       cwd: `${site}/trellis`,
