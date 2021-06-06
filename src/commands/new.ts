@@ -230,7 +230,7 @@ export default class New extends Command {
     fs.appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
 
     this.log('Committing SSH Aliases...')
-    await git.add('-A', {
+    await git.add('wp-cli.yml wp-cli.trellis-alias.yml', {
       cwd: `${site}/bedrock`,
     })
     await git.commit('iRoots: Add SSH aliases', {
