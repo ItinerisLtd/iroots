@@ -84,7 +84,7 @@ export default class New extends Command {
     }
     fs.ensureDirSync(site)
 
-    this.log('Cloning Bedrock template repo...')
+    cli.action.start('Cloning Bedrock template repo')
     await git.clone(bedrock_template_remote, {
       dir: 'bedrock',
       branch: bedrock_template_branch,
@@ -101,8 +101,9 @@ export default class New extends Command {
     await git.addRemote('origin', bedrock_remote, {
       cwd: `${site}/bedrock`,
     })
+    cli.action.stop()
 
-    this.log('Cloning Trellis template repo...')
+    cli.action.start('Cloning Trellis template repo')
     await git.clone(trellis_template_remote, {
       dir: 'trellis',
       branch: trellis_template_branch,
@@ -119,16 +120,18 @@ export default class New extends Command {
     await git.addRemote('origin', trellis_remote, {
       cwd: `${site}/trellis`,
     })
+    cli.action.stop()
 
-    this.log(`Writing template vault password into \`${site}/trellis/.vault_pass...\``)
+    cli.action.start(`Writing template vault password into \`${site}/trellis/.vault_pass\``)
     fs.writeFileSync(`${site}/trellis/.vault_pass`, trellis_template_vault_pass)
+    cli.action.stop()
 
-    this.log('Initializing Trellis project... (this may take some time, be patient)')
+    this.log('Initializing Trellis project (this may take some time, be patient)...')
     await trellis.init({
       cwd: `${site}/trellis`,
     })
 
-    this.log('Decrypting vault.yml...')
+    cli.action.start('Decrypting vault.yml')
     await trellis.vaultDecrypt('all', {
       cwd: `${site}/trellis`,
     })
@@ -141,15 +144,17 @@ export default class New extends Command {
     await trellis.vaultDecrypt('staging', {
       cwd: `${site}/trellis`,
     })
+    cli.action.stop()
 
-    this.log('Looking for files to perform search and replace...')
+    cli.action.start('Looking for files to perform search and replace')
     const yamls = await globby([
       `${site}/trellis/hosts/*`,
       `${site}/trellis/group_vars/*/*.yml`,
       `${site}/bedrock/config/*`,
     ])
+    cli.action.stop()
 
-    this.log('Searching for placeholders...')
+    cli.action.start('Searching for placeholders')
     let placeholderMatches: string[] = []
     yamls.forEach(file => {
       const content = fs.readFileSync(file, 'utf8')
@@ -160,8 +165,9 @@ export default class New extends Command {
       }
     })
     let placeholders = [...new Set(placeholderMatches)].sort()
+    cli.action.stop()
 
-    this.log('Q&A...')
+    cli.action.start('Q&A')
     let qAndAs: QAndA[] = []
     for (let placeholder of placeholders) {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
@@ -174,8 +180,9 @@ export default class New extends Command {
         to: answer,
       }]
     }
+    cli.action.stop()
 
-    this.log('Searching and replacing...')
+    cli.action.start('Searching and replacing')
     for (let {from, to} of qAndAs) {
       const regex = new RegExp(from, 'img')
 
@@ -190,8 +197,9 @@ export default class New extends Command {
       from: /"generateme"/g,
       to: () => randomBytes(64).toString('hex'),
     })
+    cli.action.stop()
 
-    this.log(`Rekeying \`${site}/trellis/.vault_pass\`...`)
+    cli.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)
     fs.removeSync(`${site}/trellis/.vault_pass`)
     const vaultPass = randomBytes(256).toString('hex')
     fs.writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
@@ -204,23 +212,27 @@ export default class New extends Command {
     await trellis.vaultEncrypt('staging', {
       cwd: `${site}/trellis`,
     })
+    cli.action.stop()
 
-    this.log('Commiting Trellis changes...')
+    cli.action.start('Commiting Trellis changes')
     await git.add(['.'], {
       cwd: `${site}/trellis`,
     })
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/trellis`,
     })
-    this.log('Commiting Bedrock changes...')
+    cli.action.stop()
+
+    cli.action.start('Commiting Bedrock changes')
     await git.add(['.'], {
       cwd: `${site}/bedrock`,
     })
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/bedrock`,
     })
+    cli.action.stop()
 
-    this.log('Creating SSH Aliases...')
+    cli.action.start('Creating SSH Aliases')
     await trellis.alias({
       cwd: `${site}/trellis`,
     })
@@ -228,21 +240,24 @@ export default class New extends Command {
   inherit: wp-cli.trellis-alias.yml
 `
     fs.appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
+    cli.action.stop()
 
-    this.log('Committing SSH Aliases...')
+    cli.action.start('Committing SSH Aliases')
     await git.add(['wp-cli.yml', 'wp-cli.trellis-alias.yml'], {
       cwd: `${site}/bedrock`,
     })
     await git.commit('iRoots: Add SSH aliases', {
       cwd: `${site}/bedrock`,
     })
+    cli.action.stop()
 
-    this.log('Pushing Trellis changes to new repo...')
+    cli.action.start('Pushing Trellis changes to new repo')
     await git.push('origin', 'master', {
       cwd: `${site}/trellis`,
     })
+    cli.action.stop()
 
-    this.log('Pushing Bedrock changes to new repo...')
+    cli.action.start('Pushing Bedrock changes to new repo')
     await git.push('origin', 'master', {
       cwd: `${site}/bedrock`,
     })
@@ -252,21 +267,24 @@ export default class New extends Command {
     await git.push('origin', 'master:production', {
       cwd: `${site}/bedrock`,
     })
+    cli.action.stop()
 
-    this.log('Installing Ansible Galaxy roles...')
+    cli.action.start('Installing Ansible Galaxy roles')
     await trellis.galaxyInstall({
       cwd: `${site}/trellis`,
     })
+    cli.action.stop()
 
     if (deploy) {
-      this.log('Deploying to staging...')
+      cli.action.start('Deploying to staging')
       await trellis.deploy('staging', {
         cwd: `${site}/trellis`,
       })
-      this.log('Deploying to production...')
+      cli.action.start('Deploying to production')
       await trellis.deploy('production', {
         cwd: `${site}/trellis`,
       })
+      cli.action.stop()
     }
   }
 }
