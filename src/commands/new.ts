@@ -206,14 +206,14 @@ export default class New extends Command {
     })
 
     this.log('Commiting Trellis changes...')
-    await git.add('.', {
+    await git.add(['.'], {
       cwd: `${site}/trellis`,
     })
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/trellis`,
     })
     this.log('Commiting Bedrock changes...')
-    await git.add('.', {
+    await git.add(['.'], {
       cwd: `${site}/bedrock`,
     })
     await git.commit('iRoots: Search and replace placeholders', {
@@ -230,7 +230,7 @@ export default class New extends Command {
     fs.appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
 
     this.log('Committing SSH Aliases...')
-    await git.add('wp-cli.yml wp-cli.trellis-alias.yml', {
+    await git.add(['wp-cli.yml', 'wp-cli.trellis-alias.yml'], {
       cwd: `${site}/bedrock`,
     })
     await git.commit('iRoots: Add SSH aliases', {

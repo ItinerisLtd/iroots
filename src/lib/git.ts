@@ -16,8 +16,8 @@ export async function addRemote(name: string, url: string, options?: execa.Optio
   return execa('git', ['remote', 'add', name, url], options)
 }
 
-export async function add(files: string, options?: execa.Options) {
-  return execa('git', ['add', files], options)
+export async function add(files: string[], options?: execa.Options) {
+  return execa('git', ['add', ...files], options)
 }
 
 export async function commit(message: string, options?: execa.Options) {
