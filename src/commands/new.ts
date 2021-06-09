@@ -39,6 +39,11 @@ export default class New extends Command {
       default: true,
       allowNo: true,
     }),
+    git_push: flags.boolean({
+      description: 'whether to push to git remotes or not',
+      default: true,
+      allowNo: true,
+    }),
     bedrock_remote: flags.string({
       char: 'b',
       description: 'bedrock remote',
@@ -84,7 +89,7 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = this.parse(New)
-    const {site, deploy, local, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, git_push, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -258,23 +263,25 @@ export default class New extends Command {
     })
     cli.action.stop()
 
-    cli.action.start('Pushing Trellis changes to new repo')
-    await git.push('origin', 'master', {
-      cwd: `${site}/trellis`,
-    })
-    cli.action.stop()
+    if (git_push) {
+      cli.action.start('Pushing Trellis changes to new repo')
+      await git.push('origin', 'master', {
+        cwd: `${site}/trellis`,
+      })
+      cli.action.stop()
 
-    cli.action.start('Pushing Bedrock changes to new repo')
-    await git.push('origin', 'master', {
-      cwd: `${site}/bedrock`,
-    })
-    await git.push('origin', 'master:staging', {
-      cwd: `${site}/bedrock`,
-    })
-    await git.push('origin', 'master:production', {
-      cwd: `${site}/bedrock`,
-    })
-    cli.action.stop()
+      cli.action.start('Pushing Bedrock changes to new repo')
+      await git.push('origin', 'master', {
+        cwd: `${site}/bedrock`,
+      })
+      await git.push('origin', 'master:staging', {
+        cwd: `${site}/bedrock`,
+      })
+      await git.push('origin', 'master:production', {
+        cwd: `${site}/bedrock`,
+      })
+      cli.action.stop()
+    }
 
     if (local) {
       cli.action.start('Populating local `.env`')
