@@ -5,8 +5,10 @@ import * as fs from 'fs-extra'
 import * as globby from 'globby'
 import {replaceInFile} from 'replace-in-file'
 
+import * as composer from '../lib/composer'
 import * as git from '../lib/git'
 import * as trellis from '../lib/trellis'
+import * as wp from '../lib/wp'
 
 type QAndA = {
   from: string,
@@ -28,7 +30,12 @@ export default class New extends Command {
     deploy: flags.boolean({
       char: 'd',
       description: 'whether to deploy or not',
-      env: 'IROOTS_NEW_DEPLOY',
+      default: true,
+      allowNo: true,
+    }),
+    local: flags.boolean({
+      char: 'l',
+      description: 'whether to setup local site or not',
       default: true,
       allowNo: true,
     }),
@@ -77,7 +84,7 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = this.parse(New)
-    const {site, deploy, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -268,6 +275,32 @@ export default class New extends Command {
       cwd: `${site}/bedrock`,
     })
     cli.action.stop()
+
+    if (local) {
+      cli.action.start('Populating local `.env`')
+      await trellis.dotenv({
+        cwd: `${site}/trellis`,
+      })
+      cli.action.stop()
+
+      cli.action.start('Installing Bedrock Composer dependencies')
+      await composer.install({
+        cwd: `${site}/bedrock`,
+      })
+      cli.action.stop()
+
+      cli.action.start('Creating local database')
+      await wp.dbCreate({
+        cwd: `${site}/bedrock`,
+      })
+      cli.action.stop()
+
+      cli.action.start('Linking Valet site')
+      await trellis.valetLink({
+        cwd: `${site}/trellis`
+      })
+      cli.action.stop()
+    }
 
     cli.action.start('Installing Ansible Galaxy roles')
     await trellis.galaxyInstall({

@@ -20,6 +20,14 @@ export async function alias(options?: execa.Options) {
   return execa('trellis', ['alias'], options)
 }
 
+export async function dotenv(options?: execa.Options) {
+  return execa('trellis', ['dotenv'], options)
+}
+
+export async function valetLink(options?: execa.Options) {
+  return execa('trellis', ['valet', 'link'], options)
+}
+
 export async function galaxyInstall(options?: execa.Options) {
   return execa('trellis', ['galaxy', 'install'], options)
 }
