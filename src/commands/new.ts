@@ -309,13 +309,13 @@ export default class New extends Command {
       cli.action.stop()
     }
 
-    cli.action.start('Installing Ansible Galaxy roles')
-    await trellis.galaxyInstall({
-      cwd: `${site}/trellis`,
-    })
-    cli.action.stop()
-
     if (deploy) {
+      cli.action.start('Installing Ansible Galaxy roles')
+      await trellis.galaxyInstall({
+        cwd: `${site}/trellis`,
+      })
+      cli.action.stop()
+
       cli.action.start('Deploying to staging')
       await trellis.deploy('staging', {
         cwd: `${site}/trellis`,
