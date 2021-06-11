@@ -296,11 +296,16 @@ export default class New extends Command {
       })
       cli.action.stop()
 
-      cli.action.start('Creating local database')
-      await wp.dbCreate({
+      const dbExists = await wp.dbExists({
         cwd: `${site}/bedrock`,
-      })
-      cli.action.stop()
+      });
+      if (false === dbExists) {
+        cli.action.start('Creating local database')
+        await wp.dbCreate({
+          cwd: `${site}/bedrock`,
+        })
+        cli.action.stop()
+      }
 
       cli.action.start('Linking Valet site')
       await trellis.valetLink({
