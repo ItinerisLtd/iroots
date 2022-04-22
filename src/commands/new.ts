@@ -162,6 +162,7 @@ export default class New extends Command {
     const yamls = await globby([
       `${site}/trellis/hosts/*`,
       `${site}/trellis/group_vars/*/*.yml`,
+      `${site}/bedrock/.github/workflows/*.yml`,
       `${site}/bedrock/config/*`,
     ])
     cli.action.stop()
