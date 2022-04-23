@@ -35,3 +35,13 @@ export async function galaxyInstall(options?: execa.Options) {
 export async function deploy(env: string, options?: execa.Options) {
   return execa('trellis', ['deploy', env], options)
 }
+
+export async function getHosts(options?: execa.Options) {
+  const {stdout} = await execa('trellis', ['exec', 'ansible', 'all', '--list-hosts', '--limit', '!development'], options)
+
+  const output = stdout.toString().split('\n')
+    .map(host => host.trim())
+    .filter(host => '' !== host.trim() && false === host.trim().startsWith('hosts ('))
+
+  return [...output]
+}
