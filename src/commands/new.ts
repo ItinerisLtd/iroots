@@ -57,7 +57,6 @@ export default class New extends Command {
       description: 'whether to use GH CLI/API or not',
       default: true,
       allowNo: true,
-      dependsOn: ['git_push'],
     }),
     bedrock_remote: flags.string({
       char: 'b',
@@ -68,7 +67,6 @@ export default class New extends Command {
     bedrock_repo_pat: flags.string({
       description: 'the bedrock personal access token for GitHub Actions to clone trellis',
       env: 'IROOTS_NEW_BEDROCK_REPO_PAT',
-      dependsOn: ['github'],
       required: true,
     }),
     trellis_remote: flags.string({
