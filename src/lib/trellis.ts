@@ -33,7 +33,12 @@ export async function galaxyInstall(options?: execa.Options) {
 }
 
 export async function deploy(env: string, options?: execa.Options) {
-  return execa('trellis', ['deploy', env], options)
+  const subprocess = execa('trellis', ['deploy', '--verbose', env], options)
+
+  // This is to pipe the command output to the main output in realtime.
+  subprocess.stdout?.pipe(process.stdout)
+
+  return subprocess
 }
 
 export async function getHosts(options?: execa.Options) {
