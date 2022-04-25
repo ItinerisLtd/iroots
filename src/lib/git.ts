@@ -27,3 +27,12 @@ export async function commit(message: string, options?: execa.Options) {
 export async function push(remote: string, branch: string, options?: execa.Options) {
   return execa('git', ['push', remote, branch], options)
 }
+
+export async function parseRemote(remote: string) {
+  const ownerAndRepo = remote.replace(/.*github.com(:|\/)/img, '').replace('.git', '').split('/')
+
+  return {
+    owner: ownerAndRepo[0],
+    repo: ownerAndRepo[1],
+  }
+}
