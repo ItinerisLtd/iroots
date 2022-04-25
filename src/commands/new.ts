@@ -58,6 +58,14 @@ export default class New extends Command {
       default: true,
       allowNo: true,
     }),
+    github_team: flags.string({
+      description: 'the team to add to the created GitHub repositories',
+      default: 'php-team',
+    }),
+    github_team_permission: flags.string({
+      description: 'the permission to set for the specified GitHub team',
+      default: 'admin',
+    }),
     bedrock_remote: flags.string({
       char: 'b',
       description: 'bedrock remote',
@@ -108,7 +116,7 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = this.parse(New)
-    const {site, deploy, local, git_push, github, bedrock_remote, trellis_remote, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, git_push, github, github_team, github_team_permission, bedrock_remote, trellis_remote, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -118,12 +126,31 @@ export default class New extends Command {
     const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
     const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
     if (github) {
-      cli.action.start('Creating Bedrock repo on GitHub')
-      await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo)
-      cli.action.stop()
+      cli.action.start('Creating Bedrock and Trellis repos on GitHub')
+      await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo, {
+        teamSlug: github_team,
+      })
+      await gh.createRepo(trellisRemoteOwner, trellisRemoteRepo, {
+        teamSlug: github_team,
+      })
 
-      cli.action.start('Creating Trellis repo on GitHub')
-      await gh.createRepo(trellisRemoteOwner, trellisRemoteRepo)
+      const githubRepoSettings = [
+        'delete-branch-on-merge',
+        'enable-auto-merge',
+      ]
+      for (const flag of githubRepoSettings) {
+        await gh.editRepo(bedrockRemoteOwner, bedrockRemoteRepo, flag)
+        await gh.editRepo(trellisRemoteOwner, trellisRemoteRepo, flag)
+      }
+
+      await gh.setTeamPermissions(bedrockRemoteOwner, bedrockRemoteRepo, {
+        teamSlug: github_team,
+        teamPermission: github_team_permission,
+      })
+      await gh.setTeamPermissions(trellisRemoteOwner, trellisRemoteRepo, {
+        teamSlug: github_team,
+        teamPermission: github_team_permission,
+      })
       cli.action.stop()
     }
 
