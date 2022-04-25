@@ -390,11 +390,10 @@ export default class New extends Command {
         cli.action.stop()
       }
 
-      cli.action.start('Linking Valet site')
+      cli.info('Linking Valet site')
       await trellis.valetLink({
         cwd: `${site}/trellis`
       })
-      cli.action.stop()
     }
 
     if (deploy) {
