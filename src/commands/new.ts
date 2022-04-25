@@ -125,7 +125,7 @@ export default class New extends Command {
     }, {
       cwd: site,
     })
-    await git.renameCurrentBranch('master', {
+    await git.renameCurrentBranch('main', {
       cwd: `${site}/bedrock`,
     })
     await git.removeRemote('upstream', {
@@ -144,7 +144,7 @@ export default class New extends Command {
     }, {
       cwd: site,
     })
-    await git.renameCurrentBranch('master', {
+    await git.renameCurrentBranch('main', {
       cwd: `${site}/trellis`,
     })
     await git.removeRemote('upstream', {
@@ -287,19 +287,19 @@ export default class New extends Command {
 
     if (git_push) {
       cli.action.start('Pushing Trellis changes to new repo')
-      await git.push('origin', 'master', {
+      await git.push('origin', 'main', {
         cwd: `${site}/trellis`,
       })
       cli.action.stop()
 
       cli.action.start('Pushing Bedrock changes to new repo')
-      await git.push('origin', 'master', {
+      await git.push('origin', 'main', {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', 'master:staging', {
+      await git.push('origin', 'main:staging', {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', 'master:production', {
+      await git.push('origin', 'main:production', {
         cwd: `${site}/bedrock`,
       })
       cli.action.stop()
