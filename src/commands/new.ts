@@ -72,6 +72,11 @@ export default class New extends Command {
       env: 'IROOTS_NEW_BEDROCK_REMOTE',
       required: true,
     }),
+    bedrock_remote_branch: flags.string({
+      description: 'the branch to use for your new bedrock remote',
+      env: 'IROOTS_NEW_BEDROCK_REMOTE_BRANCH',
+      default: 'main',
+    }),
     bedrock_repo_pat: flags.string({
       description: 'the bedrock personal access token for GitHub Actions to clone trellis',
       env: 'IROOTS_NEW_BEDROCK_REPO_PAT',
@@ -82,6 +87,11 @@ export default class New extends Command {
       description: 'trellis remote',
       env: 'IROOTS_NEW_TRELLIS_REMOTE',
       required: true,
+    }),
+    trellis_remote_branch: flags.string({
+      description: 'the branch to use for your new trellis remote',
+      env: 'IROOTS_NEW_TRELLIS_REMOTE_BRANCH',
+      default: 'main',
     }),
     bedrock_template_remote: flags.string({
       description: 'bedrock template remote',
@@ -116,7 +126,7 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = this.parse(New)
-    const {site, deploy, local, git_push, github, github_team, github_team_permission, bedrock_remote, trellis_remote, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, git_push, github, github_team, github_team_permission, bedrock_remote, bedrock_remote_branch, trellis_remote, trellis_remote_branch, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -162,7 +172,7 @@ export default class New extends Command {
     }, {
       cwd: site,
     })
-    await git.renameCurrentBranch('main', {
+    await git.renameCurrentBranch(bedrock_remote_branch, {
       cwd: `${site}/bedrock`,
     })
     await git.removeRemote('upstream', {
@@ -181,7 +191,7 @@ export default class New extends Command {
     }, {
       cwd: site,
     })
-    await git.renameCurrentBranch('main', {
+    await git.renameCurrentBranch(trellis_remote_branch, {
       cwd: `${site}/trellis`,
     })
     await git.removeRemote('upstream', {
@@ -324,19 +334,19 @@ export default class New extends Command {
 
     if (git_push) {
       cli.action.start('Pushing Trellis changes to new repo')
-      await git.push('origin', 'main', {
+      await git.push('origin', trellis_remote_branch, {
         cwd: `${site}/trellis`,
       })
       cli.action.stop()
 
       cli.action.start('Pushing Bedrock changes to new repo')
-      await git.push('origin', 'main', {
+      await git.push('origin', bedrock_remote_branch, {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', 'main:staging', {
+      await git.push('origin', `${bedrock_remote_branch}:staging`, {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', 'main:production', {
+      await git.push('origin', `${bedrock_remote_branch}:production`, {
         cwd: `${site}/bedrock`,
       })
       cli.action.stop()
@@ -448,8 +458,9 @@ export default class New extends Command {
     }
 
     if (github) {
-      cli.info('Don\'t forget to set your branch protection rules for `main`!')
-      cli.info('Without branch protection on `main`, Kodiak will not merge any dependency pull requests.')
+      const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join()
+      cli.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
+      cli.info(`Without branch protection on ${remoteBranches}, Kodiak will not merge any dependency pull requests.`)
     }
   }
 }
