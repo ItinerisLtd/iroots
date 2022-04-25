@@ -115,6 +115,18 @@ export default class New extends Command {
     }
     fs.ensureDirSync(site)
 
+    const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
+    const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
+    if (github) {
+      cli.action.start('Creating Bedrock repo on GitHub')
+      await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo)
+      cli.action.stop()
+
+      cli.action.start('Creating Trellis repo on GitHub')
+      await gh.createRepo(trellisRemoteOwner, trellisRemoteRepo)
+      cli.action.stop()
+    }
+
     cli.action.start('Cloning Bedrock template repo')
     await git.clone(bedrock_template_remote, {
       dir: 'bedrock',
@@ -311,7 +323,6 @@ export default class New extends Command {
       cli.action.stop()
 
       cli.action.start('Setting Bedrock repo deploy key')
-      const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
       await gh.setDeployKey(deployKey.public, keyName, bedrockRemoteOwner, bedrockRemoteRepo)
       cli.action.stop()
 

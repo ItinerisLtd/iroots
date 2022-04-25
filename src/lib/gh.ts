@@ -7,3 +7,7 @@ export async function setSecret(key: string, value: string, repo: string, option
 export async function setDeployKey(key: string, keyName: string, owner: string, repo: string, options?: execa.Options) {
   return execa('gh', ['api', `repos/${owner}/${repo}/keys`, '-f', `title=${keyName}`, '-f', `key=${key}`, '-f', 'read_only=true'], options)
 }
+
+export async function createRepo(owner: string, repo: string, options?: execa.Options) {
+  return execa('gh', ['repo', 'create', `${owner}/${repo}`, '--private'], options)
+}
