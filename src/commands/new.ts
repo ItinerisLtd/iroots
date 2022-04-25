@@ -407,6 +407,8 @@ export default class New extends Command {
       await trellis.deploy('staging', {
         cwd: `${site}/trellis`,
       })
+      cli.action.stop()
+
       cli.action.start('Deploying to production')
       await trellis.deploy('production', {
         cwd: `${site}/trellis`,
