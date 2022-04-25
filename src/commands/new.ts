@@ -446,5 +446,10 @@ export default class New extends Command {
       })
       cli.action.stop()
     }
+
+    if (github) {
+      cli.info('Don\'t forget to set your branch protection rules for `main`!')
+      cli.info('Without branch protection on `main`, Kodiak will not merge any dependency pull requests.')
+    }
   }
 }
