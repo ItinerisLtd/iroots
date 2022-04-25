@@ -53,8 +53,8 @@ export default class New extends Command {
       default: true,
       allowNo: true,
     }),
-    gh_set_repo_secrets: flags.boolean({
-      description: 'whether to set repository secrets or not',
+    github: flags.boolean({
+      description: 'whether to use GH CLI/API or not',
       default: true,
       allowNo: true,
       dependsOn: ['git_push'],
@@ -68,7 +68,7 @@ export default class New extends Command {
     bedrock_repo_pat: flags.string({
       description: 'the bedrock personal access token for GitHub Actions to clone trellis',
       env: 'IROOTS_NEW_BEDROCK_REPO_PAT',
-      dependsOn: ['gh_set_repo_secrets'],
+      dependsOn: ['github'],
       required: true,
     }),
     trellis_remote: flags.string({
@@ -110,7 +110,7 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = this.parse(New)
-    const {site, deploy, local, git_push, gh_set_repo_secrets, bedrock_remote, trellis_remote, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, git_push, github, bedrock_remote, trellis_remote, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -121,7 +121,7 @@ export default class New extends Command {
     await git.clone(bedrock_template_remote, {
       dir: 'bedrock',
       branch: bedrock_template_branch,
-      origin: 'upstream'
+      origin: 'upstream',
     }, {
       cwd: site,
     })
@@ -305,7 +305,7 @@ export default class New extends Command {
       cli.action.stop()
     }
 
-    if (gh_set_repo_secrets) {
+    if (github) {
       cli.action.start('Generating Bedrock repo deploy key')
       const keyName = 'Trellis deploy'
       const keyFilePath = `${homedir()}/.ssh/trellis_${site}_ed25519`
