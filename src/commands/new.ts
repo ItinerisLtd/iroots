@@ -3,8 +3,8 @@ import cli from 'cli-ux'
 import {randomBytes} from 'crypto'
 import * as fs from 'fs-extra'
 import * as globby from 'globby'
-import {replaceInFile} from 'replace-in-file'
 import {homedir} from 'os'
+import {replaceInFile} from 'replace-in-file'
 
 import * as composer from '../lib/composer'
 import * as gh from '../lib/gh'
@@ -314,7 +314,7 @@ export default class New extends Command {
 
       cli.action.start('Setting Bedrock repo deploy key')
       const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
-      gh.setDeployKey(deployKey.public, keyName, bedrockRemoteOwner, bedrockRemoteRepo)
+      await gh.setDeployKey(deployKey.public, keyName, bedrockRemoteOwner, bedrockRemoteRepo)
       cli.action.stop()
 
       cli.action.start('Scanning for known hosts')
@@ -379,16 +379,11 @@ export default class New extends Command {
       })
       cli.action.stop()
 
-      const dbExists = await wp.dbExists({
+      cli.action.start('Creating local database')
+      await wp.dbCreate({
         cwd: `${site}/bedrock`,
-      });
-      if (false === dbExists) {
-        cli.action.start('Creating local database')
-        await wp.dbCreate({
-          cwd: `${site}/bedrock`,
-        })
-        cli.action.stop()
-      }
+      })
+      cli.action.stop()
 
       cli.info('Linking Valet site')
       await trellis.valetLink({
