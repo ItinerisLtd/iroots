@@ -16,7 +16,7 @@
     "fs-extra": "^10.1.0",
     "globby": "^13.1.1",
     "replace-in-file": "^6.3.2",
-    "tslib": "^1"
+    "tslib": "^2"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
