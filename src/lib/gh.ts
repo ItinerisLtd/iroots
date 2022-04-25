@@ -9,5 +9,9 @@ export async function setDeployKey(key: string, keyName: string, owner: string, 
 }
 
 export async function createRepo(owner: string, repo: string, options?: execa.Options) {
-  return execa('gh', ['repo', 'create', `${owner}/${repo}`, '--private'], options)
+  return execa('gh', ['repo', 'create', `${owner}/${repo}`, '--private', '--team', 'php-team'], options)
+}
+
+export async function editRepo(owner: string, repo: string, flag: string, options?: execa.Options) {
+  return execa('gh', ['repo', 'edit', `${owner}/${repo}`, `--${flag}`], options)
 }
