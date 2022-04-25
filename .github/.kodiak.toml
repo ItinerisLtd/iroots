@@ -1,0 +1,13 @@
+# .kodiak.toml
+# Minimal config. version is the only required field.
+version = 1
+
+# Only auto merge prs with a label of "dependencies"
+merge.automerge_label = "dependencies"
+
+[merge.automerge_dependencies]
+# Only auto merge prs from username of "dependabot"
+usernames = ["dependabot"]
+
+# https://kodiakhq.com/docs/config-reference#mergedelete_branch_on_merge
+merge.delete_branch_on_merge = true
