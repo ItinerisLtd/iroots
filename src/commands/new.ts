@@ -53,11 +53,18 @@ export default class New extends Command {
       default: true,
       allowNo: true,
     }),
-    gh_set_repo_secrets: flags.boolean({
-      description: 'whether to set repository secrets or not',
+    github: flags.boolean({
+      description: 'whether to use GH CLI/API or not',
       default: true,
       allowNo: true,
-      dependsOn: ['git_push'],
+    }),
+    github_team: flags.string({
+      description: 'the team to add to the created GitHub repositories',
+      default: 'php-team',
+    }),
+    github_team_permission: flags.string({
+      description: 'the permission to set for the specified GitHub team',
+      default: 'admin',
     }),
     bedrock_remote: flags.string({
       char: 'b',
@@ -65,10 +72,14 @@ export default class New extends Command {
       env: 'IROOTS_NEW_BEDROCK_REMOTE',
       required: true,
     }),
+    bedrock_remote_branch: flags.string({
+      description: 'the branch to use for your new bedrock remote',
+      env: 'IROOTS_NEW_BEDROCK_REMOTE_BRANCH',
+      default: 'main',
+    }),
     bedrock_repo_pat: flags.string({
       description: 'the bedrock personal access token for GitHub Actions to clone trellis',
       env: 'IROOTS_NEW_BEDROCK_REPO_PAT',
-      dependsOn: ['gh_set_repo_secrets'],
       required: true,
     }),
     trellis_remote: flags.string({
@@ -76,6 +87,11 @@ export default class New extends Command {
       description: 'trellis remote',
       env: 'IROOTS_NEW_TRELLIS_REMOTE',
       required: true,
+    }),
+    trellis_remote_branch: flags.string({
+      description: 'the branch to use for your new trellis remote',
+      env: 'IROOTS_NEW_TRELLIS_REMOTE_BRANCH',
+      default: 'main',
     }),
     bedrock_template_remote: flags.string({
       description: 'bedrock template remote',
@@ -110,22 +126,53 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = this.parse(New)
-    const {site, deploy, local, git_push, gh_set_repo_secrets, bedrock_remote, trellis_remote, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, git_push, github, github_team, github_team_permission, bedrock_remote, bedrock_remote_branch, trellis_remote, trellis_remote_branch, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
     }
     fs.ensureDirSync(site)
 
+    const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
+    const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
+    if (github) {
+      cli.action.start('Creating Bedrock and Trellis repos on GitHub')
+      await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo, {
+        teamSlug: github_team,
+      })
+      await gh.createRepo(trellisRemoteOwner, trellisRemoteRepo, {
+        teamSlug: github_team,
+      })
+
+      const githubRepoSettings = [
+        'delete-branch-on-merge',
+        'enable-auto-merge',
+      ]
+      for (const flag of githubRepoSettings) {
+        await gh.editRepo(bedrockRemoteOwner, bedrockRemoteRepo, flag)
+        await gh.editRepo(trellisRemoteOwner, trellisRemoteRepo, flag)
+      }
+
+      await gh.setTeamPermissions(bedrockRemoteOwner, bedrockRemoteRepo, {
+        teamSlug: github_team,
+        teamPermission: github_team_permission,
+      })
+      await gh.setTeamPermissions(trellisRemoteOwner, trellisRemoteRepo, {
+        teamSlug: github_team,
+        teamPermission: github_team_permission,
+      })
+      cli.action.stop()
+    }
+
     cli.action.start('Cloning Bedrock template repo')
     await git.clone(bedrock_template_remote, {
       dir: 'bedrock',
       branch: bedrock_template_branch,
-      origin: 'upstream'
+      origin: 'upstream',
     }, {
       cwd: site,
     })
-    await git.renameCurrentBranch('master', {
+    await git.renameCurrentBranch(bedrock_remote_branch, {
       cwd: `${site}/bedrock`,
     })
     await git.removeRemote('upstream', {
@@ -144,7 +191,7 @@ export default class New extends Command {
     }, {
       cwd: site,
     })
-    await git.renameCurrentBranch('master', {
+    await git.renameCurrentBranch(trellis_remote_branch, {
       cwd: `${site}/trellis`,
     })
     await git.removeRemote('upstream', {
@@ -287,25 +334,25 @@ export default class New extends Command {
 
     if (git_push) {
       cli.action.start('Pushing Trellis changes to new repo')
-      await git.push('origin', 'master', {
+      await git.push('origin', trellis_remote_branch, {
         cwd: `${site}/trellis`,
       })
       cli.action.stop()
 
       cli.action.start('Pushing Bedrock changes to new repo')
-      await git.push('origin', 'master', {
+      await git.push('origin', bedrock_remote_branch, {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', 'master:staging', {
+      await git.push('origin', `${bedrock_remote_branch}:staging`, {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', 'master:production', {
+      await git.push('origin', `${bedrock_remote_branch}:production`, {
         cwd: `${site}/bedrock`,
       })
       cli.action.stop()
     }
 
-    if (gh_set_repo_secrets) {
+    if (github) {
       cli.action.start('Generating Bedrock repo deploy key')
       const keyName = 'Trellis deploy'
       const keyFilePath = `${homedir()}/.ssh/trellis_${site}_ed25519`
@@ -313,7 +360,6 @@ export default class New extends Command {
       cli.action.stop()
 
       cli.action.start('Setting Bedrock repo deploy key')
-      const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
       await gh.setDeployKey(deployKey.public, keyName, bedrockRemoteOwner, bedrockRemoteRepo)
       cli.action.stop()
 
@@ -409,6 +455,12 @@ export default class New extends Command {
         cwd: `${site}/trellis`,
       })
       cli.action.stop()
+    }
+
+    if (github) {
+      const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join()
+      cli.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
+      cli.info(`Without branch protection on ${remoteBranches}, Kodiak will not merge any dependency pull requests.`)
     }
   }
 }
