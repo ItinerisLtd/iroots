@@ -1,7 +1,7 @@
 import * as execa from 'execa'
 
 export async function init(options?: execa.Options) {
-  const subprocess = execa('trellis', ['init'], options);
+  const subprocess = execa('trellis', ['init'], options)
   // This is to pipe the command output to the main output in realtime.
   subprocess.stdout?.pipe(process.stdout)
 
@@ -46,7 +46,7 @@ export async function getHosts(options?: execa.Options) {
 
   const output = stdout.toString().split('\n')
     .map(host => host.trim())
-    .filter(host => '' !== host.trim() && false === host.trim().startsWith('hosts ('))
+    .filter(host => host.trim() !== '' && host.trim().startsWith('hosts (') === false)
 
   return [...output]
 }
