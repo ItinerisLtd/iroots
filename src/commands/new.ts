@@ -4,15 +4,24 @@ import {randomBytes} from 'crypto'
 import * as fs from 'fs-extra'
 import * as globby from 'globby'
 import {replaceInFile} from 'replace-in-file'
+import {homedir} from 'os'
 
 import * as composer from '../lib/composer'
+import * as gh from '../lib/gh'
 import * as git from '../lib/git'
+import * as ssh from '../lib/ssh'
 import * as trellis from '../lib/trellis'
 import * as wp from '../lib/wp'
 
 type QAndA = {
   from: string,
   to: string,
+}
+
+type GitHubSecret = {
+  name: string,
+  value: string,
+  remote: string,
 }
 
 export default class New extends Command {
@@ -44,10 +53,22 @@ export default class New extends Command {
       default: true,
       allowNo: true,
     }),
+    gh_set_repo_secrets: flags.boolean({
+      description: 'whether to set repository secrets or not',
+      default: true,
+      allowNo: true,
+      dependsOn: ['git_push'],
+    }),
     bedrock_remote: flags.string({
       char: 'b',
       description: 'bedrock remote',
       env: 'IROOTS_NEW_BEDROCK_REMOTE',
+      required: true,
+    }),
+    bedrock_repo_pat: flags.string({
+      description: 'the bedrock personal access token for GitHub Actions to clone trellis',
+      env: 'IROOTS_NEW_BEDROCK_REPO_PAT',
+      dependsOn: ['gh_set_repo_secrets'],
       required: true,
     }),
     trellis_remote: flags.string({
@@ -89,7 +110,7 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = this.parse(New)
-    const {site, deploy, local, git_push, bedrock_remote, trellis_remote, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, git_push, gh_set_repo_secrets, bedrock_remote, trellis_remote, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -281,6 +302,67 @@ export default class New extends Command {
       await git.push('origin', 'master:production', {
         cwd: `${site}/bedrock`,
       })
+      cli.action.stop()
+    }
+
+    if (gh_set_repo_secrets) {
+      cli.action.start('Generating Bedrock repo deploy key')
+      const keyName = 'Trellis deploy'
+      const keyFilePath = `${homedir()}/.ssh/trellis_${site}_ed25519`
+      const deployKey = await ssh.keygen(keyFilePath, {keyName})
+      cli.action.stop()
+
+      cli.action.start('Setting Bedrock repo deploy key')
+      const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
+      gh.setDeployKey(deployKey.public, keyName, bedrockRemoteOwner, bedrockRemoteRepo)
+      cli.action.stop()
+
+      cli.action.start('Scanning for known hosts')
+      const hostYamls = await globby([
+        `${site}/trellis/hosts/*`,
+      ])
+      let hostMatches: string[] = []
+      hostYamls.forEach(file => {
+        const content = fs.readFileSync(file, 'utf8')
+        const regex = /ansible_host=\d+\.\d+\.\d+\.\d+/img
+        let match
+        while ((match = regex.exec(content)) !== null) {
+          match = match[0].replace('ansible_host=', '')
+          hostMatches = [...hostMatches, match]
+        }
+      })
+      const hosts = [...new Set(hostMatches)].sort()
+      const sshKnownHosts = await ssh.keyscan(hosts)
+      cli.action.stop()
+
+      cli.action.start('Setting Bedrock GitHub repo secrets')
+      const repoSecrets: GitHubSecret[] = [
+        {
+          name: 'REPO_PAT',
+          value: bedrock_repo_pat,
+          remote: bedrock_remote,
+        },
+        {
+          name: 'TRELLIS_DEPLOY_SSH_PRIVATE_KEY',
+          value: deployKey.private,
+          remote: bedrock_remote,
+        },
+        {
+          name: 'TRELLIS_DEPLOY_SSH_KNOWN_HOSTS',
+          value: sshKnownHosts.join(','),
+          remote: bedrock_remote,
+        },
+        {
+          name: 'ANSIBLE_VAULT_PASSWORD',
+          value: vaultPass,
+          remote: trellis_remote,
+        }
+      ]
+
+      for (const {name, value, remote} of repoSecrets) {
+        await gh.setSecret(name, value, remote)
+      }
+
       cli.action.stop()
     }
 
