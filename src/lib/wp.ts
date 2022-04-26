@@ -1,4 +1,4 @@
-import cli from 'cli-ux'
+import {CliUx} from '@oclif/core'
 import * as execa from 'execa'
 
 export async function dbCreate(options?: execa.Options) {
@@ -6,7 +6,7 @@ export async function dbCreate(options?: execa.Options) {
     await execa('wp', ['db', 'create'], options)
     return true
   } catch (error) {
-    cli.log(error.stderr.substring(error.stdout.indexOf(': ') + 1))
+    CliUx.ux.log(error.stderr.substring(error.stdout.indexOf(': ') + 1))
     return false
   }
 }
