@@ -10,7 +10,7 @@
   "dependencies": {
     "@oclif/core": "^1.7.0",
     "@oclif/plugin-help": "^5",
-    "execa": "^5.1.1",
+    "execa": "^6.1.0",
     "fs-extra": "^10.0.0",
     "globby": "^11.1.0",
     "replace-in-file": "^6.3.2",
