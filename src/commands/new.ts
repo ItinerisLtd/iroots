@@ -2,13 +2,11 @@ import {CliUx, Command, Flags} from '@oclif/core'
 import {randomBytes} from 'crypto'
 import * as fs from 'fs-extra'
 import * as globby from 'globby'
-import {homedir} from 'os'
 import {replaceInFile} from 'replace-in-file'
 
 import * as composer from '../lib/composer'
 import * as gh from '../lib/gh'
 import * as git from '../lib/git'
-import * as ssh from '../lib/ssh'
 import * as trellis from '../lib/trellis'
 import * as wp from '../lib/wp'
 
@@ -354,16 +352,6 @@ export default class New extends Command {
     }
 
     if (github) {
-      CliUx.ux.action.start('Generating Bedrock repo deploy key')
-      const keyName = 'Trellis deploy'
-      const keyFilePath = `${homedir()}/.ssh/trellis_${site}_ed25519`
-      const deployKey = await ssh.keygen(keyFilePath, {keyName})
-      CliUx.ux.action.stop()
-
-      CliUx.ux.action.start('Setting Bedrock repo deploy key')
-      await gh.setDeployKey(deployKey.public, keyName, bedrockRemoteOwner, bedrockRemoteRepo)
-      CliUx.ux.action.stop()
-
       CliUx.ux.action.start('Scanning for known hosts')
       const hostYamls = await globby([
         `${site}/trellis/hosts/*`,
@@ -378,25 +366,20 @@ export default class New extends Command {
           hostMatches = [...hostMatches, match]
         }
       })
-      const hosts = [...new Set(hostMatches)].sort()
-      const sshKnownHosts = await ssh.keyscan(hosts)
+      const sshKnownHosts = [...new Set(hostMatches)].sort()
       CliUx.ux.action.stop()
 
-      CliUx.ux.action.start('Setting Bedrock GitHub repo secrets')
+      CliUx.ux.action.start('Generating Bedrock deploy key')
+      await trellis.keyGenerate(`${bedrockRemoteOwner}/${bedrockRemoteRepo}`, sshKnownHosts, {
+        cwd: `${site}/trellis`,
+      })
+      CliUx.ux.action.stop()
+
+      CliUx.ux.action.start('Setting additional Bedrock repo secrets')
       const repoSecrets: GitHubSecret[] = [
         {
           name: 'REPO_PAT',
           value: bedrock_repo_pat,
-          remote: bedrock_remote,
-        },
-        {
-          name: 'TRELLIS_DEPLOY_SSH_PRIVATE_KEY',
-          value: deployKey.private,
-          remote: bedrock_remote,
-        },
-        {
-          name: 'TRELLIS_DEPLOY_SSH_KNOWN_HOSTS',
-          value: sshKnownHosts.join(','),
           remote: bedrock_remote,
         },
         {
@@ -466,7 +449,6 @@ export default class New extends Command {
     if (github) {
       const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join()
       CliUx.ux.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
-      CliUx.ux.info(`Without branch protection on ${remoteBranches}, Kodiak will not merge any dependency pull requests.`)
     }
   }
 }
