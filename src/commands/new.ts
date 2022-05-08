@@ -133,7 +133,9 @@ export default class New extends Command {
     fs.ensureDirSync(site)
 
     const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
+    const bedrockRemote = `git@github.com:${bedrockRemoteOwner}/${bedrockRemoteRepo}`
     const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
+    const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
     if (github) {
       CliUx.ux.action.start('Creating Bedrock and Trellis repos on GitHub')
       await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo, {
@@ -177,7 +179,7 @@ export default class New extends Command {
     await git.removeRemote('upstream', {
       cwd: `${site}/bedrock`,
     })
-    await git.addRemote('origin', bedrock_remote, {
+    await git.addRemote('origin', bedrockRemote, {
       cwd: `${site}/bedrock`,
     })
     CliUx.ux.action.stop()
@@ -196,7 +198,7 @@ export default class New extends Command {
     await git.removeRemote('upstream', {
       cwd: `${site}/trellis`,
     })
-    await git.addRemote('origin', trellis_remote, {
+    await git.addRemote('origin', trellisRemote, {
       cwd: `${site}/trellis`,
     })
     CliUx.ux.action.stop()
