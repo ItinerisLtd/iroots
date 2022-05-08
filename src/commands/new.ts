@@ -11,14 +11,14 @@ import * as trellis from '../lib/trellis'
 import * as wp from '../lib/wp'
 
 type QAndA = {
-  from: string,
-  to: string,
+  from: string
+  to: string
 }
 
 type GitHubSecret = {
-  name: string,
-  value: string,
-  remote: string,
+  name: string
+  value: string
+  remote: string
 }
 
 export default class New extends Command {
@@ -135,7 +135,27 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(New)
-    const {site, deploy, local, git_push, github, github_team, github_team_permission, bedrock_remote, bedrock_remote_branch, trellis_remote, trellis_remote_branch, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, theme_template_remote, theme_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {
+      site,
+      deploy,
+      local,
+      git_push,
+      github,
+      github_team,
+      github_team_permission,
+      bedrock_remote,
+      bedrock_remote_branch,
+      trellis_remote,
+      trellis_remote_branch,
+      bedrock_repo_pat,
+      bedrock_template_remote,
+      bedrock_template_branch,
+      theme_template_remote,
+      theme_template_branch,
+      trellis_template_remote,
+      trellis_template_branch,
+      trellis_template_vault_pass,
+    } = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -155,10 +175,7 @@ export default class New extends Command {
         teamSlug: github_team,
       })
 
-      const githubRepoSettings = [
-        'delete-branch-on-merge',
-        'enable-auto-merge',
-      ]
+      const githubRepoSettings = ['delete-branch-on-merge', 'enable-auto-merge']
       for (const flag of githubRepoSettings) {
         await gh.editRepo(bedrockRemoteOwner, bedrockRemoteRepo, flag)
         await gh.editRepo(trellisRemoteOwner, trellisRemoteRepo, flag)
@@ -176,13 +193,17 @@ export default class New extends Command {
     }
 
     CliUx.ux.action.start('Cloning Bedrock template repo')
-    await git.clone(bedrock_template_remote, {
-      dir: 'bedrock',
-      branch: bedrock_template_branch,
-      origin: 'upstream',
-    }, {
-      cwd: site,
-    })
+    await git.clone(
+      bedrock_template_remote,
+      {
+        dir: 'bedrock',
+        branch: bedrock_template_branch,
+        origin: 'upstream',
+      },
+      {
+        cwd: site,
+      },
+    )
     await git.renameCurrentBranch(bedrock_remote_branch, {
       cwd: `${site}/bedrock`,
     })
@@ -205,13 +226,17 @@ export default class New extends Command {
     CliUx.ux.action.stop()
 
     CliUx.ux.action.start('Cloning Trellis template repo')
-    await git.clone(trellis_template_remote, {
-      dir: 'trellis',
-      branch: trellis_template_branch,
-      origin: 'upstream'
-    }, {
-      cwd: site,
-    })
+    await git.clone(
+      trellis_template_remote,
+      {
+        dir: 'trellis',
+        branch: trellis_template_branch,
+        origin: 'upstream',
+      },
+      {
+        cwd: site,
+      },
+    )
     await git.renameCurrentBranch(trellis_remote_branch, {
       cwd: `${site}/trellis`,
     })
@@ -261,7 +286,7 @@ export default class New extends Command {
     let placeholderMatches: string[] = []
     yamls.forEach(file => {
       const content = fs.readFileSync(file, 'utf8')
-      const regex = /xxx\w+xxx/img
+      const regex = /xxx\w+xxx/gim
       let match
       while ((match = regex.exec(content)) !== null) {
         placeholderMatches = [...placeholderMatches, match[0]]
@@ -275,13 +300,16 @@ export default class New extends Command {
     for (let placeholder of placeholders) {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
-        answer = await CliUx.ux.prompt(`What is ${placeholder}?`, {type: 'mask'}) as string
+        answer = (await CliUx.ux.prompt(`What is ${placeholder}?`, {type: 'mask'})) as string
       }
 
-      qAndAs = [...qAndAs, {
-        from: placeholder,
-        to: answer,
-      }]
+      qAndAs = [
+        ...qAndAs,
+        {
+          from: placeholder,
+          to: answer,
+        },
+      ]
     }
     CliUx.ux.action.stop()
 
@@ -382,13 +410,11 @@ export default class New extends Command {
 
     if (github) {
       CliUx.ux.action.start('Scanning for known hosts')
-      const hostYamls = await globby([
-        `${site}/trellis/hosts/*`,
-      ])
+      const hostYamls = await globby([`${site}/trellis/hosts/*`])
       let hostMatches: string[] = []
       hostYamls.forEach(file => {
         const content = fs.readFileSync(file, 'utf8')
-        const regex = /ansible_host=\d+\.\d+\.\d+\.\d+/img
+        const regex = /ansible_host=\d+\.\d+\.\d+\.\d+/gim
         let match
         while ((match = regex.exec(content)) !== null) {
           match = match[0].replace('ansible_host=', '')
@@ -451,7 +477,7 @@ export default class New extends Command {
 
       CliUx.ux.info('Linking Valet site')
       await trellis.valetLink({
-        cwd: `${site}/trellis`
+        cwd: `${site}/trellis`,
       })
     }
 
