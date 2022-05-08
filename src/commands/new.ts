@@ -370,7 +370,9 @@ export default class New extends Command {
       CliUx.ux.action.stop()
 
       CliUx.ux.action.start('Generating Bedrock deploy key')
-      await trellis.keyGenerate(`${bedrockRemoteOwner}/${bedrockRemoteRepo}`, sshKnownHosts)
+      await trellis.keyGenerate(`${bedrockRemoteOwner}/${bedrockRemoteRepo}`, sshKnownHosts, {
+        cwd: `${site}/trellis`,
+      })
       CliUx.ux.action.stop()
 
       CliUx.ux.action.start('Setting additional Bedrock repo secrets')
