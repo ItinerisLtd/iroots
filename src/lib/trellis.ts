@@ -52,5 +52,5 @@ export async function getHosts(options?: execa.Options) {
 }
 
 export async function keyGenerate(repo: string, knownHosts: string[], options?: execa.Options) {
-  return execa('trellis', ['key', 'generate', '--repo', repo, '--known-hosts', knownHosts.join()], options)
+  return execa('trellis', ['key', 'generate', '--repo', repo, '--known-hosts', knownHosts.join(), '--no-provision'], options)
 }
