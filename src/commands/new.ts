@@ -114,6 +114,18 @@ export default class New extends Command {
       default: 'master',
       required: true,
     }),
+    theme_template_remote: Flags.string({
+      description: 'theme template remote',
+      env: 'IROOTS_NEW_THEME_TEMPLATE_REMOTE',
+      default: 'git@github.com:ItinerisLtd/sage.git',
+      required: true,
+    }),
+    theme_template_branch: Flags.string({
+      description: 'theme template branch',
+      env: 'IROOTS_NEW_THEME_TEMPLATE_BRANCH',
+      default: 'master',
+      required: true,
+    }),
     trellis_template_vault_pass: Flags.string({
       description: 'trellis template vault password',
       env: 'IROOTS_NEW_TRELLIS_TEMPLATE_VAULT_PASS',
@@ -123,7 +135,7 @@ export default class New extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(New)
-    const {site, deploy, local, git_push, github, github_team, github_team_permission, bedrock_remote, bedrock_remote_branch, trellis_remote, trellis_remote_branch, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
+    const {site, deploy, local, git_push, github, github_team, github_team_permission, bedrock_remote, bedrock_remote_branch, trellis_remote, trellis_remote_branch, bedrock_repo_pat, bedrock_template_remote, bedrock_template_branch, theme_template_remote, theme_template_branch, trellis_template_remote, trellis_template_branch, trellis_template_vault_pass} = flags
 
     if (fs.existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
@@ -182,6 +194,16 @@ export default class New extends Command {
     })
     CliUx.ux.action.stop()
 
+    CliUx.ux.action.start('Cloning theme template repo')
+    await git.clone(theme_template_remote, {
+      dir: `${site}/bedrock/web/app/themes/${site}`,
+      branch: theme_template_branch,
+    })
+    fs.removeSync(`${site}/bedrock/web/app/themes/${site}/.git`)
+    fs.removeSync(`${site}/bedrock/web/app/themes/${site}/.github`)
+    fs.removeSync(`${site}/bedrock/web/app/themes/${site}/.circleci`)
+    CliUx.ux.action.stop()
+
     CliUx.ux.action.start('Cloning Trellis template repo')
     await git.clone(trellis_template_remote, {
       dir: 'trellis',
@@ -231,6 +253,7 @@ export default class New extends Command {
       `${site}/trellis/group_vars/*/*.yml`,
       `${site}/bedrock/.github/workflows/*.yml`,
       `${site}/bedrock/config/*`,
+      `${site}/bedrock/web/app/themes/${site}/style.css`,
     ])
     CliUx.ux.action.stop()
 
@@ -304,6 +327,12 @@ export default class New extends Command {
     CliUx.ux.action.stop()
 
     CliUx.ux.action.start('Commiting Bedrock changes')
+    await git.add([`web/app/themes/${site}`], {
+      cwd: `${site}/bedrock`,
+    })
+    await git.commit('iRoots: Add theme', {
+      cwd: `${site}/bedrock`,
+    })
     await git.add(['.'], {
       cwd: `${site}/bedrock`,
     })
