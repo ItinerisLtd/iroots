@@ -402,8 +402,13 @@ export default class New extends Command {
         {
           name: 'ANSIBLE_VAULT_PASSWORD',
           value: vaultPass,
+          remote: bedrock_remote,
+        },
+        {
+          name: 'ANSIBLE_VAULT_PASSWORD',
+          value: vaultPass,
           remote: trellis_remote,
-        }
+        },
       ]
 
       for (const {name, value, remote} of repoSecrets) {
