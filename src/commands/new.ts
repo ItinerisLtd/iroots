@@ -19,6 +19,7 @@ type GitHubSecret = {
   name: string
   value: string
   remote: string
+  app: string
 }
 
 export default class New extends Command {
@@ -436,16 +437,25 @@ export default class New extends Command {
           name: 'REPO_PAT',
           value: bedrock_repo_pat,
           remote: bedrock_remote,
+          app: 'actions',
         },
         {
           name: 'ANSIBLE_VAULT_PASSWORD',
           value: vaultPass,
           remote: bedrock_remote,
+          app: 'actions',
         },
         {
           name: 'ANSIBLE_VAULT_PASSWORD',
           value: vaultPass,
           remote: trellis_remote,
+          app: 'actions',
+        },
+        {
+          name: 'THEME_NAME',
+          value: site,
+          remote: bedrock_remote,
+          app: 'codespaces',
         },
       ]
 
