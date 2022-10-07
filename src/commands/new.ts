@@ -124,7 +124,7 @@ export default class New extends Command {
     theme_template_branch: Flags.string({
       description: 'theme template branch',
       env: 'IROOTS_NEW_THEME_TEMPLATE_BRANCH',
-      default: 'master',
+      default: 'main',
       required: true,
     }),
     trellis_template_vault_pass: Flags.string({
