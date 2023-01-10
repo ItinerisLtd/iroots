@@ -20,7 +20,7 @@
     "@oclif/dev-cli": "^1",
     "@oclif/tslint": "^3",
     "@types/execa": "^2.0.0",
-    "@types/fs-extra": "^9.0.11",
+    "@types/fs-extra": "^11.0.0",
     "@types/globby": "^9.1.0",
     "@types/node": "^18.11.18",
     "ts-node": "^10",
