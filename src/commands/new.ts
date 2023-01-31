@@ -62,7 +62,7 @@ export default class New extends Command {
     }),
     github_team_permission: Flags.string({
       description: 'the permission to set for the specified GitHub team',
-      default: 'admin',
+      default: 'maintain',
     }),
     bedrock_remote: Flags.string({
       char: 'b',
@@ -183,8 +183,16 @@ export default class New extends Command {
       }
 
       await gh.setTeamPermissions(bedrockRemoteOwner, bedrockRemoteRepo, {
+        teamSlug: 'senior-team',
+        teamPermission: 'admin',
+      })
+      await gh.setTeamPermissions(bedrockRemoteOwner, bedrockRemoteRepo, {
         teamSlug: github_team,
         teamPermission: github_team_permission,
+      })
+      await gh.setTeamPermissions(trellisRemoteOwner, trellisRemoteRepo, {
+        teamSlug: 'senior-team',
+        teamPermission: 'admin',
       })
       await gh.setTeamPermissions(trellisRemoteOwner, trellisRemoteRepo, {
         teamSlug: github_team,
