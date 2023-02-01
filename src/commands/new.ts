@@ -267,9 +267,6 @@ export default class New extends Command {
     })
 
     CliUx.ux.action.start('Decrypting vault.yml')
-    await trellis.vaultDecrypt('all', {
-      cwd: `${site}/trellis`,
-    })
     await trellis.vaultDecrypt('development', {
       cwd: `${site}/trellis`,
     })
