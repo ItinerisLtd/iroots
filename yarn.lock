@@ -124,10 +124,10 @@
     is-wsl "^2.1.1"
     tslib "^2.3.1"
 
-"@oclif/core@^2.0.11", "@oclif/core@^2.0.8":
-  version "2.0.11"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-2.0.11.tgz#3d5385196b9a6bfff8df26caf6baa58e53b15d33"
-  integrity sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==
+"@oclif/core@^2.0.8", "@oclif/core@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-2.1.2.tgz#a3e47ed2274e47cb2b3dc1a16b5955cceae5d2d0"
+  integrity sha512-l7Kx+80zuDgi9o4gZe39XQeYvQuj6Hf+B31kXSUSntgXpfLdDbpFSZH/GP7tsldzG4icrpmSwnLDOz8MNB40Hg==
   dependencies:
     "@types/cli-progress" "^3.11.0"
     ansi-escapes "^4.3.2"
@@ -135,7 +135,7 @@
     cardinal "^2.1.1"
     chalk "^4.1.2"
     clean-stack "^3.0.1"
-    cli-progress "^3.10.0"
+    cli-progress "^3.11.2"
     debug "^4.3.4"
     ejs "^3.1.6"
     fs-extra "^9.1.0"
@@ -493,12 +493,12 @@ clean-stack@^3.0.0, clean-stack@^3.0.1:
   dependencies:
     escape-string-regexp "4.0.0"
 
-cli-progress@^3.10.0, cli-progress@^3.4.0:
-  version "3.10.0"
-  resolved "https://registry.yarnpkg.com/cli-progress/-/cli-progress-3.10.0.tgz#63fd9d6343c598c93542fdfa3563a8b59887d78a"
-  integrity sha512-kLORQrhYCAtUPLZxqsAt2YJGOvRdt34+O6jl5cQGb7iF3dM55FQZlTR+rQyIK9JUcO9bBMwZsTlND+3dmFU2Cw==
+cli-progress@^3.11.2, cli-progress@^3.4.0:
+  version "3.11.2"
+  resolved "https://registry.yarnpkg.com/cli-progress/-/cli-progress-3.11.2.tgz#f8c89bd157e74f3f2c43bcfb3505670b4d48fc77"
+  integrity sha512-lCPoS6ncgX4+rJu5bS3F/iCz17kZ9MPZ6dpuTtI0KXKABkhyXIdYB3Inby1OpaGti3YlI3EeEkM9AuWpelJrVA==
   dependencies:
-    string-width "^4.2.0"
+    string-width "^4.2.3"
 
 cli-ux@5.6.7:
   version "5.6.7"
