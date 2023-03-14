@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "oclif",
+    "oclif-typescript"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "./src/commands/new.ts"
+      ],
+      "rules": {
+        "camelcase": "off"
+      }
+    }
+  ]
+}
