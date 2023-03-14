@@ -429,6 +429,15 @@ export default class New extends Command {
     }
 
     if (github) {
+      ux.action.start('Creating branch protection rules')
+      await gh.setBranchProtection(bedrockRemoteOwner, bedrockRemoteRepo, bedrock_remote_branch, {
+        shell: true,
+      })
+      await gh.setBranchProtection(trellisRemoteOwner, trellisRemoteRepo, trellis_remote_branch, {
+        shell: true,
+      })
+      ux.action.stop()
+
       ux.action.start('Scanning for known hosts')
       const hostYamls = await globby([`${site}/trellis/hosts/*`])
       let hostMatches: string[] = []

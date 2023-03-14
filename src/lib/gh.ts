@@ -67,3 +67,48 @@ export async function setTeamPermissions(
     options,
   )
 }
+
+export async function setBranchProtection(
+  owner: string,
+  repo: string,
+  branch: string,
+  options?: Options,
+): Promise<ExecaReturnValue> {
+  const {stdout: repoId} = await execa(
+    'gh',
+    ['api', 'graphql', '-f', `query='{repository(owner:"${owner}",name:"${repo}"){id}}'`, '-q', '.data.repository.id'],
+    options,
+  )
+
+  // TODO: add bypassPullRequestActorIds
+  const query = `
+mutation($repositoryId:ID!,$branch:String!,$requiredReviews:Int!) {
+  createBranchProtectionRule(input: {
+    repositoryId: $repositoryId
+    pattern: $branch
+    isAdminEnforced: true
+    requiresApprovingReviews: true
+    requiredApprovingReviewCount: $requiredReviews
+    requiresStatusChecks: true
+    requiresStrictStatusChecks: true
+  }) { clientMutationId }
+}
+  `
+
+  return execa(
+    'gh',
+    [
+      'api',
+      'graphql',
+      '-f',
+      `query='${query}'`,
+      '-f',
+      `repositoryId="${repoId}"`,
+      '-f',
+      `branch="${branch}"`,
+      '-F',
+      'requiredReviews=3',
+    ],
+    options,
+  )
+}
