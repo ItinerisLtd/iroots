@@ -42,7 +42,7 @@ export default class New extends Command {
     deploy: Flags.boolean({
       char: 'd',
       description: 'whether to deploy or not',
-      default: true,
+      default: false,
       allowNo: true,
     }),
     local: Flags.boolean({
