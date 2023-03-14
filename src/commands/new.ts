@@ -182,7 +182,7 @@ export default class New extends Command {
         teamSlug: github_team,
       })
 
-      const githubRepoSettings = ['delete-branch-on-merge', 'enable-auto-merge']
+      const githubRepoSettings = ['delete-branch-on-merge', 'enable-auto-merge', 'allow-update-branch']
       for (const flag of githubRepoSettings) {
         // eslint-disable-next-line no-await-in-loop
         await gh.editRepo(bedrockRemoteOwner, bedrockRemoteRepo, flag)
