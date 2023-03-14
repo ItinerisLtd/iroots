@@ -1,14 +1,19 @@
-import {CliUx, Command, Flags} from '@oclif/core'
-import {randomBytes} from 'crypto'
-import * as fs from 'fs-extra'
-import * as globby from 'globby'
-import {replaceInFile} from 'replace-in-file'
+import {ux, Command, Flags} from '@oclif/core'
+import {randomBytes} from 'node:crypto'
+import {appendFileSync, readFileSync, existsSync, writeFileSync, rmSync, mkdirSync} from 'node:fs'
+import {globby} from 'globby'
+import replaceInFilePkg from 'replace-in-file'
 
-import * as composer from '../lib/composer'
-import * as gh from '../lib/gh'
-import * as git from '../lib/git'
-import * as trellis from '../lib/trellis'
-import * as wp from '../lib/wp'
+// eslint-disable-next-line node/no-missing-import
+import * as composer from '../lib/composer.js'
+// eslint-disable-next-line node/no-missing-import
+import * as gh from '../lib/gh.js'
+// eslint-disable-next-line node/no-missing-import
+import * as git from '../lib/git.js'
+// eslint-disable-next-line node/no-missing-import
+import * as trellis from '../lib/trellis.js'
+// eslint-disable-next-line node/no-missing-import
+import * as wp from '../lib/wp.js'
 
 type QAndA = {
   from: string
@@ -66,7 +71,7 @@ export default class New extends Command {
     }),
     bedrock_remote: Flags.string({
       char: 'b',
-      description: 'bedrock remote',
+      description: 'bedrock importremote',
       env: 'IROOTS_NEW_BEDROCK_REMOTE',
       required: true,
     }),
@@ -158,17 +163,18 @@ export default class New extends Command {
       trellis_template_vault_pass,
     } = flags
 
-    if (fs.existsSync(site)) {
+    if (existsSync(site)) {
       this.error(`Abort! Directory ${site} already exists`, {exit: 1})
     }
-    fs.ensureDirSync(site)
+
+    mkdirSync(site, {recursive: true})
 
     const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
     const bedrockRemote = `git@github.com:${bedrockRemoteOwner}/${bedrockRemoteRepo}`
     const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
     const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
     if (github) {
-      CliUx.ux.action.start('Creating Bedrock and Trellis repos on GitHub')
+      ux.action.start('Creating Bedrock and Trellis repos on GitHub')
       await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo, {
         teamSlug: github_team,
       })
@@ -178,7 +184,9 @@ export default class New extends Command {
 
       const githubRepoSettings = ['delete-branch-on-merge', 'enable-auto-merge']
       for (const flag of githubRepoSettings) {
+        // eslint-disable-next-line no-await-in-loop
         await gh.editRepo(bedrockRemoteOwner, bedrockRemoteRepo, flag)
+        // eslint-disable-next-line no-await-in-loop
         await gh.editRepo(trellisRemoteOwner, trellisRemoteRepo, flag)
       }
 
@@ -198,10 +206,10 @@ export default class New extends Command {
         teamSlug: github_team,
         teamPermission: github_team_permission,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
     }
 
-    CliUx.ux.action.start('Cloning Bedrock template repo')
+    ux.action.start('Cloning Bedrock template repo')
     await git.clone(
       bedrock_template_remote,
       {
@@ -222,19 +230,19 @@ export default class New extends Command {
     await git.addRemote('origin', bedrockRemote, {
       cwd: `${site}/bedrock`,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start('Cloning theme template repo')
+    ux.action.start('Cloning theme template repo')
     await git.clone(theme_template_remote, {
       dir: `${site}/bedrock/web/app/themes/${site}`,
       branch: theme_template_branch,
     })
-    fs.removeSync(`${site}/bedrock/web/app/themes/${site}/.git`)
-    fs.removeSync(`${site}/bedrock/web/app/themes/${site}/.github`)
-    fs.removeSync(`${site}/bedrock/web/app/themes/${site}/.circleci`)
-    CliUx.ux.action.stop()
+    rmSync(`${site}/bedrock/web/app/themes/${site}/.git`, {recursive: true, force: true})
+    rmSync(`${site}/bedrock/web/app/themes/${site}/.github`, {recursive: true, force: true})
+    rmSync(`${site}/bedrock/web/app/themes/${site}/.circleci`, {recursive: true, force: true})
+    ux.action.stop()
 
-    CliUx.ux.action.start('Cloning Trellis template repo')
+    ux.action.start('Cloning Trellis template repo')
     await git.clone(
       trellis_template_remote,
       {
@@ -255,18 +263,18 @@ export default class New extends Command {
     await git.addRemote('origin', trellisRemote, {
       cwd: `${site}/trellis`,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start(`Writing template vault password into \`${site}/trellis/.vault_pass\``)
-    fs.writeFileSync(`${site}/trellis/.vault_pass`, trellis_template_vault_pass)
-    CliUx.ux.action.stop()
+    ux.action.start(`Writing template vault password into \`${site}/trellis/.vault_pass\``)
+    writeFileSync(`${site}/trellis/.vault_pass`, trellis_template_vault_pass)
+    ux.action.stop()
 
     this.log('Initializing Trellis project (this may take some time, be patient)...')
     await trellis.init({
       cwd: `${site}/trellis`,
     })
 
-    CliUx.ux.action.start('Decrypting vault.yml')
+    ux.action.start('Decrypting vault.yml')
     await trellis.vaultDecrypt('development', {
       cwd: `${site}/trellis`,
     })
@@ -276,9 +284,9 @@ export default class New extends Command {
     await trellis.vaultDecrypt('staging', {
       cwd: `${site}/trellis`,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start('Looking for files to perform search and replace')
+    ux.action.start('Looking for files to perform search and replace')
     const yamls = await globby([
       `${site}/trellis/hosts/*`,
       `${site}/trellis/group_vars/*/*.yml`,
@@ -286,27 +294,29 @@ export default class New extends Command {
       `${site}/bedrock/config/*`,
       `${site}/bedrock/web/app/themes/${site}/style.css`,
     ])
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start('Searching for placeholders')
+    ux.action.start('Searching for placeholders')
     let placeholderMatches: string[] = []
-    yamls.forEach(file => {
-      const content = fs.readFileSync(file, 'utf8')
+    for (const file of yamls) {
+      const content = readFileSync(file, 'utf8')
       const regex = /xxx\w+xxx/gim
       let match
       while ((match = regex.exec(content)) !== null) {
         placeholderMatches = [...placeholderMatches, match[0]]
       }
-    })
-    let placeholders = [...new Set(placeholderMatches)].sort()
-    CliUx.ux.action.stop()
+    }
 
-    CliUx.ux.action.start('Q&A')
+    const placeholders = [...new Set(placeholderMatches)].sort()
+    ux.action.stop()
+
+    ux.action.start('Q&A')
     let qAndAs: QAndA[] = []
-    for (let placeholder of placeholders) {
+    for (const placeholder of placeholders) {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
-        answer = (await CliUx.ux.prompt(`What is ${placeholder}?`, {type: 'mask'})) as string
+        // eslint-disable-next-line no-await-in-loop
+        answer = (await ux.prompt(`What is ${placeholder}?`, {type: 'mask'})) as string
       }
 
       qAndAs = [
@@ -317,29 +327,33 @@ export default class New extends Command {
         },
       ]
     }
-    CliUx.ux.action.stop()
 
-    CliUx.ux.action.start('Searching and replacing')
-    for (let {from, to} of qAndAs) {
+    ux.action.stop()
+
+    ux.action.start('Searching and replacing')
+    const {replaceInFile} = replaceInFilePkg
+    for (const {from, to} of qAndAs) {
       const regex = new RegExp(from, 'img')
 
+      // eslint-disable-next-line no-await-in-loop
       await replaceInFile({
         files: yamls,
         from: regex,
         to,
       })
     }
+
     await replaceInFile({
       files: yamls,
       from: /"generateme"/g,
       to: () => randomBytes(64).toString('hex'),
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)
-    fs.removeSync(`${site}/trellis/.vault_pass`)
+    ux.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)
+    rmSync(`${site}/trellis/.vault_pass`, {recursive: true, force: true})
     const vaultPass = randomBytes(256).toString('hex')
-    fs.writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
+    writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
     await trellis.vaultEncrypt('development', {
       cwd: `${site}/trellis`,
     })
@@ -349,18 +363,18 @@ export default class New extends Command {
     await trellis.vaultEncrypt('staging', {
       cwd: `${site}/trellis`,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start('Commiting Trellis changes')
+    ux.action.start('Commiting Trellis changes')
     await git.add(['.'], {
       cwd: `${site}/trellis`,
     })
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/trellis`,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start('Commiting Bedrock changes')
+    ux.action.start('Commiting Bedrock changes')
     await git.add([`web/app/themes/${site}`], {
       cwd: `${site}/bedrock`,
     })
@@ -373,35 +387,35 @@ export default class New extends Command {
     await git.commit('iRoots: Search and replace placeholders', {
       cwd: `${site}/bedrock`,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
-    CliUx.ux.action.start('Creating SSH Aliases')
+    ux.action.start('Creating SSH Aliases')
     await trellis.alias({
       cwd: `${site}/trellis`,
     })
     const trelliaAliasString = `_:
   inherit: wp-cli.trellis-alias.yml
 `
-    fs.appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
-    CliUx.ux.action.stop()
+    appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
+    ux.action.stop()
 
-    CliUx.ux.action.start('Committing SSH Aliases')
+    ux.action.start('Committing SSH Aliases')
     await git.add(['wp-cli.yml', 'wp-cli.trellis-alias.yml'], {
       cwd: `${site}/bedrock`,
     })
     await git.commit('iRoots: Add SSH aliases', {
       cwd: `${site}/bedrock`,
     })
-    CliUx.ux.action.stop()
+    ux.action.stop()
 
     if (git_push) {
-      CliUx.ux.action.start('Pushing Trellis changes to new repo')
+      ux.action.start('Pushing Trellis changes to new repo')
       await git.push('origin', trellis_remote_branch, {
         cwd: `${site}/trellis`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
 
-      CliUx.ux.action.start('Pushing Bedrock changes to new repo')
+      ux.action.start('Pushing Bedrock changes to new repo')
       await git.push('origin', bedrock_remote_branch, {
         cwd: `${site}/bedrock`,
       })
@@ -411,32 +425,33 @@ export default class New extends Command {
       await git.push('origin', `${bedrock_remote_branch}:production`, {
         cwd: `${site}/bedrock`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
     }
 
     if (github) {
-      CliUx.ux.action.start('Scanning for known hosts')
+      ux.action.start('Scanning for known hosts')
       const hostYamls = await globby([`${site}/trellis/hosts/*`])
       let hostMatches: string[] = []
-      hostYamls.forEach(file => {
-        const content = fs.readFileSync(file, 'utf8')
-        const regex = /ansible_host=\d+\.\d+\.\d+\.\d+/gim
+      for (const file of hostYamls) {
+        const content = readFileSync(file, 'utf8')
+        const regex = /ansible_host=(?:\d+\.){3}\d+/gim
         let match
         while ((match = regex.exec(content)) !== null) {
           match = match[0].replace('ansible_host=', '')
           hostMatches = [...hostMatches, match]
         }
-      })
-      const sshKnownHosts = [...new Set(hostMatches)].sort()
-      CliUx.ux.action.stop()
+      }
 
-      CliUx.ux.action.start('Generating Bedrock deploy key')
+      const sshKnownHosts = [...new Set(hostMatches)].sort()
+      ux.action.stop()
+
+      ux.action.start('Generating Bedrock deploy key')
       await trellis.keyGenerate(`${bedrockRemoteOwner}/${bedrockRemoteRepo}`, sshKnownHosts, {
         cwd: `${site}/trellis`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
 
-      CliUx.ux.action.start('Setting additional Bedrock repo secrets')
+      ux.action.start('Setting additional Bedrock repo secrets')
       const repoSecrets: GitHubSecret[] = [
         {
           name: 'REPO_PAT',
@@ -465,60 +480,61 @@ export default class New extends Command {
       ]
 
       for (const {name, value, remote} of repoSecrets) {
+        // eslint-disable-next-line no-await-in-loop
         await gh.setSecret(name, value, remote)
       }
 
-      CliUx.ux.action.stop()
+      ux.action.stop()
     }
 
     if (local) {
-      CliUx.ux.action.start('Populating local `.env`')
+      ux.action.start('Populating local `.env`')
       await trellis.dotenv({
         cwd: `${site}/trellis`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
 
-      CliUx.ux.action.start('Installing Bedrock Composer dependencies')
+      ux.action.start('Installing Bedrock Composer dependencies')
       await composer.install({
         cwd: `${site}/bedrock`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
 
-      CliUx.ux.action.start('Creating local database')
+      ux.action.start('Creating local database')
       await wp.dbCreate({
         cwd: `${site}/bedrock`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
 
-      CliUx.ux.info('Linking Valet site')
+      ux.info('Linking Valet site')
       await trellis.valetLink({
         cwd: `${site}/trellis`,
       })
     }
 
     if (deploy) {
-      CliUx.ux.action.start('Installing Ansible Galaxy roles')
+      ux.action.start('Installing Ansible Galaxy roles')
       await trellis.galaxyInstall({
         cwd: `${site}/trellis`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
 
-      CliUx.ux.action.start('Deploying to staging')
+      ux.action.start('Deploying to staging')
       await trellis.deploy('staging', {
         cwd: `${site}/trellis`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
 
-      CliUx.ux.action.start('Deploying to production')
+      ux.action.start('Deploying to production')
       await trellis.deploy('production', {
         cwd: `${site}/trellis`,
       })
-      CliUx.ux.action.stop()
+      ux.action.stop()
     }
 
     if (github) {
-      const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join()
-      CliUx.ux.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
+      const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join(',')
+      ux.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
     }
   }
 }
