@@ -430,12 +430,34 @@ export default class New extends Command {
 
     if (github) {
       ux.action.start('Creating branch protection rules')
-      await gh.setBranchProtection(bedrockRemoteOwner, bedrockRemoteRepo, bedrock_remote_branch, {
-        shell: true,
-      })
-      await gh.setBranchProtection(trellisRemoteOwner, trellisRemoteRepo, trellis_remote_branch, {
-        shell: true,
-      })
+      await gh.createBranchProtection(
+        {
+          owner: bedrockRemoteOwner,
+          repo: bedrockRemoteRepo,
+          branch: bedrock_remote_branch,
+          isAdminEnforced: true,
+          requiresApprovingReviews: true,
+          requiresStatusChecks: true,
+          requiresStrictStatusChecks: true,
+        },
+        {
+          shell: true,
+        },
+      )
+      await gh.createBranchProtection(
+        {
+          owner: trellisRemoteOwner,
+          repo: trellisRemoteRepo,
+          branch: trellis_remote_branch,
+          isAdminEnforced: true,
+          requiresApprovingReviews: true,
+          requiresStatusChecks: true,
+          requiresStrictStatusChecks: true,
+        },
+        {
+          shell: true,
+        },
+      )
       ux.action.stop()
 
       ux.action.start('Scanning for known hosts')

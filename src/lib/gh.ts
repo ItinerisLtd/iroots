@@ -68,29 +68,53 @@ export async function setTeamPermissions(
   )
 }
 
-export async function setBranchProtection(
-  owner: string,
-  repo: string,
-  branch: string,
-  options?: Options,
-): Promise<ExecaReturnValue> {
-  const {stdout: repoId} = await execa(
+export async function getRepositoryIdFromName(owner: string, repo: string, options?: Options): Promise<string> {
+  const {stdout} = await execa(
     'gh',
     ['api', 'graphql', '-f', `query='{repository(owner:"${owner}",name:"${repo}"){id}}'`, '-q', '.data.repository.id'],
     options,
   )
 
-  // TODO: add bypassPullRequestActorIds
+  return stdout.trim()
+}
+
+// export async function getActorIdsByName(actor: string, options?: Options): Promise<string> {}
+
+type BranchProtectionOptions = {
+  owner: string
+  repo: string
+  branch: string
+  isAdminEnforced: boolean
+  requiresApprovingReviews: boolean
+  requiresStatusChecks: boolean
+  requiresStrictStatusChecks: boolean
+}
+
+export async function createBranchProtection(
+  {
+    owner,
+    repo,
+    branch,
+    isAdminEnforced,
+    requiresApprovingReviews,
+    requiresStatusChecks,
+    requiresStrictStatusChecks,
+  }: BranchProtectionOptions,
+  options?: Options,
+): Promise<ExecaReturnValue> {
+  const repoId = await getRepositoryIdFromName(owner, repo, options)
+
+  // TODO: add bypassPullRequestActorIds.
+  // TODO: add the required checks.
   const query = `
-mutation($repositoryId:ID!,$branch:String!,$requiredReviews:Int!) {
+mutation($repositoryId:ID!,$branch:String!,$isAdminEnforced:Boolean!,$requiresApprovingReviews:Boolean!,$requiresStatusChecks:Boolean!,$requiresStrictStatusChecks:Boolean!) {
   createBranchProtectionRule(input: {
     repositoryId: $repositoryId
     pattern: $branch
-    isAdminEnforced: true
-    requiresApprovingReviews: true
-    requiredApprovingReviewCount: $requiredReviews
-    requiresStatusChecks: true
-    requiresStrictStatusChecks: true
+    isAdminEnforced: $isAdminEnforced
+    requiresApprovingReviews: $requiresApprovingReviews
+    requiresStatusChecks: $requiresStatusChecks
+    requiresStrictStatusChecks: $requiresStrictStatusChecks
   }) { clientMutationId }
 }
   `
@@ -107,7 +131,13 @@ mutation($repositoryId:ID!,$branch:String!,$requiredReviews:Int!) {
       '-f',
       `branch="${branch}"`,
       '-F',
-      'requiredReviews=3',
+      `isAdminEnforced="${isAdminEnforced}"`,
+      '-F',
+      `requiresApprovingReviews="${requiresApprovingReviews}"`,
+      '-F',
+      `requiresStatusChecks="${requiresStatusChecks}"`,
+      '-F',
+      `requiresStrictStatusChecks="${requiresStrictStatusChecks}"`,
     ],
     options,
   )
