@@ -422,9 +422,6 @@ export default class New extends Command {
       await git.push('origin', `${bedrock_remote_branch}:staging`, {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', `${bedrock_remote_branch}:production`, {
-        cwd: `${site}/bedrock`,
-      })
       ux.action.stop()
     }
 
