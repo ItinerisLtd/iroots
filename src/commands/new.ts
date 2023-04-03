@@ -426,37 +426,6 @@ export default class New extends Command {
     }
 
     if (github) {
-      ux.action.start('Creating branch protection rules')
-      await gh.createBranchProtection(
-        {
-          owner: bedrockRemoteOwner,
-          repo: bedrockRemoteRepo,
-          branch: bedrock_remote_branch,
-          isAdminEnforced: true,
-          requiresApprovingReviews: true,
-          requiresStatusChecks: true,
-          requiresStrictStatusChecks: true,
-        },
-        {
-          shell: true,
-        },
-      )
-      await gh.createBranchProtection(
-        {
-          owner: trellisRemoteOwner,
-          repo: trellisRemoteRepo,
-          branch: trellis_remote_branch,
-          isAdminEnforced: true,
-          requiresApprovingReviews: true,
-          requiresStatusChecks: true,
-          requiresStrictStatusChecks: true,
-        },
-        {
-          shell: true,
-        },
-      )
-      ux.action.stop()
-
       ux.action.start('Scanning for known hosts')
       const hostYamls = await globby([`${site}/trellis/hosts/*`])
       let hostMatches: string[] = []
@@ -475,6 +444,15 @@ export default class New extends Command {
 
       ux.action.start('Generating Bedrock deploy key')
       await trellis.keyGenerate(`${bedrockRemoteOwner}/${bedrockRemoteRepo}`, sshKnownHosts, {
+        cwd: `${site}/trellis`,
+      })
+      await git.add(['public_keys/'], {
+        cwd: `${site}/trellis`,
+      })
+      await git.commit('iRoots: Add public deploy key', {
+        cwd: `${site}/trellis`,
+      })
+      await git.push('origin', trellis_remote_branch, {
         cwd: `${site}/trellis`,
       })
       ux.action.stop()
@@ -512,6 +490,37 @@ export default class New extends Command {
         await gh.setSecret(name, value, remote)
       }
 
+      ux.action.stop()
+
+      ux.action.start('Creating branch protection rules')
+      await gh.createBranchProtection(
+        {
+          owner: bedrockRemoteOwner,
+          repo: bedrockRemoteRepo,
+          branch: bedrock_remote_branch,
+          isAdminEnforced: true,
+          requiresApprovingReviews: true,
+          requiresStatusChecks: true,
+          requiresStrictStatusChecks: true,
+        },
+        {
+          shell: true,
+        },
+      )
+      await gh.createBranchProtection(
+        {
+          owner: trellisRemoteOwner,
+          repo: trellisRemoteRepo,
+          branch: trellis_remote_branch,
+          isAdminEnforced: true,
+          requiresApprovingReviews: true,
+          requiresStatusChecks: true,
+          requiresStrictStatusChecks: true,
+        },
+        {
+          shell: true,
+        },
+      )
       ux.action.stop()
     }
 
