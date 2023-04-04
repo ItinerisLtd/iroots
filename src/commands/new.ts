@@ -293,6 +293,7 @@ export default class New extends Command {
       `${site}/bedrock/.github/workflows/*.yml`,
       `${site}/bedrock/config/*`,
       `${site}/bedrock/web/app/themes/${site}/style.css`,
+      `${site}/bedrock/web/app/themes/${site}/*.config.*`,
     ])
     ux.action.stop()
 
