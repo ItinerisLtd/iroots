@@ -536,7 +536,7 @@
     supports-color "^8.1.1"
     tslib "^2"
 
-"@oclif/core@^2.6.2", "@oclif/core@^2.7.1", "@oclif/core@^2.8.0", "@oclif/core@^2.8.2":
+"@oclif/core@^2.6.2", "@oclif/core@^2.8.0", "@oclif/core@^2.8.2":
   version "2.8.2"
   resolved "https://registry.yarnpkg.com/@oclif/core/-/core-2.8.2.tgz#86fc31f20419dbb3cd25f89f4f1d83760c60f7c0"
   integrity sha512-g50NrCdEcFlBfuwZb9RxLmxPNQ9wIaBPOiwbxlGYRkHMnsC6LNHcvVtyDnmndU8qoXrmCOZ6ocSZenOMlG+G1w==
@@ -3576,12 +3576,12 @@ object-treeify@^1.1.33:
   resolved "https://registry.yarnpkg.com/object-treeify/-/object-treeify-1.1.33.tgz#f06fece986830a3cba78ddd32d4c11d1f76cdf40"
   integrity sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==
 
-oclif@^3.7.2:
-  version "3.7.2"
-  resolved "https://registry.yarnpkg.com/oclif/-/oclif-3.7.2.tgz#52bcfc5fcdf996fc7f27a9d3729f63aa0c8225e3"
-  integrity sha512-mKzQQ4GFbsuqtzvN3nHYZu2SYLDX670Sa7UItTCOFNJY3S/e65Dcj+Nx/dBPMolESWjW6fIk8I8+kuGeiGVNXw==
+oclif@^3.8.0:
+  version "3.8.0"
+  resolved "https://registry.yarnpkg.com/oclif/-/oclif-3.8.0.tgz#002a516c054bcdcd2a2d76a34a7749b603171ad9"
+  integrity sha512-XOPAetRmTzH2FTV+cHMoX7YnXKFzsEK5TMAiyvM/J/qvcUzU2QixEGzlxQtez3Tv9MCPW5W6z/0W3Sb6zULl6w==
   dependencies:
-    "@oclif/core" "^2.7.1"
+    "@oclif/core" "^2.8.0"
     "@oclif/plugin-help" "^5.1.19"
     "@oclif/plugin-not-found" "^2.3.7"
     "@oclif/plugin-warn-if-update-available" "^2.0.14"
