@@ -45,7 +45,21 @@ export async function getAllSites(token: string, stackId: string): Promise<Stack
 
   const response = await fetch(`${apiUrl}/delivery/v1/stacks/${stackId}/sites`, options)
   const json = await response.json()
-  const sites = json.results as StackPathSite[]
 
-  return sites
+  return json.results as StackPathSite[]
+}
+
+export async function getSite(token: string, stackId: string, siteId: string): Promise<StackPathSite> {
+  const options = {
+    method: 'GET',
+    headers: {
+      accept: 'application/json',
+      authorization: `Bearer ${token}`,
+    },
+  }
+
+  const response = await fetch(`${apiUrl}/delivery/v1/stacks/${stackId}/sites/${siteId}`, options)
+  const json = await response.json()
+
+  return json.site as StackPathSite
 }
