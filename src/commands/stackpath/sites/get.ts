@@ -1,5 +1,7 @@
+// eslint-disable-next-line node/no-missing-import
 import {getNewAccessToken, getSite} from '../../../lib/stackpath.js'
-import {StackPathCommand} from '../../../lib/commands/StackPathCommand.js'
+// eslint-disable-next-line node/no-missing-import
+import {StackPathCommand} from '../../../lib/commands/stackpath-command.js'
 import {Flags} from '@oclif/core'
 
 export default class GetSite extends StackPathCommand {
