@@ -103,9 +103,6 @@ export async function createBranchProtection(
   options?: Options,
 ): Promise<ExecaReturnValue> {
   const repoId = await getRepositoryIdFromName(owner, repo, options)
-
-  // TODO: add bypassPullRequestActorIds.
-  // TODO: add the required checks.
   const query = `
 mutation($repositoryId:ID!,$branch:String!,$isAdminEnforced:Boolean!,$requiresApprovingReviews:Boolean!,$requiresStatusChecks:Boolean!,$requiresStrictStatusChecks:Boolean!) {
   createBranchProtectionRule(input: {
