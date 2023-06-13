@@ -1,13 +1,11 @@
 import {Flags} from '@oclif/core'
 // eslint-disable-next-line node/no-missing-import
-import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
+import Get from './index.js'
 // eslint-disable-next-line node/no-missing-import
-import {getSite} from '../../../lib/kinsta.js'
+import {getSiteEnvironments} from '../../../../lib/kinsta.js'
 
-export default class Get extends KinstaCommand {
+export default class GetEnvironments extends Get {
   static description = 'describe the command here'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
     siteId: Flags.string({
@@ -16,10 +14,10 @@ export default class Get extends KinstaCommand {
   }
 
   public async run(): Promise<void> {
-    const {flags} = await this.parse(Get)
+    const {flags} = await this.parse(GetEnvironments)
     const {apiKey, siteId} = flags
 
-    const site = await getSite(apiKey, siteId)
-    console.log(site)
+    const environments = await getSiteEnvironments(apiKey, siteId)
+    console.table(environments)
   }
 }

@@ -5,6 +5,11 @@ type KinstaSiteLabel = {
   name: string
 }
 
+type KinstaDomain = {
+  id: string
+  name: string
+}
+
 type KinstaEnvironment = {
   id: string
   name: string
@@ -14,6 +19,9 @@ type KinstaEnvironment = {
   is_premium: boolean
   // eslint-disable-next-line camelcase
   is_blocked: boolean
+  // eslint-disable-next-line camelcase
+  id_edge_cache?: string
+  domains?: KinstaDomain[]
 }
 
 export type KinstaSite = {
@@ -41,6 +49,12 @@ type KinstaSiteRequest = {
   site: KinstaSite
 }
 
+type KinstaEnvironmentsRequest = {
+  site: {
+    environments: KinstaEnvironment[]
+  }
+}
+
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   Object.assign(options, {
     method: 'GET',
@@ -64,4 +78,10 @@ export async function getSite(token: string, siteId: string): Promise<KinstaSite
   const response = await request<KinstaSiteRequest>(token, `sites/${siteId}`)
 
   return response.site as KinstaSite
+}
+
+export async function getSiteEnvironments(token: string, siteId: string): Promise<KinstaEnvironment[]> {
+  const response = await request<KinstaEnvironmentsRequest>(token, `sites/${siteId}/environments`)
+
+  return response.site.environments
 }
