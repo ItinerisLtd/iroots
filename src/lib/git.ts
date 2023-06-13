@@ -45,9 +45,9 @@ export type Remote = {
 
 export async function parseRemote(remote: string): Promise<Remote> {
   const ownerAndRepo = remote
-  .replace(/.*github.com(:|\/)/gim, '')
-  .replace('.git', '')
-  .split('/')
+    .replace(/.*github.com(:|\/)/gim, '')
+    .replace('.git', '')
+    .split('/')
 
   return {
     owner: ownerAndRepo[0],
