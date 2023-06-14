@@ -49,10 +49,10 @@ export async function getHosts(options?: Options): Promise<string[]> {
   )
 
   const output = stdout
-  .toString()
-  .split('\n')
-  .map(host => host.trim())
-  .filter(host => host.trim() !== '' && host.trim().startsWith('hosts (') === false)
+    .toString()
+    .split('\n')
+    .map(host => host.trim())
+    .filter(host => host.trim() !== '' && host.trim().startsWith('hosts (') === false)
 
   return [...output]
 }
