@@ -6,9 +6,6 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   options.headers = headers
   options.method ??= 'GET'
 
-  const foo = `${apiUrl}/${url}`
-  console.log(foo)
-
   return fetch(`${apiUrl}/${url}`, options)
     .then(resp => resp.json())
     .then(data => data as TResponse)
@@ -36,10 +33,10 @@ type StatusCakeUptimeTestOverview = {
   // eslint-disable-next-line camelcase
   check_rate: number
   // eslint-disable-next-line camelcase
-  contact_groups: string[] // TODO make type
+  contact_groups: string[]
   paused: boolean
   status: 'up' | 'down'
-  tags?: string[] // TODO make type
+  tags?: string[]
   uptime: number // is actually a float
 }
 
@@ -62,7 +59,6 @@ export async function getAllUptimes(
   token: string,
   queryArgs: StatusCakeUptimeListQueryArgs,
 ): Promise<StatusCakeUptimeTestOverview[]> {
-  console.log(queryArgs)
   const query = new URLSearchParams()
   for (const key in queryArgs) {
     if (!Object.prototype.hasOwnProperty.call(queryArgs, key)) {
@@ -76,11 +72,8 @@ export async function getAllUptimes(
     query.set(key, queryArgs[key] as string)
   }
 
-  console.log(query)
   const url = `uptime?${query.toString()}`
-  console.log(url)
   const response = await request<StatusCakeUptimeListResponse>(token, url)
-  console.log(response)
 
   return response.data
 }

@@ -43,7 +43,7 @@ export default class List extends StatusCakeCommand {
     const {flags} = await this.parse(List)
     const {apiKey, status, page, limit, tags, matchany, nouptime} = flags
 
-    const test = await getAllUptimes(apiKey, {
+    const list = await getAllUptimes(apiKey, {
       status: status as StatusCakeUptimeStatus,
       page,
       limit,
@@ -51,6 +51,6 @@ export default class List extends StatusCakeCommand {
       matchany,
       nouptime,
     })
-    console.log(test)
+    console.table(list)
   }
 }
