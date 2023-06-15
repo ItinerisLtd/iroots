@@ -1,3 +1,5 @@
+import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+
 const apiUrl = 'https://api.statuscake.com/v1'
 
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
@@ -6,7 +8,10 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   options.headers = headers
   options.method ??= 'GET'
 
-  return fetch(`${apiUrl}/${url}`, options)
+  const fetchUrl = new URL(`${apiUrl}/${url}`)
+  fetchUrl.searchParams.delete('apiKey')
+
+  return fetch(fetchUrl, options)
     .then(resp => resp.json())
     .then(data => data as TResponse)
 }
@@ -23,8 +28,7 @@ type StatusCakeUptimeListQueryArgs = {
   [key: string]: string | string[] | number | boolean | undefined
 }
 
-type StatusCakeUptimeTestOverview = {
-  id: string
+type StatusCakeUptimeTestBaseType = {
   name: string
   // eslint-disable-next-line camelcase
   website_url: string
@@ -35,9 +39,11 @@ type StatusCakeUptimeTestOverview = {
   // eslint-disable-next-line camelcase
   contact_groups: string[]
   paused: boolean
-  status: 'up' | 'down'
   tags?: string[]
-  uptime: number // is actually a float
+}
+
+type StatusCakeUptimeTestOverview = StatusCakeUptimeTestBaseType & {
+  id: string
 }
 
 type StatusCakeUptimeTest = StatusCakeUptimeTestOverview & {
@@ -64,14 +70,14 @@ type StatusCakeUptimeTest = StatusCakeUptimeTestOverview & {
   // eslint-disable-next-line camelcase
   processing_state: 'complete' | 'pretest' | 'retest' | 'up_retest'
   servers: string[]
-  status: 'up'
+  status: 'up' | 'down'
   // eslint-disable-next-line camelcase
   status_codes: string[]
   tags: []
   timeout: number
   // eslint-disable-next-line camelcase
   trigger_rate: number
-  uptime: 99.9
+  uptime: number // is actually a float
   // eslint-disable-next-line camelcase
   use_jar: boolean
   // eslint-disable-next-line camelcase
@@ -95,6 +101,46 @@ type StatusCakeUptimeListResponse = {
 
 type StatusCakeUptimeGetResponse = {
   data: StatusCakeUptimeTest
+}
+
+type StatusCakeUptimeCreateResponse = {
+  data: {
+    // eslint-disable-next-line camelcase
+    new_id: string
+  }
+  message?: string
+  errors?: {
+    length: number
+    [key: string]: string[] | number
+  }
+}
+
+type StatusCakeUptimeCreateQueryArgs = StatusCakeUptimeTest & {
+  // eslint-disable-next-line camelcase
+  basic_username: string
+  // eslint-disable-next-line camelcase
+  basic_password: string
+  // eslint-disable-next-line camelcase
+  custom_header: string
+  // eslint-disable-next-line camelcase
+  dns_server: string
+  // eslint-disable-next-line camelcase
+  enable_ssl_alert: boolean
+  // eslint-disable-next-line camelcase
+  final_endpoint: string
+  // eslint-disable-next-line camelcase
+  find_string: string
+  // eslint-disable-next-line camelcase
+  follow_redirects: boolean
+  port: number
+  // eslint-disable-next-line camelcase
+  post_body: string
+  // eslint-disable-next-line camelcase
+  post_raw: string
+  regions: string[]
+  // eslint-disable-next-line camelcase
+  status_codes_csv: string
+  [key: string]: string | string[] | boolean | number | Record<'new_id', string>
 }
 
 export async function getAllUptimes(
@@ -125,4 +171,38 @@ export async function getSiteUptime(token: string, testId: number): Promise<Stat
   const response = await request<StatusCakeUptimeGetResponse>(token, url)
 
   return response.data
+}
+
+export async function createUptimeTest(token: string, args: FlagOutput): Promise<StatusCakeUptimeCreateResponse> {
+  const queryArgs = args as StatusCakeUptimeCreateQueryArgs
+  const query = new URLSearchParams()
+  for (const key in queryArgs) {
+    if (!Object.prototype.hasOwnProperty.call(queryArgs, key)) {
+      continue
+    }
+
+    if (!queryArgs[key] || (Array.isArray(queryArgs[key]) && (<Array<string>>queryArgs[key]).length === 0)) {
+      continue
+    }
+
+    query.set(key, queryArgs[key] as string)
+  }
+
+  const contactGroups = query.get('contact_groups')
+  if (contactGroups?.length) {
+    query.delete('contact_groups')
+    query.set('contact_groups[]', contactGroups)
+  }
+
+  const websiteUrl = query.get('website_url')
+  if (websiteUrl?.length) {
+    const websiteUrlFixed = new URL(websiteUrl)
+    websiteUrlFixed.searchParams.set('statuscake', '')
+    query.set('website_url', websiteUrlFixed.toString())
+  }
+
+  const url = `uptime`
+  const response = await request<StatusCakeUptimeCreateResponse>(token, url, {method: 'POST', body: query})
+
+  return response
 }
