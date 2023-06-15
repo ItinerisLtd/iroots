@@ -349,6 +349,19 @@ export default class New extends Command {
       from: /"generateme"/g,
       to: () => randomBytes(64).toString('hex'),
     })
+
+    // Cron schedule. Random choice with `step` from `firstHour` to `lastHour`.
+    const firstHour = 10
+    const lastHour = 14
+    const step = 1
+    const hours = Array.from({length: (lastHour - firstHour) / step + 1}, (_, index) => firstHour + index * step)
+    const chosenHour = Math.floor(Math.random() * hours.length)
+    const cronValue = `0 ${hours[chosenHour]} * * 1,2,3,4,5`
+    await replaceInFile({
+      files: `${site}/bedrock/.github/workflows/cd.yml`,
+      from: /cron: .*/g,
+      to: `cron: "${cronValue}"`,
+    })
     ux.action.stop()
 
     ux.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)
