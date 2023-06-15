@@ -29,7 +29,7 @@ type StatusCakeUptimeTestOverview = {
   // eslint-disable-next-line camelcase
   website_url: string
   // eslint-disable-next-line camelcase
-  test_type: string
+  test_type: 'DNS' | 'HEAD' | 'HTTP' | 'PING' | 'SMTP' | 'SSH' | 'TCP'
   // eslint-disable-next-line camelcase
   check_rate: number
   // eslint-disable-next-line camelcase
@@ -38,6 +38,44 @@ type StatusCakeUptimeTestOverview = {
   status: 'up' | 'down'
   tags?: string[]
   uptime: number // is actually a float
+}
+
+type StatusCakeUptimeTest = StatusCakeUptimeTestOverview & {
+  confirmation: number
+  // eslint-disable-next-line camelcase
+  dns_ips: string[]
+  // eslint-disable-next-line camelcase
+  do_not_find: boolean
+  // eslint-disable-next-line camelcase
+  enable_ssl_alert: boolean
+  // eslint-disable-next-line camelcase
+  follow_redirects: boolean
+  host: string
+  // eslint-disable-next-line camelcase
+  include_header: boolean
+  // eslint-disable-next-line camelcase
+  last_tested_at: Date
+  // eslint-disable-next-line camelcase
+  next_location: string
+  paused: boolean
+  processing: boolean
+  // eslint-disable-next-line camelcase
+  processing_on: string
+  // eslint-disable-next-line camelcase
+  processing_state: 'complete' | 'pretest' | 'retest' | 'up_retest'
+  servers: string[]
+  status: 'up'
+  // eslint-disable-next-line camelcase
+  status_codes: string[]
+  tags: []
+  timeout: number
+  // eslint-disable-next-line camelcase
+  trigger_rate: number
+  uptime: 99.9
+  // eslint-disable-next-line camelcase
+  use_jar: boolean
+  // eslint-disable-next-line camelcase
+  user_agent: string
 }
 
 type StatusCakePagination = {
@@ -53,6 +91,10 @@ type StatusCakePagination = {
 type StatusCakeUptimeListResponse = {
   data: StatusCakeUptimeTestOverview[]
   metadata: StatusCakePagination
+}
+
+type StatusCakeUptimeGetResponse = {
+  data: StatusCakeUptimeTest
 }
 
 export async function getAllUptimes(
@@ -74,6 +116,13 @@ export async function getAllUptimes(
 
   const url = `uptime?${query.toString()}`
   const response = await request<StatusCakeUptimeListResponse>(token, url)
+
+  return response.data
+}
+
+export async function getSiteUptime(token: string, testId: number): Promise<StatusCakeUptimeTest> {
+  const url = `uptime/${testId}`
+  const response = await request<StatusCakeUptimeGetResponse>(token, url)
 
   return response.data
 }
