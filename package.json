@@ -16,7 +16,7 @@
     "replace-in-file": "^7.0.1"
   },
   "devDependencies": {
-    "@oclif/test": "^2.3.25",
+    "@oclif/test": "^2.3.26",
     "@oclif/tslint": "^3",
     "@types/fs-extra": "^11.0.1",
     "@types/globby": "^9.1.0",
