@@ -27,7 +27,7 @@
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
     "oclif": "^3.9.1",
-    "prettier": "^2.8.8",
+    "prettier": "^3.0.0",
     "shx": "^0.3.4",
     "ts-node": "^10",
     "tslib": "^2.6.0",
