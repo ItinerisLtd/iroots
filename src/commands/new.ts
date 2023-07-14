@@ -446,7 +446,7 @@ export default class New extends Command {
       ux.action.start('Configuring Multisite')
       const composerRequirePackages = [
         'itinerisltd/network-media-library',
-        'roots/multisite-url-fixer',
+        'itinerisltd/multisite-url-fixer',
         'wpackagist-plugin/threewp-broadcast',
       ]
       for (const dependency of composerRequirePackages) {
