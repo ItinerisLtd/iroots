@@ -444,38 +444,54 @@ export default class New extends Command {
 
     if (multisite) {
       ux.action.start('Configuring Multisite')
-      await composer.require('roots/multisite-url-fixer', ['--no-install'], {
-        cwd: `${site}/bedrock`,
-      })
-      await git.add(['composer.json', 'composer.lock'], {
-        cwd: `${site}/bedrock`,
-      })
-      await git.commit('iRoots: add `roots/multisite-url-fixer`', {
-        cwd: `${site}/bedrock`,
-      })
+      const composerRequirePackages = [
+        'itinerisltd/network-media-library',
+        'roots/multisite-url-fixer',
+        'wpackagist-plugin/threewp-broadcast',
+      ]
+      for (const dependency of composerRequirePackages) {
+        // eslint-disable-next-line no-await-in-loop
+        await composer.require(dependency, ['--no-install'], {
+          cwd: `${site}/bedrock`,
+        })
+        // eslint-disable-next-line no-await-in-loop
+        await git.add(['composer.json', 'composer.lock'], {
+          cwd: `${site}/bedrock`,
+        })
+        // eslint-disable-next-line no-await-in-loop
+        await git.commit(`iRoots: add \`${dependency}\``, {
+          cwd: `${site}/bedrock`,
+        })
+      }
 
-      // Why? It is not compatible with `itinerisltd/network-media-library`.
-      await composer.remove('itinerisltd/wp-media-folder', ['--no-install'], {
-        cwd: `${site}/bedrock`,
-      })
-      await git.add(['composer.json', 'composer.lock'], {
-        cwd: `${site}/bedrock`,
-      })
-      await git.commit('iRoots: remove `itinerisltd/wp-media-folder`', {
-        cwd: `${site}/bedrock`,
-      })
+      const composerRemovePackages = [
+        // Why? It is not compatible with `itinerisltd/network-media-library`.
+        'itinerisltd/wp-media-folder',
+      ]
 
-      await composer.require('itinerisltd/network-media-library', ['--no-install'], {
-        cwd: `${site}/bedrock`,
-      })
+      for (const dependency of composerRemovePackages) {
+        // eslint-disable-next-line no-await-in-loop
+        await composer.remove(dependency, ['--no-install'], {
+          cwd: `${site}/bedrock`,
+        })
+        // eslint-disable-next-line no-await-in-loop
+        await git.add(['composer.json', 'composer.lock'], {
+          cwd: `${site}/bedrock`,
+        })
+        // eslint-disable-next-line no-await-in-loop
+        await git.commit(`iRoots: remove \`${dependency}\``, {
+          cwd: `${site}/bedrock`,
+        })
+      }
+
       appendFileSync(
         `${site}/bedrock/web/app/mu-plugins/site/Hooks/filters.php`,
         wp.multisiteNetworkMediaLibrarySiteIdFilter(network_media_library_site_id),
       )
-      await git.add(['composer.json', 'composer.lock', `web/app/mu-plugins/site/Hooks/filters.php`], {
+      await git.add([`web/app/mu-plugins/site/Hooks/filters.php`], {
         cwd: `${site}/bedrock`,
       })
-      await git.commit('iRoots: add `itinerisltd/network-media-library`', {
+      await git.commit('iRoots: add `network-media-library` site ID config', {
         cwd: `${site}/bedrock`,
       })
 
