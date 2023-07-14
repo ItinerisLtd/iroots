@@ -14,6 +14,8 @@ import * as git from '../lib/git.js'
 import * as trellis from '../lib/trellis.js'
 // eslint-disable-next-line node/no-missing-import
 import * as wp from '../lib/wp.js'
+// eslint-disable-next-line node/no-missing-import
+import {findLastMatch} from '../lib/misc.js'
 
 type QAndA = {
   from: string
@@ -137,8 +139,24 @@ export default class New extends Command {
       env: 'IROOTS_NEW_TRELLIS_TEMPLATE_VAULT_PASS',
       required: true,
     }),
+    multisite: Flags.boolean({
+      description: 'whether or not to setup a WordPress multisite network',
+      env: 'IROOTS_NEW_IS_MULTISITE',
+      required: false,
+      default: false,
+    }),
+    network_media_library_site_id: Flags.integer({
+      description: 'the site ID you wish to use for the network media library',
+      env: 'IROOTS_NEW_NETWORK_MEDIA_LIBRARY_SITE_ID',
+      required: false,
+      default: 2,
+      dependsOn: ['multisite'],
+    }),
   }
 
+  // eslint-disable-next-line no-warning-comments
+  // TODO: needs a nice refactor.
+  // eslint-disable-next-line complexity
   async run(): Promise<void> {
     const {flags} = await this.parse(New)
     const {
@@ -161,6 +179,8 @@ export default class New extends Command {
       trellis_template_remote,
       trellis_template_branch,
       trellis_template_vault_pass,
+      multisite,
+      network_media_library_site_id,
     } = flags
 
     if (existsSync(site)) {
@@ -422,6 +442,90 @@ export default class New extends Command {
     })
     ux.action.stop()
 
+    if (multisite) {
+      ux.action.start('Configuring Multisite')
+      await composer.require('roots/multisite-url-fixer', ['--no-install'], {
+        cwd: `${site}/bedrock`,
+      })
+      await git.add(['composer.json', 'composer.lock'], {
+        cwd: `${site}/bedrock`,
+      })
+      await git.commit('iRoots: add `roots/multisite-url-fixer`', {
+        cwd: `${site}/bedrock`,
+      })
+
+      // Why? It is not compatible with `itinerisltd/network-media-library`.
+      await composer.remove('itinerisltd/wp-media-folder', ['--no-install'], {
+        cwd: `${site}/bedrock`,
+      })
+      await git.add(['composer.json', 'composer.lock'], {
+        cwd: `${site}/bedrock`,
+      })
+      await git.commit('iRoots: remove `itinerisltd/wp-media-folder`', {
+        cwd: `${site}/bedrock`,
+      })
+
+      await composer.require('itinerisltd/network-media-library', ['--no-install'], {
+        cwd: `${site}/bedrock`,
+      })
+      appendFileSync(
+        `${site}/bedrock/web/app/mu-plugins/site/Hooks/filters.php`,
+        wp.multisiteNetworkMediaLibrarySiteIdFilter(network_media_library_site_id),
+      )
+      await git.add(['composer.json', 'composer.lock', `web/app/mu-plugins/site/Hooks/filters.php`], {
+        cwd: `${site}/bedrock`,
+      })
+      await git.commit('iRoots: add `itinerisltd/network-media-library`', {
+        cwd: `${site}/bedrock`,
+      })
+
+      const bedrockConfigFile = `${site}/bedrock/config/application.php`
+      const bedrockConfigFileContents = readFileSync(bedrockConfigFile, 'utf8')
+      let hasInsertedMultisiteBedrockConstants = false
+      const pattern = /Config::define(.*);/gm
+      const lastMatch = findLastMatch(bedrockConfigFileContents, pattern)
+      if (lastMatch?.length) {
+        const result = await replaceInFile({
+          files: bedrockConfigFile,
+          // eslint-disable-next-line unicorn/better-regex
+          from: new RegExp(lastMatch.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&')),
+          to: `${lastMatch}\n${wp.multisiteConfigTemplate}`,
+        })
+        hasInsertedMultisiteBedrockConstants = result.shift()?.hasChanged || false
+      }
+
+      if (hasInsertedMultisiteBedrockConstants) {
+        await git.add(['config/application.php'], {
+          cwd: `${site}/bedrock`,
+        })
+        await git.commit('iRoots: Add multisite constants', {
+          cwd: `${site}/bedrock`,
+        })
+      } else {
+        this.error(
+          'Could not insert Multisite Bedrock constants! Investigate or try again without --multisite and configure it manually.',
+        )
+      }
+
+      const yamls = await globby([`${site}/trellis/group_vars/*/wordpress_sites.yml`])
+      const result = await replaceInFile({
+        files: yamls,
+        from: /multisite:\n\s+enabled: false/g,
+        to: match => match.replace('false', 'true'),
+      })
+      const changedFiles = result.filter(item => item.hasChanged).map(item => item.file)
+      if (changedFiles.length > 0) {
+        await git.add(['group_vars/*/wordpress_sites.yml'], {
+          cwd: `${site}/trellis`,
+        })
+        await git.commit('iRoots: Enable multisite', {
+          cwd: `${site}/trellis`,
+        })
+      }
+
+      ux.action.stop()
+    }
+
     if (git_push) {
       ux.action.start('Pushing Trellis changes to new repo')
       await git.push('origin', trellis_remote_branch, {
@@ -586,6 +690,13 @@ export default class New extends Command {
     if (github) {
       const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join(',')
       ux.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
+    }
+
+    if (multisite) {
+      ux.info("Don't forget to install the multisite DB!")
+      ux.info(
+        '$ wp core multisite-install --title="site title" --admin_user="username" --admin_password="password" --admin_email="you@example.com"',
+      )
     }
   }
 }
