@@ -601,13 +601,13 @@
     lodash "^4.17.21"
     semver "^7.5.4"
 
-"@oclif/test@^2.3.31":
-  version "2.3.31"
-  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-2.3.31.tgz#227fdc50d0348b2263b59f501b1fd06ef50b8e7c"
-  integrity sha512-dTWCni+Zv9aSuzyamS95+GJaIub6EAI+CT+pA1MP10RZF54mF7CKaas7t8dvNvDp1Y194hi64cqe+cNwZlR5ng==
+"@oclif/test@^2.3.33":
+  version "2.3.33"
+  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-2.3.33.tgz#28d22b72277b0b8d96e2c52098ed1fcedf87da4a"
+  integrity sha512-AmhsxZRDDqJHTk1mDQ+Rl3mNUvb7GIXNcNdP7G7r5l3fRYBUsbzflSy3M760WZfAW4r85rnB+SNG5OBvmajWow==
   dependencies:
-    "@oclif/core" "^2.9.3"
-    fancy-test "^2.0.29"
+    "@oclif/core" "^2.9.4"
+    fancy-test "^2.0.31"
 
 "@oclif/tslint@^3":
   version "3.1.1"
@@ -2107,10 +2107,10 @@ external-editor@^3.0.3:
     iconv-lite "^0.4.24"
     tmp "^0.0.33"
 
-fancy-test@^2.0.29:
-  version "2.0.30"
-  resolved "https://registry.yarnpkg.com/fancy-test/-/fancy-test-2.0.30.tgz#d9b9295b3a904ec1fb1fc7eaf1a1540d146f91b6"
-  integrity sha512-bDQnAXYYODKwjb/6VEwAovEN0uJ1iRMTahEqOpQCRxIX7rIqoFHCy0LEqWYAU3kVw4ERgK4HQSn6GISEA1ipxg==
+fancy-test@^2.0.31:
+  version "2.0.32"
+  resolved "https://registry.yarnpkg.com/fancy-test/-/fancy-test-2.0.32.tgz#3cbf7ea8a83f9912b02d9ee0782517cca71834f9"
+  integrity sha512-yN40FulpMlEDVp/3YbSxVzkdUR/u0ZAk2Wu30vVvv79Dni0LoSz90ZXtLsp6e813ED0SHkaW/zfgDEp8YqF9Lw==
   dependencies:
     "@types/chai" "*"
     "@types/lodash" "*"
@@ -3572,10 +3572,10 @@ object-treeify@^1.1.33:
   resolved "https://registry.yarnpkg.com/object-treeify/-/object-treeify-1.1.33.tgz#f06fece986830a3cba78ddd32d4c11d1f76cdf40"
   integrity sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==
 
-oclif@^3.9.2:
-  version "3.9.2"
-  resolved "https://registry.yarnpkg.com/oclif/-/oclif-3.9.2.tgz#f48c5446d5034af05f5175c615a97912b932d3b5"
-  integrity sha512-iDauedLM+oHiG/se+68DENKk4+D/k733neOQq4ZXrcsHVoJMmWflejC4iBeeKrm/mVb3pUHsoFij6S7G7Mt60w==
+oclif@^3.10.0:
+  version "3.10.0"
+  resolved "https://registry.yarnpkg.com/oclif/-/oclif-3.10.0.tgz#edfe473d5195603f1a689eb9aefead236c302ae1"
+  integrity sha512-Kf/nL7GrfezePsZGQytbPJG1EGNFRAG+lC6NhYqPOgeBIGppLuQDg6vO9wz0QRoijSJv/Yf4wCe2URMoCFtBNw==
   dependencies:
     "@oclif/core" "^2.9.4"
     "@oclif/plugin-help" "^5.2.14"
