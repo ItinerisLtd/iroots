@@ -20,7 +20,7 @@
     "@oclif/tslint": "^3",
     "@types/fs-extra": "^11.0.1",
     "@types/globby": "^9.1.0",
-    "@types/node": "^20.5.0",
+    "@types/node": "^20.5.1",
     "eslint": "^7.32.0",
     "eslint-config-oclif": "^4.0.0",
     "eslint-config-oclif-typescript": "^1.0.3",
@@ -30,7 +30,7 @@
     "prettier": "^3.0.2",
     "shx": "^0.3.4",
     "ts-node": "^10",
-    "tslib": "^2.6.1",
+    "tslib": "^2.6.2",
     "typescript": "^5.1.6"
   },
   "engines": {
