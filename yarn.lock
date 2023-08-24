@@ -601,12 +601,12 @@
     lodash "^4.17.21"
     semver "^7.5.4"
 
-"@oclif/test@^2.4.6":
-  version "2.4.6"
-  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-2.4.6.tgz#4f6a9d7a5a79e9188aaa5c120477fb57592a0ee3"
-  integrity sha512-lI3I+gqCzkY0yXWCyaIPhVoYJXyBhH7dHq9BkLeBtiaMTMlUsjOIYrO8azfUmFI58Qa1sgsrpbuuo5PBO2RFew==
+"@oclif/test@^2.4.7":
+  version "2.4.7"
+  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-2.4.7.tgz#4372270157aa6598c0d1b61349b2eff4e2003193"
+  integrity sha512-r18sKGNUm/VGQ8BkSF9Kn7QeMGjGMDUrLxTDPzL5ERaBF5YSi+O9CT3mKhcFdrMwGnCqPVvlAdX4U/6gtYPy1A==
   dependencies:
-    "@oclif/core" "^2.11.8"
+    "@oclif/core" "^2.11.10"
     fancy-test "^2.0.34"
 
 "@oclif/tslint@^3":
