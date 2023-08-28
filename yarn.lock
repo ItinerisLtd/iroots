@@ -848,10 +848,10 @@
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.5.tgz#1001cc5e6a3704b83c236027e77f2f58ea010f40"
   integrity sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==
 
-"@types/node@*", "@types/node@^20.5.6":
-  version "20.5.6"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.5.6.tgz#5e9aaa86be03a09decafd61b128d6cec64a5fe40"
-  integrity sha512-Gi5wRGPbbyOTX+4Y2iULQ27oUPrefaB0PxGQJnfyWN3kvEDGM3mIB5M/gQLmitZf7A9FmLeaqxD3L1CXpm3VKQ==
+"@types/node@*", "@types/node@^20.5.7":
+  version "20.5.7"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.5.7.tgz#4b8ecac87fbefbc92f431d09c30e176fc0a7c377"
+  integrity sha512-dP7f3LdZIysZnmvP3ANJYTSwg+wLLl8p7RqniVlV7j+oXSXAbt9h0WIBFmJy5inWZoX9wZN6eXx+YXd9Rh3RBA==
 
 "@types/node@^15.6.2":
   version "15.14.9"
@@ -3610,10 +3610,10 @@ object-treeify@^1.1.33:
   resolved "https://registry.yarnpkg.com/object-treeify/-/object-treeify-1.1.33.tgz#f06fece986830a3cba78ddd32d4c11d1f76cdf40"
   integrity sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==
 
-oclif@^3.11.3:
-  version "3.11.3"
-  resolved "https://registry.yarnpkg.com/oclif/-/oclif-3.11.3.tgz#2cccb4f9fe34191812bfa4dda7740e737cef1715"
-  integrity sha512-6bUVTbTflu+IN9UnuIt5S4ba052oqLqsZF6zV2U8bx6ZH+hzgc3aXPTJ5JHU2MbDUg1B9PG5zHAbmvoX7V+16Q==
+oclif@^3.12.0:
+  version "3.12.0"
+  resolved "https://registry.yarnpkg.com/oclif/-/oclif-3.12.0.tgz#f6957c7b93f32b3a87c13023a3ce4c12f70e789d"
+  integrity sha512-+a0yYguqrb6AAlIgCYZiqhcgaA9S8S8kkfBOjCQf6qZGfsHf865h6Ks90Q8XBBRb7Zzw7QhjhMUElspEqC3Okg==
   dependencies:
     "@oclif/core" "^2.11.4"
     "@oclif/plugin-help" "^5.2.14"
