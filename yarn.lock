@@ -536,10 +536,10 @@
     supports-color "^8.1.1"
     tslib "^2"
 
-"@oclif/core@^2.11.10", "@oclif/core@^2.11.4", "@oclif/core@^2.14.0", "@oclif/core@^2.9.3":
-  version "2.14.0"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-2.14.0.tgz#9289174b47fc0ef5f23ea7fe0e2380b5d3c88ad4"
-  integrity sha512-LlOM8okLrKNkCCiqOA+9tojwueVHRY/zM8PXUxT1hz1n4Xv1lj9aphWennx1pPnwUMJ3texbEPOkt57o+aDYPA==
+"@oclif/core@^2.11.10", "@oclif/core@^2.11.4", "@oclif/core@^2.15.0", "@oclif/core@^2.9.3":
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-2.15.0.tgz#f27797b30a77d13279fba88c1698fc34a0bd0d2a"
+  integrity sha512-fNEMG5DzJHhYmI3MgpByTvltBOMyFcnRIUMxbiz2ai8rhaYgaTHMG3Q38HcosfIvtw9nCjxpcQtC8MN8QtVCcA==
   dependencies:
     "@types/cli-progress" "^3.11.0"
     ansi-escapes "^4.3.2"
@@ -559,7 +559,6 @@
     natural-orderby "^2.0.3"
     object-treeify "^1.1.33"
     password-prompt "^1.1.2"
-    semver "^7.5.4"
     slice-ansi "^4.0.0"
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
