@@ -654,10 +654,10 @@
     wordwrap "^1.0.0"
     wrap-ansi "^7.0.0"
 
-"@oclif/core@^3.0.0-beta.19", "@oclif/core@^3.0.4", "@oclif/core@^3.2.1":
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-3.2.1.tgz#94de6b9abdf97b00c95f3790bd60019d184b58af"
-  integrity sha512-QY9csFjADbRa4RH7wcKSvIowaGI+Kc5oFCODYrKy9nj3x/RPGXG9KJ2848+9ZWJKUxv3KPHBX9CULHwvrwpVdg==
+"@oclif/core@^3.0.0-beta.19", "@oclif/core@^3.0.4", "@oclif/core@^3.2.1", "@oclif/core@^3.3.2":
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-3.3.2.tgz#1244aa19313681000881d97dd0e956a4ed48daa5"
+  integrity sha512-8bZa42d86t5BayJUENKqZN6c5CnX0n3j+JyCWmqI5PP7VsRWZl4YSXFoLFw+mZXKtvwAMrgzMxSGltm5iIXT7w==
   dependencies:
     ansi-escapes "^4.3.2"
     ansi-styles "^4.3.0"
