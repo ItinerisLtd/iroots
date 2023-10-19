@@ -18,7 +18,7 @@
   "devDependencies": {
     "@oclif/test": "^3.0.2",
     "@oclif/tslint": "^3",
-    "@types/fs-extra": "^11.0.2",
+    "@types/fs-extra": "^11.0.3",
     "@types/globby": "^9.1.0",
     "@types/node": "^20.8.4",
     "eslint": "^7.32.0",
