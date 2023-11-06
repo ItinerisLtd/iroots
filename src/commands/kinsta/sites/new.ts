@@ -11,6 +11,7 @@ export default class New extends KinstaCommand {
   static flags = {
     company: Flags.string({
       required: true,
+      env: 'IROOTS_KINSTA_COMPANY_ID',
     }),
     // eslint-disable-next-line camelcase
     display_name: Flags.string({

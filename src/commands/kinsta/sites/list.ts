@@ -12,6 +12,7 @@ export default class List extends KinstaCommand {
   static flags = {
     companyId: Flags.string({
       required: true,
+      env: 'IROOTS_KINSTA_COMPANY_ID',
     }),
   }
 
