@@ -198,7 +198,7 @@ export async function createUptimeTest(token: string, args: FlagOutput): Promise
   if (websiteUrl?.length) {
     const websiteUrlFixed = new URL(websiteUrl)
     websiteUrlFixed.searchParams.set('statuscake', '')
-    query.set('website_url', websiteUrlFixed.toString())
+    query.set('website_url', websiteUrlFixed.toString().replace('?statuscake=', '?statuscake'))
   }
 
   const url = `uptime`
