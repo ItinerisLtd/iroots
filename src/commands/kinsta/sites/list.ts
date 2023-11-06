@@ -10,7 +10,7 @@ export default class List extends KinstaCommand {
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
-    companyId: Flags.string({
+    company: Flags.string({
       required: true,
       env: 'IROOTS_KINSTA_COMPANY_ID',
     }),
@@ -18,9 +18,9 @@ export default class List extends KinstaCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const {apiKey, companyId} = flags
+    const {apiKey, company} = flags
 
-    const sites = await getAllSites(apiKey, companyId)
+    const sites = await getAllSites(apiKey, company)
     console.table(sites)
   }
 }
