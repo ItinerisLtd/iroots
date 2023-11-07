@@ -18,6 +18,13 @@ type CloudflareSite = {
   sitekey: string
 }
 
+type CloudflareSiteRequest = {
+  errors: string[]
+  messages: string[]
+  success: boolean
+  result: CloudflareSite
+}
+
 type CloudflareSitesRequest = {
   errors: string[]
   messages: string[]
@@ -60,4 +67,10 @@ export async function getAllSites(token: string, account: string): Promise<Cloud
   const response = await request<CloudflareSitesRequest>(token, account)
 
   return response.result as CloudflareSite[]
+}
+
+export async function getSite(token: string, account: string, siteKey: string): Promise<CloudflareSite> {
+  const response = await request<CloudflareSiteRequest>(token, account, siteKey)
+
+  return response.result as CloudflareSite
 }
