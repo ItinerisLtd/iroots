@@ -85,3 +85,11 @@ export async function createSite(token: string, account: string, args: FlagOutpu
 
   return response.result as CloudflareSite
 }
+
+export async function deleteSite(token: string, account: string, siteKey: string): Promise<CloudflareSite> {
+  const response = await request<CloudflareSiteRequest>(token, account, siteKey, {
+    method: 'DELETE',
+  })
+
+  return response.result as CloudflareSite
+}
