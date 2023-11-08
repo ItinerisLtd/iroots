@@ -1,7 +1,5 @@
 import {Flags} from '@oclif/core'
-// eslint-disable-next-line node/no-missing-import
 import Get from './index.js'
-// eslint-disable-next-line node/no-missing-import
 import {getSiteEnvironments} from '../../../../lib/kinsta.js'
 
 export default class GetEnvironments extends Get {

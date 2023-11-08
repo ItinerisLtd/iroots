@@ -4,17 +4,11 @@ import {appendFileSync, readFileSync, existsSync, writeFileSync, rmSync, mkdirSy
 import {globby} from 'globby'
 import replaceInFilePkg from 'replace-in-file'
 
-// eslint-disable-next-line node/no-missing-import
 import * as composer from '../lib/composer.js'
-// eslint-disable-next-line node/no-missing-import
 import * as gh from '../lib/gh.js'
-// eslint-disable-next-line node/no-missing-import
 import * as git from '../lib/git.js'
-// eslint-disable-next-line node/no-missing-import
 import * as trellis from '../lib/trellis.js'
-// eslint-disable-next-line node/no-missing-import
 import * as wp from '../lib/wp.js'
-// eslint-disable-next-line node/no-missing-import
 import {findLastMatch} from '../lib/misc.js'
 
 type QAndA = {

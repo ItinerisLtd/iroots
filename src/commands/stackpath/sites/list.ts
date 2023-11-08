@@ -1,6 +1,4 @@
-// eslint-disable-next-line node/no-missing-import
 import {getAllSites, getNewAccessToken} from '../../../lib/stackpath.js'
-// eslint-disable-next-line node/no-missing-import
 import {StackPathCommand} from '../../../lib/commands/stackpath-command.js'
 
 export default class GetAllSites extends StackPathCommand {
