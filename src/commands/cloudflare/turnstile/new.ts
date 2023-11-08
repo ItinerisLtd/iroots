@@ -1,7 +1,5 @@
 import {Flags} from '@oclif/core'
-// eslint-disable-next-line node/no-missing-import
 import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
-// eslint-disable-next-line node/no-missing-import
 import {createSite} from '../../../lib/cloudflare.js'
 
 export default class New extends CloudflareCommand {

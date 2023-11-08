@@ -1,7 +1,5 @@
 import {Flags} from '@oclif/core'
-// eslint-disable-next-line node/no-missing-import
 import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
-// eslint-disable-next-line node/no-missing-import
 import {createSite, getRegions} from '../../../lib/kinsta.js'
 import {randomBytes} from 'node:crypto'
 

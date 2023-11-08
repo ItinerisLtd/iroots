@@ -1,6 +1,4 @@
-// eslint-disable-next-line node/no-missing-import
 import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
-// eslint-disable-next-line node/no-missing-import
 import {getSite} from '../../../lib/cloudflare.js'
 import {Flags} from '@oclif/core'
 

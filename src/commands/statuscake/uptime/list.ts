@@ -1,7 +1,5 @@
 import {Flags} from '@oclif/core'
-// eslint-disable-next-line node/no-missing-import
 import {StatusCakeUptimeStatus, getAllUptimes} from '../../../lib/statuscake.js'
-// eslint-disable-next-line node/no-missing-import
 import {StatusCakeCommand} from '../../../lib/commands/statuscake-command.js'
 
 export default class List extends StatusCakeCommand {
