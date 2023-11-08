@@ -1,3 +1,5 @@
+import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+
 const apiUrl = 'https://api.cloudflare.com/client/v4/accounts/{account_identifier}/challenges/widgets'
 
 type CloudflareSite = {
@@ -71,6 +73,15 @@ export async function getAllSites(token: string, account: string): Promise<Cloud
 
 export async function getSite(token: string, account: string, siteKey: string): Promise<CloudflareSite> {
   const response = await request<CloudflareSiteRequest>(token, account, siteKey)
+
+  return response.result as CloudflareSite
+}
+
+export async function createSite(token: string, account: string, args: FlagOutput): Promise<CloudflareSite> {
+  const response = await request<CloudflareSiteRequest>(token, account, '', {
+    method: 'POST',
+    body: JSON.stringify(args),
+  })
 
   return response.result as CloudflareSite
 }
