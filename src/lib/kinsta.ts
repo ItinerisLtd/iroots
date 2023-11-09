@@ -68,7 +68,7 @@ type KinstaCreateSiteRequest = KinstaCreateSiteResponse
 
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options?.headers)
-  headers.set('authorization', `Bearer ${token}`)
+  headers.set('Authorization', `Bearer ${token}`)
   options.headers = headers
   options.method ??= 'GET'
 
@@ -136,7 +136,7 @@ export function getRegions(): string[] {
 }
 
 export async function createSite(token: string, args: FlagOutput): Promise<KinstaCreateSiteResponse> {
-  const response = await request<KinstaCreateSiteRequest>(token, `sites`, {
+  const response = await request<KinstaCreateSiteRequest>(token, 'sites/plain', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
