@@ -57,14 +57,23 @@ type KinstaEnvironmentsRequest = {
   }
 }
 
-type KinstaCreateSiteResponse = {
+type KinstaBasicResponse = {
   // eslint-disable-next-line camelcase
   operation_id: string
   message: string
-  status: number
+  status: keyof ResponseCodes
+  data: {
+    status: keyof ResponseCodes
+    message: string
+  }
 }
 
-type KinstaCreateSiteRequest = KinstaCreateSiteResponse
+export type ResponseCodes = {
+  200: string
+  202: string
+  404: string
+  [key: number]: string
+}
 
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options?.headers)
@@ -135,8 +144,8 @@ export function getRegions(): string[] {
   ]
 }
 
-export async function createSite(token: string, args: FlagOutput): Promise<KinstaCreateSiteResponse> {
-  const response = await request<KinstaCreateSiteRequest>(token, 'sites/plain', {
+export async function createSite(token: string, args: FlagOutput): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(token, 'sites/plain', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -145,4 +154,8 @@ export async function createSite(token: string, args: FlagOutput): Promise<Kinst
   })
 
   return response
+}
+
+export async function getOperationStatus(token: string, operationId: string): Promise<KinstaBasicResponse> {
+  return request(token, `operations/${operationId}`)
 }
