@@ -159,3 +159,15 @@ export async function createSite(token: string, args: FlagOutput): Promise<Kinst
 export async function getOperationStatus(token: string, operationId: string): Promise<KinstaBasicResponse> {
   return request(token, `operations/${operationId}`)
 }
+
+export async function setPhpVersion(token: string, args: FlagOutput): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(token, 'sites/tools/modify-php-version', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(args),
+  })
+
+  return response
+}
