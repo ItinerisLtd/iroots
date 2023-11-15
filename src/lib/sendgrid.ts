@@ -57,3 +57,20 @@ export async function createApiKey(token: string, name: string, scopes: string[]
     body: JSON.stringify(body),
   })
 }
+
+export async function deleteApiKey(token: string, key: string): Promise<SendGridError[] | true> {
+  const options = {} as RequestInit
+  const headers = new Headers()
+  headers.set('authorization', `Bearer ${token}`)
+  headers.set('Content-Type', 'application/json')
+  options.headers = headers
+  options.method = 'DELETE'
+
+  const response = await fetch(`${apiUrl}/api_keys/${key}`, options)
+  if (response.body instanceof ReadableStream) {
+    const json = await response.json()
+    return json.errors as SendGridError[]
+  }
+
+  return true
+}
