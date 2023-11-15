@@ -4,12 +4,17 @@ type SendGridApiKey = {
   // eslint-disable-next-line camelcase
   api_key_id: string
   name: string
+  scopes: string[]
 }
 
 type SendGridError = {
   field: string
   help: string
   message: string
+}
+
+type SendGridApiKeyResponse = SendGridApiKey & {
+  errors: SendGridError[]
 }
 
 type SendGridApiKeysResponse = {
@@ -27,6 +32,10 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   return fetch(`${apiUrl}/${url}`, options)
     .then(resp => resp.json())
     .then(data => data as TResponse)
+}
+
+export async function getApiKey(token: string, key: string): Promise<SendGridApiKeyResponse> {
+  return request<SendGridApiKeyResponse>(token, `api_keys/${key}`)
 }
 
 export async function getAllApiKeys(token: string, limit: number = 0): Promise<SendGridApiKeysResponse> {
