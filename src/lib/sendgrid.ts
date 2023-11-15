@@ -46,3 +46,14 @@ export async function getAllApiKeys(token: string, limit: number = 0): Promise<S
 
   return request<SendGridApiKeysResponse>(token, endpoint)
 }
+
+export async function createApiKey(token: string, name: string, scopes: string[]): Promise<SendGridApiKeyResponse> {
+  const body = {
+    name: name,
+    scopes: scopes,
+  }
+  return request<SendGridApiKeyResponse>(token, 'api_keys', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
