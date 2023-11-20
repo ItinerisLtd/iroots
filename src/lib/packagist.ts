@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
+import { ukSort } from './utility.js';
 
 const apiHost = 'https://packagist.com'
 
@@ -29,6 +30,14 @@ type PackagistApiParams = {
   timestamp: string,
 }
 
+export type PackagistNewTokenParam = {
+  description: string,
+  access: "read"|"update",
+  accessToAllPackages?: boolean,
+  teamId?: number,
+  expiresAt?: string,
+}
+
 type PackagistApiKeyResponse = PackagistApiResponseError|PackagistApiResponseSuccess;
 
 function signHmacSha256(key: string, str: string):string {
@@ -50,6 +59,8 @@ async function request<TResponse>(key: string, secret: string, url: string, opti
   if (options?.body) {
     params.body=options.body as string;
   }
+
+  params = ukSort(params) as PackagistApiParams;
 
   options.method ??= 'GET'
 
@@ -74,4 +85,14 @@ export async function deleteToken(key: string, secret: string, tokenId: number):
   options.method = 'DELETE';
 
   return request<PackagistApiResponseError | {}>(key, secret, `api/tokens/${tokenId}/`, options);
+}
+
+export async function createToken(key: string, secret: string, params: PackagistNewTokenParam): Promise<PackagistApiResponseError | {}> {
+  const options = {} as RequestInit;
+  options.method = 'POST';
+  options.body = JSON.stringify(params);
+  options.headers = new Headers();
+  options.headers.set('Content-Type', 'application/json');
+
+  return request<PackagistApiResponseError | {}>(key, secret, `api/tokens/`, options);
 }
