@@ -65,11 +65,11 @@ async function request<TResponse>(key: string, secret: string, url: string, opti
     .then(data => data as TResponse)
 }
 
-export async function getAllApiKeys(key: string, secret: string): Promise<PackagistApiKeyResponse> {
+export async function getAllTokens(key: string, secret: string): Promise<PackagistApiKeyResponse> {
   return request<PackagistApiKeyResponse>(key, secret, 'api/tokens/')
 }
 
-export async function deleteApiKey(key: string, secret: string, tokenId: number): Promise<PackagistApiResponseError | {}> {
+export async function deleteToken(key: string, secret: string, tokenId: number): Promise<PackagistApiResponseError | {}> {
   const options = {} as RequestInit;
   options.method = 'DELETE';
 
