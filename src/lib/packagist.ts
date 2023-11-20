@@ -71,6 +71,7 @@ export async function getAllApiKeys(key: string, secret: string): Promise<Packag
 
 export async function deleteApiKey(key: string, secret: string, tokenId: number): Promise<PackagistApiResponseError | {}> {
   const options = {} as RequestInit;
+  options.method = 'DELETE';
 
   return request<PackagistApiResponseError | {}>(key, secret, `api/tokens/${tokenId}/`, options);
 }
