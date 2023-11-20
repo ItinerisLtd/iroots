@@ -1,5 +1,5 @@
 import {PackagistCommand} from '../../../lib/commands/packagist-command.js'
-import {getAllApiKeys} from '../../../lib/packagist.js'
+import {getAllTokens} from '../../../lib/packagist.js'
 
 export default class List extends PackagistCommand {
   static description = 'List all the tokens'
@@ -10,7 +10,7 @@ export default class List extends PackagistCommand {
     const {flags} = await this.parse(List)
     const {apiKey, apiSecret} = flags
 
-    const response = await getAllApiKeys(apiKey, apiSecret)
+    const response = await getAllTokens(apiKey, apiSecret)
     if ('status' in response) {
       console.table(response.status)
       this.exit(1)

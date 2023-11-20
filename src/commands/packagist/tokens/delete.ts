@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {PackagistCommand} from '../../../lib/commands/packagist-command.js'
-import {deleteApiKey} from '../../../lib/packagist.js'
+import {deleteToken} from '../../../lib/packagist.js'
 
 export default class Delete extends PackagistCommand {
   static description = 'The ID of the token we want to delete'
@@ -18,7 +18,7 @@ export default class Delete extends PackagistCommand {
     const {flags} = await this.parse(Delete)
     const {apiKey, apiSecret, tokenId} = flags
 
-    const response = await deleteApiKey(apiKey, apiSecret, tokenId)
+    const response = await deleteToken(apiKey, apiSecret, tokenId)
     if ('status' in response) {
       console.table(response)
       this.exit(1)
