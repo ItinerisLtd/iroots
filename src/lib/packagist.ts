@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import * as qs from 'qs';
 import * as crypto from 'crypto';
 import { ukSort } from './utility.js';
 
@@ -31,10 +32,16 @@ type PackagistApiParams = {
 }
 
 export type PackagistNewTokenParam = {
-  description: string,
   access: "read"|"update",
   accessToAllPackages?: boolean,
+  description: string,
+  expiresAt?: string,
   teamId?: number,
+}
+
+export type PackagistRegenerateTokenParam = {
+  tokenId: number,
+  IConfirmOldTokenWillStopWorkingImmediately: boolean,
   expiresAt?: string,
 }
 
@@ -64,7 +71,7 @@ async function request<TResponse>(key: string, secret: string, url: string, opti
 
   options.method ??= 'GET'
 
-  const signatureString =  `${options.method}\n${apiHost.replace('https://', '')}\n\/${url}\n${(new URLSearchParams(params)).toString()}`;
+  const signatureString =  `${options.method}\n${apiHost.replace('https://', '')}\n\/${url}\n${qs.stringify(params, { format : 'RFC3986' })}`;
   const signature = await signHmacSha256(secret, signatureString);
   headers.set('Authorization', `PACKAGIST-HMAC-SHA256 Cnonce=${params.cnonce} Key=${params.key} Timestamp=${params.timestamp} Signature=${signature}`)
   headers.set('Accept', 'application/json')
@@ -87,12 +94,23 @@ export async function deleteToken(key: string, secret: string, tokenId: number):
   return request<PackagistApiResponseError | {}>(key, secret, `api/tokens/${tokenId}/`, options);
 }
 
-export async function createToken(key: string, secret: string, params: PackagistNewTokenParam): Promise<PackagistApiResponseError | {}> {
+export async function createToken(key: string, secret: string, params: PackagistNewTokenParam): Promise<PackagistApiKeyResponse> {
   const options = {} as RequestInit;
   options.method = 'POST';
   options.body = JSON.stringify(params);
   options.headers = new Headers();
   options.headers.set('Content-Type', 'application/json');
 
-  return request<PackagistApiResponseError | {}>(key, secret, `api/tokens/`, options);
+  return request<PackagistApiKeyResponse>(key, secret, 'api/tokens/', options);
+}
+
+export async function regenerateToken(key: string, secret: string, args: PackagistRegenerateTokenParam): Promise<PackagistApiKeyResponse> {
+  const options = {} as RequestInit;
+  const {tokenId, ...params} = args;
+  options.method = 'POST';
+  options.body = JSON.stringify(params);
+  options.headers = new Headers();
+  options.headers.set('Content-Type', 'application/json');
+
+  return request<PackagistApiKeyResponse>(key, secret, `api/tokens/${tokenId}/regenerate`, options);
 }
