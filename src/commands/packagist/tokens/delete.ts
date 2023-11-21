@@ -24,6 +24,6 @@ export default class Delete extends PackagistCommand {
       this.exit(1)
     }
 
-    this.log('API Key deleted successfully.')
+    this.log('Token deleted successfully.')
   }
 }

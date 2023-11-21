@@ -36,7 +36,6 @@ export default class New extends PackagistCommand {
     const {flags} = await this.parse(New)
     const {apiKey, apiSecret, ...params} = flags
 
-    console.log(flags)
     const response = await createToken(apiKey, apiSecret, params as PackagistNewTokenParam)
     console.table(response)
   }
