@@ -1,7 +1,7 @@
 import {Flags} from '@oclif/core'
 import {PackagistCommand} from '../../../lib/commands/packagist-command.js'
 import {regenerateToken} from '../../../lib/packagist.js'
-import type {PackagistRegenerateTokenParam} from '../../../lib/packagist.js';
+import type {PackagistRegenerateTokenParam} from '../../../lib/packagist.js'
 
 export default class New extends PackagistCommand {
   static description = 'Create new token'
@@ -25,9 +25,9 @@ export default class New extends PackagistCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(New)
-    const {apiKey, apiSecret, ...params} = flags;
+    const {apiKey, apiSecret, ...params} = flags
 
     const response = await regenerateToken(apiKey, apiSecret, params as PackagistRegenerateTokenParam)
-    console.table(response);
+    console.table(response)
   }
 }
