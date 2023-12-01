@@ -9,7 +9,7 @@
   },
   "bugs": "https://github.com/itinerisltd/iroots/issues",
   "dependencies": {
-    "@oclif/core": "^3.12.0",
+    "@oclif/core": "^3.13.1",
     "@oclif/plugin-help": "^6",
     "execa": "^8.0.1",
     "globby": "^14.0.0",
