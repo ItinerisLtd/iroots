@@ -1,5 +1,4 @@
 import {v4 as uuidv4} from 'uuid'
-import * as qs from 'qs'
 import * as crypto from 'node:crypto'
 import {ukSort} from './utility.js'
 
@@ -76,9 +75,8 @@ async function request<TResponse>(
 
   options.method ??= 'GET'
 
-  const signatureString = `${options.method}\n${apiHost.replace('https://', '')}\n/${url}\n${qs.stringify(params, {
-    format: 'RFC3986',
-  })}`
+  const qsParams = new URLSearchParams(params)
+  const signatureString = `${options.method}\n${apiHost.replace('https://', '')}\n/${url}\n${qsParams.toString()}`
   const signature = await signHmacSha256(secret, signatureString)
   headers.set(
     'Authorization',
