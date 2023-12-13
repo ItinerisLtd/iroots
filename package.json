@@ -3,7 +3,16 @@
   "description": "A CLI to manage Trellis projects",
   "type": "module",
   "version": "0.0.0",
-  "author": "Tang Rufus @TangRufus",
+  "contributors": [
+    {
+      "author": "Tang Rufus @TangRufus"
+    },
+    {
+      "name": "Lee Hanbury-Pickett",
+      "email": "lee.hanbury@gmail.com",
+      "url": "https://github.com/codepuncher"
+    }
+  ],
   "bin": {
     "iroots": "./bin/run.js"
   },
