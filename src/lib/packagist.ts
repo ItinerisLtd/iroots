@@ -1,6 +1,5 @@
-import {v4 as uuidv4} from 'uuid'
 import {ukSort} from './utility.js'
-import {createHmac} from 'node:crypto'
+import {createHmac, randomUUID} from 'node:crypto'
 
 const apiHost = 'https://packagist.com'
 
@@ -65,7 +64,7 @@ async function request<TResponse>(
 ): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   const params: PackagistApiParams = {
-    cnonce: uuidv4(),
+    cnonce: randomUUID(),
     key,
     // Get Unix timestamp in seconds.
     timestamp: Math.floor(Date.now() / 1000).toString(),
