@@ -37,26 +37,33 @@ export default class New extends KinstaCommand {
 
     const {operation_id: operationId} = response
 
+    const secondsToWait = 5
     let operationStatus = null
     let operationStatusCode = 404
     let requestsCount = 0
-    while (requestsCount < 10 && operationStatusCode === 404) {
+
+    do {
       // This is to make sure that Kinsta have created the operation for us to query.
       // If we send the request too soon, it will not be ready to view.
       // eslint-disable-next-line no-await-in-loop
-      await ux.wait(5000)
+      await ux.wait(secondsToWait * 1000)
 
       // eslint-disable-next-line no-await-in-loop
       operationStatus = await getOperationStatus(flags.apiKey, operationId)
       operationStatusCode = operationStatus.status
+
+      if (operationStatusCode >= 500) {
+        this.error(operationStatus.data.message)
+      }
+
       requestsCount++
+    } while (requestsCount < 10 && operationStatusCode !== 200)
+
+    if (operationStatus === null) {
+      this.error('Failed to create site. Try again with MyKinsta UI')
     }
 
-    if (operationStatusCode !== 202 && operationStatus !== null) {
-      this.log(`Operation ID: ${operationId}`)
-      this.error(operationStatus.data.message, {exit: 2})
-    }
-
-    ux.action.stop(`Site created. Operation ID: ${operationId}`)
+    ux.action.stop('Done.')
+    this.log(`Operation ID: ${operationId}`)
   }
 }
