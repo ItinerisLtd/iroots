@@ -24,6 +24,10 @@ export default class New extends KinstaCommand {
   public async run(): Promise<void> {
     const {flags} = await this.parse(New)
 
+    if (flags.display_name.length < 5) {
+      this.error('The site name must be between 5 and 32 characters long.')
+    }
+
     ux.action.start('Creating site')
     const response = await createSite(flags.apiKey, flags)
     if (response?.status !== 202) {
