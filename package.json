@@ -1,6 +1,6 @@
 {
   "name": "iroots",
-  "description": "A CLI to manage Trellis projects",
+  "description": "A CLI to manage Roots projects",
   "type": "module",
   "version": "0.0.0",
   "contributors": [
