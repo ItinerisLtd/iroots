@@ -3,13 +3,13 @@ import {PackagistCommand} from '../../../lib/commands/packagist-command.js'
 import {deleteToken} from '../../../lib/packagist.js'
 
 export default class Delete extends PackagistCommand {
-  static description = 'The ID of the token we want to delete'
+  static description = 'Delete a Packagist token.'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
     tokenId: Flags.integer({
-      description: 'The token ID',
+      description: 'The ID of the token we want to delete',
       required: true,
     }),
   }

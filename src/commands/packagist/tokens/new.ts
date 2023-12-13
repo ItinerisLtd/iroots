@@ -14,16 +14,16 @@ export default class New extends PackagistCommand {
       required: true,
     }),
     access: Flags.string({
-      description: 'Type of access the token will have. only read or update',
+      description: 'Type of access the token will have. Only read or update',
       required: true,
       default: 'read',
     }),
     accessToAllPackages: Flags.boolean({
-      description: 'Flag indicating whether the token has access to all packages',
+      description: 'Whether or not the token has access to all packages',
       required: false,
     }),
     teamId: Flags.integer({
-      description: 'The team id to define which packages the token has access to. Example 1',
+      description: 'The team id to define which packages the token has access to',
       required: false,
     }),
     expiresAt: Flags.string({
