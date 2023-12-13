@@ -3,7 +3,7 @@ import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
 import {createSite} from '../../../lib/cloudflare.js'
 
 export default class New extends CloudflareCommand {
-  static description = 'describe the command here'
+  static description = 'Create a new Turnstile instance'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

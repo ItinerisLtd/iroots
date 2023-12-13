@@ -69,7 +69,15 @@
     ],
     "additionalVersionFlags": [
       "-h"
-    ]
+    ],
+    "topics": {
+      "cloudflare": {
+        "description": "Manage Cloudflare services"
+      },
+      "cloudflare:turnstile": {
+        "description": "Manage Cloudflare Turnstile instances"
+      }
+    }
   },
   "repository": "itinerisltd/iroots",
   "scripts": {

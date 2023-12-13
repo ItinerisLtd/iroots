@@ -1,6 +1,8 @@
 import {Command, Flags} from '@oclif/core'
 
 export abstract class CloudflareCommand extends Command {
+  static description = 'Cloudflare Turnstile API commands'
+
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static baseFlags = {

@@ -2,7 +2,7 @@ import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
 import {getAllSites} from '../../../lib/cloudflare.js'
 
 export default class List extends CloudflareCommand {
-  static description = 'describe the command here'
+  static description = 'List Turnstile instances'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 
