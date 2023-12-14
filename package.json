@@ -103,6 +103,12 @@
       },
       "stackpath:sites": {
         "description": "Manage StackPath sites"
+      },
+      "statuscake": {
+        "description": "Manage StatusCake services"
+      },
+      "statuscake:uptime": {
+        "description": "Manage StatusCake uptime monitors"
       }
     }
   },

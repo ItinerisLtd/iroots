@@ -3,7 +3,7 @@ import {StatusCakeUptimeStatus, getAllUptimes} from '../../../lib/statuscake.js'
 import {StatusCakeCommand} from '../../../lib/commands/statuscake-command.js'
 
 export default class List extends StatusCakeCommand {
-  static description = 'describe the command here'
+  static description = 'List uptime monitors'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 
