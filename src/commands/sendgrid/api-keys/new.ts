@@ -3,7 +3,7 @@ import {SendGridCommand} from '../../../lib/commands/sendgrid-command.js'
 import {createApiKey} from '../../../lib/sendgrid.js'
 
 export default class New extends SendGridCommand {
-  static description = 'describe the command here'
+  static description = 'Create an API key'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

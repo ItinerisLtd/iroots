@@ -3,7 +3,7 @@ import {SendGridCommand} from '../../../lib/commands/sendgrid-command.js'
 import {deleteApiKey} from '../../../lib/sendgrid.js'
 
 export default class Delete extends SendGridCommand {
-  static description = 'describe the command here'
+  static description = 'Delete an API key'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

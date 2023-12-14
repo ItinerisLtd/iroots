@@ -91,6 +91,12 @@
       },
       "packagist:tokens": {
         "description": "Manage Private Packagist tokens"
+      },
+      "sendgrid": {
+        "description": "Manage SendGrid services"
+      },
+      "sendgrid:api-keys": {
+        "description": "Manage SendGrid API keys"
       }
     }
   },
