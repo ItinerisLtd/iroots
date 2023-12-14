@@ -43,7 +43,7 @@ export type PackagistRegenerateTokenParam = {
   expiresAt?: string
 }
 
-type PackagistApiKeyResponse = PackagistApiResponseError | PackagistApiResponseSuccess
+type PackagistApiKeyResponse = PackagistApiResponseError & PackagistApiResponseSuccess
 
 function signHmacSha256(key: string, str: string): string {
   const hmac = createHmac('sha256', key)
