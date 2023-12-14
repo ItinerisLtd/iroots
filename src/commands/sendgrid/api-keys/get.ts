@@ -3,7 +3,7 @@ import {getApiKey} from '../../../lib/sendgrid.js'
 import {Flags} from '@oclif/core'
 
 export default class Get extends SendGridCommand {
-  static description = 'describe the command here'
+  static description = 'Get information about an API key'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

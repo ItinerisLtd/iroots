@@ -1,9 +1,18 @@
 {
   "name": "iroots",
-  "description": "A CLI to manage Trellis projects",
+  "description": "A CLI to manage Roots projects",
   "type": "module",
   "version": "0.0.0",
-  "author": "Tang Rufus @TangRufus",
+  "contributors": [
+    {
+      "author": "Tang Rufus @TangRufus"
+    },
+    {
+      "name": "Lee Hanbury-Pickett",
+      "email": "lee.hanbury@gmail.com",
+      "url": "https://github.com/codepuncher"
+    }
+  ],
   "bin": {
     "iroots": "./bin/run.js"
   },
@@ -60,7 +69,48 @@
     ],
     "additionalVersionFlags": [
       "-h"
-    ]
+    ],
+    "topics": {
+      "cloudflare": {
+        "description": "Manage Cloudflare services"
+      },
+      "cloudflare:turnstile": {
+        "description": "Manage Cloudflare Turnstile instances"
+      },
+      "kinsta": {
+        "description": "Manage Kinsta services"
+      },
+      "kinsta:sites": {
+        "description": "Manage Kinsta WordPress sites"
+      },
+      "kinsta:sites:tools": {
+        "description": "Tools for Kinsta sites"
+      },
+      "packagist": {
+        "description": "Manage Private Packagist services"
+      },
+      "packagist:tokens": {
+        "description": "Manage Private Packagist tokens"
+      },
+      "sendgrid": {
+        "description": "Manage SendGrid services"
+      },
+      "sendgrid:api-keys": {
+        "description": "Manage SendGrid API keys"
+      },
+      "stackpath": {
+        "description": "Manage StackPath services"
+      },
+      "stackpath:sites": {
+        "description": "Manage StackPath sites"
+      },
+      "statuscake": {
+        "description": "Manage StatusCake services"
+      },
+      "statuscake:uptime": {
+        "description": "Manage StatusCake uptime monitors"
+      }
+    }
   },
   "repository": "itinerisltd/iroots",
   "scripts": {

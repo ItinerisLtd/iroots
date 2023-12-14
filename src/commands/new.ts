@@ -24,7 +24,7 @@ type GitHubSecret = {
 }
 
 export default class New extends Command {
-  static description = 'describe the command here'
+  static description = 'Create a new project'
   static strict = false
 
   static flags = {

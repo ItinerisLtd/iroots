@@ -3,7 +3,7 @@ import {getSite} from '../../../lib/cloudflare.js'
 import {Flags} from '@oclif/core'
 
 export default class Get extends CloudflareCommand {
-  static description = 'describe the command here'
+  static description = 'Get a Turnstile instance'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

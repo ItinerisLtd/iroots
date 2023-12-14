@@ -3,7 +3,7 @@ import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
 import {getAllSites} from '../../../lib/kinsta.js'
 
 export default class List extends KinstaCommand {
-  static description = 'describe the command here'
+  static description = 'List sites in Kinsta account'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

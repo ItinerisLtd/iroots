@@ -3,7 +3,7 @@ import {SendGridCommand} from '../../../lib/commands/sendgrid-command.js'
 import {getAllApiKeys} from '../../../lib/sendgrid.js'
 
 export default class List extends SendGridCommand {
-  static description = 'describe the command here'
+  static description = 'List API keys in SendGrid account'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 

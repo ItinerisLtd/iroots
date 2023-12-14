@@ -3,7 +3,7 @@ import {createUptimeTest} from '../../../lib/statuscake.js'
 import {StatusCakeCommand} from '../../../lib/commands/statuscake-command.js'
 
 export default class New extends StatusCakeCommand {
-  static description = 'describe the command here'
+  static description = 'Create a new uptime monitor'
 
   static help: 'see https://developers.statuscake.com/api/#tag/uptime/operation/create-uptime-test for more info'
 

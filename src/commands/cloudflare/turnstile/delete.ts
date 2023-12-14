@@ -3,7 +3,7 @@ import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
 import {deleteSite} from '../../../lib/cloudflare.js'
 
 export default class Delete extends CloudflareCommand {
-  static description = 'describe the command here'
+  static description = 'Delete a Turnstile instance'
 
   static examples = ['<%= config.bin %> <%= command.id %>']
 
