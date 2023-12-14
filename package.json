@@ -85,6 +85,12 @@
       },
       "kinsta:sites:tools": {
         "description": "Tools for Kinsta sites"
+      },
+      "packagist": {
+        "description": "Manage Private Packagist services"
+      },
+      "packagist:tokens": {
+        "description": "Manage Private Packagist tokens"
       }
     }
   },
