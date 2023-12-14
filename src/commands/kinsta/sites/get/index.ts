@@ -4,7 +4,7 @@ import {getSite} from '../../../../lib/kinsta.js'
 import {inspect} from 'node:util'
 
 export default class Get extends KinstaCommand {
-  static description = 'describe the command here'
+  static description = 'Get information about a Kinsta site'
 
   static flags = {
     siteId: Flags.string({

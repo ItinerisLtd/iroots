@@ -76,6 +76,15 @@
       },
       "cloudflare:turnstile": {
         "description": "Manage Cloudflare Turnstile instances"
+      },
+      "kinsta": {
+        "description": "Manage Kinsta services"
+      },
+      "kinsta:sites": {
+        "description": "Manage Kinsta WordPress sites"
+      },
+      "kinsta:sites:tools": {
+        "description": "Tools for Kinsta sites"
       }
     }
   },

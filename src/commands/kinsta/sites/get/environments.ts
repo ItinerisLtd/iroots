@@ -3,7 +3,7 @@ import Get from './index.js'
 import {getSiteEnvironments} from '../../../../lib/kinsta.js'
 
 export default class GetEnvironments extends Get {
-  static description = 'describe the command here'
+  static description = 'Get information about environments of a Kinsta site'
 
   static flags = {
     siteId: Flags.string({
@@ -16,6 +16,6 @@ export default class GetEnvironments extends Get {
     const {apiKey, siteId} = flags
 
     const environments = await getSiteEnvironments(apiKey, siteId)
-    console.table(environments)
+    console.log(environments)
   }
 }
