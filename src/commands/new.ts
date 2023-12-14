@@ -10,6 +10,8 @@ import * as git from '../lib/git.js'
 import * as trellis from '../lib/trellis.js'
 import * as wp from '../lib/wp.js'
 import {findLastMatch} from '../lib/misc.js'
+import {createApiKey} from '../lib/sendgrid.js'
+import {createToken} from '../lib/packagist.js'
 
 type QAndA = {
   from: string
@@ -146,6 +148,21 @@ export default class New extends Command {
       default: 2,
       dependsOn: ['multisite'],
     }),
+    packagist: Flags.boolean({
+      description: 'whether or not to create a Private Packagist token for the new project',
+      default: true,
+    }),
+    sendgrid: Flags.boolean({
+      description: 'whether or not to create a SendGrid API key for the new project',
+      default: true,
+      allowNo: true,
+    }),
+    sendgrid_api_key: Flags.string({
+      description: 'the SendGrid API key used to send requests to their API',
+      env: 'IROOTS_SENDGRID_API_KEY',
+      required: true,
+      dependsOn: ['sendgrid'],
+    }),
   }
 
   // eslint-disable-next-line no-warning-comments
@@ -175,6 +192,8 @@ export default class New extends Command {
       trellis_template_vault_pass,
       multisite,
       network_media_library_site_id,
+      sendgrid,
+      sendgrid_api_key,
     } = flags
 
     if (existsSync(site)) {
@@ -187,6 +206,20 @@ export default class New extends Command {
     const bedrockRemote = `git@github.com:${bedrockRemoteOwner}/${bedrockRemoteRepo}`
     const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
     const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
+
+    // Generate a SendGrid API key
+    if (sendgrid) {
+      ux.action.start('Creating SendGrid API key')
+      const response = await createApiKey(sendgrid_api_key, trellisRemoteRepo, ['mail.send'])
+      if (response.errors) {
+        console.table(response.errors)
+        this.exit(1)
+      }
+
+      const trellisSendGridApiKey = response.api_key
+      ux.action.stop()
+    }
+
     if (github) {
       ux.action.start('Creating Bedrock and Trellis repos on GitHub')
       await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo, {
@@ -376,6 +409,7 @@ export default class New extends Command {
       from: /cron: .*/g,
       to: `cron: "${cronValue}"`,
     })
+
     ux.action.stop()
 
     ux.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)
