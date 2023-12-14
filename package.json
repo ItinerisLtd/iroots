@@ -97,6 +97,12 @@
       },
       "sendgrid:api-keys": {
         "description": "Manage SendGrid API keys"
+      },
+      "stackpath": {
+        "description": "Manage StackPath services"
+      },
+      "stackpath:sites": {
+        "description": "Manage StackPath sites"
       }
     }
   },
