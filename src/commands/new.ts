@@ -152,6 +152,18 @@ export default class New extends Command {
       description: 'whether or not to create a Private Packagist token for the new project',
       default: true,
     }),
+    packagist_api_key: Flags.string({
+      description: 'The API key',
+      env: 'IROOTS_PACKAGIST_API_KEY',
+      required: true,
+      dependsOn: ['packagist'],
+    }),
+    packagist_api_secret: Flags.string({
+      description: 'The API SECRET',
+      env: 'IROOTS_PACKAGIST_API_SECRET',
+      required: true,
+      dependsOn: ['packagist'],
+    }),
     sendgrid: Flags.boolean({
       description: 'whether or not to create a SendGrid API key for the new project',
       default: true,
@@ -192,6 +204,9 @@ export default class New extends Command {
       trellis_template_vault_pass,
       multisite,
       network_media_library_site_id,
+      packagist,
+      packagist_api_key,
+      packagist_api_secret,
       sendgrid,
       sendgrid_api_key,
     } = flags
@@ -206,6 +221,22 @@ export default class New extends Command {
     const bedrockRemote = `git@github.com:${bedrockRemoteOwner}/${bedrockRemoteRepo}`
     const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
     const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
+
+    // Generate a Private Packagist token
+    if (packagist) {
+      ux.action.start('Creating Packagist API key')
+      const response = await createToken(packagist_api_key, packagist_api_secret, {
+        description: trellisRemoteRepo,
+        access: 'read',
+        accessToAllPackages: true,
+      })
+      if (response.status === 'error' || !response.token) {
+        this.error(response.message.trim())
+      }
+
+      const trellisPackagistToken = response.token
+      ux.action.stop()
+    }
 
     // Generate a SendGrid API key
     if (sendgrid) {
