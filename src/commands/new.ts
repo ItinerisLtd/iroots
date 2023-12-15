@@ -12,6 +12,7 @@ import * as wp from '../lib/wp.js'
 import {findLastMatch} from '../lib/misc.js'
 import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
+import {checkOperationStatus, cloneEnvironment, createSite, getSite, getSiteEnvironments} from '../lib/kinsta.js'
 
 type QAndA = {
   from: string
@@ -175,6 +176,29 @@ export default class New extends Command {
       required: true,
       dependsOn: ['sendgrid'],
     }),
+    kinsta: Flags.boolean({
+      description: 'whether or not to create A Kinsta site',
+      default: true,
+      allowNo: true,
+    }),
+    kinsta_api_key: Flags.string({
+      description: 'the API key for using the Kinsta API',
+      env: 'IROOTS_KINSTA_API_KEY',
+      required: true,
+      dependsOn: ['kinsta'],
+    }),
+    kinsta_company: Flags.string({
+      description: 'the company ID of your Kinsta account',
+      env: 'IROOTS_KINSTA_COMPANY_ID',
+      required: true,
+      dependsOn: ['kinsta'],
+    }),
+    kinsta_display_name: Flags.string({
+      description: 'the display name for the Kinsta site',
+      env: 'IROOTS_KINSTA_DISPLAY_NAME',
+      required: true,
+      dependsOn: ['kinsta'],
+    }),
   }
 
   // eslint-disable-next-line no-warning-comments
@@ -209,6 +233,10 @@ export default class New extends Command {
       packagist_api_secret,
       sendgrid,
       sendgrid_api_key,
+      kinsta,
+      kinsta_api_key,
+      kinsta_company,
+      kinsta_display_name,
     } = flags
 
     if (existsSync(site)) {
@@ -221,6 +249,62 @@ export default class New extends Command {
     const bedrockRemote = `git@github.com:${bedrockRemoteOwner}/${bedrockRemoteRepo}`
     const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
     const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
+
+    // Create Kinsta site
+    if (kinsta) {
+      ux.action.start('Creating Kinsta site live environment')
+      const createSiteResponse = await createSite(kinsta_api_key, {
+        company: kinsta_company,
+        display_name: kinsta_display_name,
+        region: 'europe-west2',
+      })
+      if (createSiteResponse?.status !== 202) {
+        console.log(createSiteResponse)
+        this.error(createSiteResponse.message, {exit: 2})
+      }
+
+      const secondsToWait = 7
+      await ux.wait(secondsToWait * 1000) // TODO: correctly handle errors and too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
+      let operationStatus = await checkOperationStatus(kinsta_api_key, createSiteResponse.operation_id, secondsToWait)
+      if (operationStatus instanceof Error) {
+        this.error(operationStatus)
+      }
+
+      ux.action.stop()
+
+      ux.action.start('Creating Kinsta site staging environment')
+      const {idSite: kinstaSiteId, idEnv: kinstaProductionEnvId} = operationStatus.data
+      const {name: kinstaSiteName} = await getSite(kinsta_api_key, kinstaSiteId)
+      process.env.xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
+
+      // Wait a bit to avoid too many API requests.
+      await ux.wait(secondsToWait * 1000) // TODO: correctly handle errors and too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
+      const cloneEnvResponse = await cloneEnvironment(kinsta_api_key, kinstaSiteId, {
+        display_name: 'Staging',
+        is_premium: false,
+        source_env_id: kinstaProductionEnvId,
+      })
+      await ux.wait(secondsToWait * 1000) // TODO: correctly handle errors and too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
+      console.log(cloneEnvResponse)
+      operationStatus = await checkOperationStatus(kinsta_api_key, cloneEnvResponse.operation_id, secondsToWait)
+      console.log(operationStatus)
+      if (operationStatus instanceof Error) {
+        this.error(operationStatus)
+      }
+
+      ux.action.stop()
+
+      ux.action.start('Gathering environment details')
+      const environments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
+      for (const env of environments) {
+        const envNameUppercase = env.name.toUpperCase()
+        process.env[`xxx${envNameUppercase}_SSH_PORTxxx`] = env.ssh_connection.ssh_port.toString()
+        process.env.IROOTS_NEW_SSH_IP = env.ssh_connection.ssh_ip.external_ip
+        process.env.IROOTS_NEW_xxxSSH_IPxxx = process.env.IROOTS_NEW_SSH_IP
+      }
+
+      ux.action.stop()
+    }
 
     // Generate a Private Packagist token
     if (packagist) {

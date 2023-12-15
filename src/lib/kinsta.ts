@@ -1,3 +1,4 @@
+import {ux} from '@oclif/core'
 import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 const apiUrl = 'https://api.kinsta.com/v2'
@@ -23,7 +24,20 @@ type KinstaEnvironment = {
   is_blocked: boolean
   // eslint-disable-next-line camelcase
   id_edge_cache?: string
+  // eslint-disable-next-line camelcase
+  cdn_cache_id?: string
   domains?: KinstaDomain[]
+  primaryDomain?: KinstaDomain
+  // eslint-disable-next-line camelcase
+  ssh_connection: {
+    // eslint-disable-next-line camelcase
+    ssh_port: number
+    // eslint-disable-next-line camelcase
+    ssh_ip: {
+      // eslint-disable-next-line camelcase
+      external_ip: string
+    }
+  }
 }
 
 export type KinstaSite = {
@@ -65,6 +79,8 @@ type KinstaBasicResponse = {
   data: {
     status: keyof ResponseCodes
     message: string
+    idSite: string
+    idEnv: string
   }
 }
 
@@ -95,13 +111,41 @@ export async function getAllSites(token: string, company: string): Promise<Kinst
 export async function getSite(token: string, siteId: string): Promise<KinstaSite> {
   const response = await request<KinstaSiteRequest>(token, `sites/${siteId}`)
 
-  return response.site as KinstaSite
+  return response.site
 }
 
 export async function getSiteEnvironments(token: string, siteId: string): Promise<KinstaEnvironment[]> {
   const response = await request<KinstaEnvironmentsRequest>(token, `sites/${siteId}/environments`)
 
   return response.site.environments
+}
+
+type KinstaCloneEnvironmentArgs = {
+  // eslint-disable-next-line camelcase
+  display_name: string
+  // eslint-disable-next-line camelcase
+  is_premium: boolean
+  // eslint-disable-next-line camelcase
+  source_env_id: string
+}
+
+export async function cloneEnvironment(
+  token: string,
+  siteId: string,
+  args: KinstaCloneEnvironmentArgs,
+): Promise<KinstaBasicResponse | Error> {
+  const response = await request<KinstaBasicResponse>(token, `sites/${siteId}/environments/clone`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(args),
+  })
+  if ('message' in response) {
+    return new Error(response.message)
+  }
+
+  return response as KinstaBasicResponse
 }
 
 export function getRegions(): string[] {
@@ -158,6 +202,35 @@ export async function createSite(token: string, args: FlagOutput): Promise<Kinst
 
 export async function getOperationStatus(token: string, operationId: string): Promise<KinstaBasicResponse> {
   return request(token, `operations/${operationId}`)
+}
+
+export async function checkOperationStatus(
+  apiKey: string,
+  operationId: string,
+  secondsToWait: number = 5,
+): Promise<KinstaBasicResponse | Error> {
+  let operationStatus = null
+  let operationStatusCode = 404
+
+  do {
+    // This is to make sure that Kinsta have created the operation for us to query.
+    // If we send the request too soon, it will not be ready to view.
+    // eslint-disable-next-line no-await-in-loop
+    await ux.wait(secondsToWait * 1000)
+
+    // eslint-disable-next-line no-await-in-loop
+    operationStatus = await getOperationStatus(apiKey, operationId)
+    operationStatusCode = operationStatus.status
+    if (operationStatusCode >= 500) {
+      return new Error(operationStatus.data.message)
+    }
+  } while (operationStatusCode !== 200)
+
+  if (operationStatus === null) {
+    return new Error('Failed to create site. Try again with MyKinsta UI')
+  }
+
+  return operationStatus
 }
 
 export async function setPhpVersion(token: string, args: FlagOutput): Promise<KinstaBasicResponse> {

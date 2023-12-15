@@ -13,6 +13,7 @@ export default class New extends KinstaCommand {
     // eslint-disable-next-line camelcase
     display_name: Flags.string({
       required: true,
+      env: 'IROOTS_KINSTA_DISPLAY_NAME',
     }),
     region: Flags.string({
       required: true,
