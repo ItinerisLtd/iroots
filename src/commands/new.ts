@@ -234,7 +234,7 @@ export default class New extends Command {
         this.error(response.message.trim())
       }
 
-      const trellisPackagistToken = response.token
+      process.env.xxxPRIVATE_PACKAGIST_PASSWORDxxx = response.token
       ux.action.stop()
     }
 
@@ -247,7 +247,7 @@ export default class New extends Command {
         this.exit(1)
       }
 
-      const trellisSendGridApiKey = response.api_key
+      process.env.xxxSENDGRID_API_KEYxxx = response.api_key
       ux.action.stop()
     }
 
