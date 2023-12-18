@@ -12,7 +12,7 @@ import * as wp from '../lib/wp.js'
 import {findLastMatch} from '../lib/misc.js'
 import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
-import {checkOperationStatus, cloneEnvironment, createSite, getSite, getSiteEnvironments} from '../lib/kinsta.js'
+import {cloneEnvironment, createSite, getSite, getSiteEnvironments} from '../lib/kinsta.js'
 
 type QAndA = {
   from: string
@@ -193,9 +193,9 @@ export default class New extends Command {
       required: true,
       dependsOn: ['kinsta'],
     }),
-    kinsta_display_name: Flags.string({
-      description: 'the display name for the Kinsta site',
-      env: 'IROOTS_KINSTA_DISPLAY_NAME',
+    display_name: Flags.string({
+      description: 'the display name for the site',
+      env: 'IROOTS_DISPLAY_NAME',
       required: true,
       dependsOn: ['kinsta'],
     }),
@@ -236,7 +236,7 @@ export default class New extends Command {
       kinsta,
       kinsta_api_key,
       kinsta_company,
-      kinsta_display_name,
+      display_name,
     } = flags
 
     if (existsSync(site)) {
@@ -255,50 +255,36 @@ export default class New extends Command {
       ux.action.start('Creating Kinsta site live environment')
       const createSiteResponse = await createSite(kinsta_api_key, {
         company: kinsta_company,
-        display_name: kinsta_display_name,
+        display_name: display_name,
         region: 'europe-west2',
       })
-      if (createSiteResponse?.status !== 202) {
-        console.log(createSiteResponse)
-        this.error(createSiteResponse.message, {exit: 2})
-      }
-
-      const secondsToWait = 7
-      await ux.wait(secondsToWait * 1000) // TODO: correctly handle errors and too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
-      let operationStatus = await checkOperationStatus(kinsta_api_key, createSiteResponse.operation_id, secondsToWait)
-      if (operationStatus instanceof Error) {
-        this.error(operationStatus)
-      }
-
       ux.action.stop()
 
       ux.action.start('Creating Kinsta site staging environment')
-      const {idSite: kinstaSiteId, idEnv: kinstaProductionEnvId} = operationStatus.data
-      const {name: kinstaSiteName} = await getSite(kinsta_api_key, kinstaSiteId)
-      process.env.xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
+      const secondsToWait = 10
+      const {idSite: kinstaSiteId, idEnv: kinstaProductionEnvId} = createSiteResponse.data
+      // Wait a bit to ensure the site is ready to query.
+      await ux.wait(secondsToWait * 1000)
+      const kinstaSiteLive = await getSite(kinsta_api_key, kinstaSiteId)
+      const kinstaSiteName = kinstaSiteLive.name
+      process.env.IROOTS_NEW_xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
 
-      // Wait a bit to avoid too many API requests.
-      await ux.wait(secondsToWait * 1000) // TODO: correctly handle errors and too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
-      const cloneEnvResponse = await cloneEnvironment(kinsta_api_key, kinstaSiteId, {
+      // Wait a bit to ensure the site is ready to query.
+      await ux.wait(secondsToWait * 1000)
+      await cloneEnvironment(kinsta_api_key, kinstaSiteId, {
         display_name: 'Staging',
         is_premium: false,
         source_env_id: kinstaProductionEnvId,
       })
-      await ux.wait(secondsToWait * 1000) // TODO: correctly handle errors and too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
-      console.log(cloneEnvResponse)
-      operationStatus = await checkOperationStatus(kinsta_api_key, cloneEnvResponse.operation_id, secondsToWait)
-      console.log(operationStatus)
-      if (operationStatus instanceof Error) {
-        this.error(operationStatus)
-      }
-
       ux.action.stop()
 
       ux.action.start('Gathering environment details')
+      await ux.wait(secondsToWait * 1000) // TODO: too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
       const environments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
       for (const env of environments) {
         const envNameUppercase = env.name.toUpperCase()
-        process.env[`xxx${envNameUppercase}_SSH_PORTxxx`] = env.ssh_connection.ssh_port.toString()
+        process.env[`IROOTS_NEW_xxx${envNameUppercase}_SSH_PORTxxx`] = env.ssh_connection.ssh_port.toString()
+        // Kinsta use the same IP for all environments.
         process.env.IROOTS_NEW_SSH_IP = env.ssh_connection.ssh_ip.external_ip
         process.env.IROOTS_NEW_xxxSSH_IPxxx = process.env.IROOTS_NEW_SSH_IP
       }
@@ -318,7 +304,7 @@ export default class New extends Command {
         this.error(response.message.trim())
       }
 
-      process.env.xxxPRIVATE_PACKAGIST_PASSWORDxxx = response.token
+      process.env.IROOTS_NEW_xxxPRIVATE_PACKAGIST_PASSWORDxxx = response.token
       ux.action.stop()
     }
 
@@ -331,7 +317,7 @@ export default class New extends Command {
         this.exit(1)
       }
 
-      process.env.xxxSENDGRID_API_KEYxxx = response.api_key
+      process.env.IROOTS_NEW_xxxSENDGRID_API_KEYxxx = response.api_key
       ux.action.stop()
     }
 

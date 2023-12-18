@@ -72,34 +72,86 @@ type KinstaEnvironmentsRequest = {
 }
 
 type KinstaBasicResponse = {
-  // eslint-disable-next-line camelcase
-  operation_id: string
-  message: string
   status: keyof ResponseCodes
+  message: string
+}
+
+type KinstaCreateSiteResponse = KinstaBasicResponse & {
   data: {
-    status: keyof ResponseCodes
-    message: string
     idSite: string
     idEnv: string
   }
 }
 
 export type ResponseCodes = {
-  200: string
-  202: string
-  404: string
+  200: string // Success/Finished/Complete
+  202: string // In progress
+  404: string // Not found
+  500: string // Error
   [key: number]: string
 }
 
+type KinstaError = {
+  status: keyof ResponseCodes
+  message: string
+  data: {
+    status: keyof ResponseCodes
+    message: string
+  }
+}
+
+type KinstaOperationResponse = {
+  // eslint-disable-next-line camelcase
+  operation_id: string
+  message: string
+  status: keyof ResponseCodes
+}
+
+// TODO: handle rate-limits see https://kinsta.com/docs/kinsta-api#rate-limit
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   headers.set('Authorization', `Bearer ${token}`)
   options.headers = headers
   options.method ??= 'GET'
 
-  return fetch(`${apiUrl}/${url}`, options)
-    .then(resp => resp.json())
-    .then(data => data as TResponse)
+  const response = await fetch(`${apiUrl}/${url}`, options)
+  const data = await response.json()
+  const statusCode = data.status || response.status
+  const retryAfter = Number.parseInt(response.headers.get('retry-after') || '0', 10)
+  // const rateLimitLimit = Number.parseInt(response.headers.get('x-ratelimit-limit') || '0', 10)
+  const rateLimitRemaining = Number.parseInt(response.headers.get('x-ratelimit-remaining') || '0', 10)
+  if (rateLimitRemaining < 5) {
+    await ux.wait((retryAfter + 1) * 1000)
+  }
+
+  // Too many requests. Wait and try again.
+  if (statusCode === 429 || response.statusText.toLowerCase() === 'too many requests') {
+    await ux.wait((retryAfter + 1) * 1000)
+    return request<TResponse>(token, url, options)
+  }
+
+  if (statusCode === 200) {
+    return data as TResponse
+  }
+
+  if ([404, 500].includes(statusCode)) {
+    const kinstaError: KinstaError = data
+    if (data.status === 500) {
+      ux.error(kinstaError.data.message)
+    }
+
+    ux.error(kinstaError.message)
+  }
+
+  // The response is still in progress, wait until it is finished.
+  if ('operation_id' in data) {
+    // Wait 5 seconds to ensure the operation can be queried
+    await ux.wait((retryAfter > 5 ? retryAfter : 5) * 1000)
+    const operationStatus = await checkOperationStatus(token, data.operation_id)
+    return operationStatus as TResponse
+  }
+
+  return data as TResponse
 }
 
 export async function getAllSites(token: string, company: string): Promise<KinstaSite[]> {
@@ -141,11 +193,8 @@ export async function cloneEnvironment(
     },
     body: JSON.stringify(args),
   })
-  if ('message' in response) {
-    return new Error(response.message)
-  }
 
-  return response as KinstaBasicResponse
+  return response
 }
 
 export function getRegions(): string[] {
@@ -188,8 +237,8 @@ export function getRegions(): string[] {
   ]
 }
 
-export async function createSite(token: string, args: FlagOutput): Promise<KinstaBasicResponse> {
-  const response = await request<KinstaBasicResponse>(token, 'sites/plain', {
+export async function createSite(token: string, args: FlagOutput): Promise<KinstaCreateSiteResponse> {
+  const response = await request<KinstaCreateSiteResponse>(token, 'sites/plain', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -200,15 +249,17 @@ export async function createSite(token: string, args: FlagOutput): Promise<Kinst
   return response
 }
 
-export async function getOperationStatus(token: string, operationId: string): Promise<KinstaBasicResponse> {
-  return request(token, `operations/${operationId}`)
+export async function getOperationStatus(token: string, operationId: string): Promise<KinstaOperationResponse> {
+  const response = await request<KinstaOperationResponse>(token, `operations/${operationId}`)
+
+  return response
 }
 
-export async function checkOperationStatus(
+export async function checkOperationStatus<TResponse>(
   apiKey: string,
   operationId: string,
   secondsToWait: number = 5,
-): Promise<KinstaBasicResponse | Error> {
+): Promise<TResponse | Error> {
   let operationStatus = null
   let operationStatusCode = 404
 
@@ -221,16 +272,13 @@ export async function checkOperationStatus(
     // eslint-disable-next-line no-await-in-loop
     operationStatus = await getOperationStatus(apiKey, operationId)
     operationStatusCode = operationStatus.status
-    if (operationStatusCode >= 500) {
-      return new Error(operationStatus.data.message)
-    }
   } while (operationStatusCode !== 200)
 
   if (operationStatus === null) {
     return new Error('Failed to create site. Try again with MyKinsta UI')
   }
 
-  return operationStatus
+  return operationStatus as TResponse
 }
 
 export async function setPhpVersion(token: string, args: FlagOutput): Promise<KinstaBasicResponse> {
