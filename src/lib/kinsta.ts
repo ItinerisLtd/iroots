@@ -281,13 +281,22 @@ export async function checkOperationStatus<TResponse>(
   return operationStatus as TResponse
 }
 
-export async function setPhpVersion(token: string, args: FlagOutput): Promise<KinstaBasicResponse> {
+export async function setPhpVersion(
+  token: string,
+  environmentId: string,
+  version: string,
+): Promise<KinstaBasicResponse> {
   const response = await request<KinstaBasicResponse>(token, 'sites/tools/modify-php-version', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(args),
+    body: JSON.stringify({
+      // eslint-disable-next-line camelcase
+      environment_id: environmentId,
+      // eslint-disable-next-line camelcase
+      php_version: version,
+    }),
   })
 
   return response
