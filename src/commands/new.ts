@@ -10,6 +10,9 @@ import * as git from '../lib/git.js'
 import * as trellis from '../lib/trellis.js'
 import * as wp from '../lib/wp.js'
 import {findLastMatch} from '../lib/misc.js'
+import {createApiKey} from '../lib/sendgrid.js'
+import {createToken} from '../lib/packagist.js'
+import {cloneEnvironment, createSite, getSite, getSiteEnvironments} from '../lib/kinsta.js'
 
 type QAndA = {
   from: string
@@ -146,6 +149,56 @@ export default class New extends Command {
       default: 2,
       dependsOn: ['multisite'],
     }),
+    packagist: Flags.boolean({
+      description: 'whether or not to create a Private Packagist token for the new project',
+      default: true,
+    }),
+    packagist_api_key: Flags.string({
+      description: 'The API key',
+      env: 'IROOTS_PACKAGIST_API_KEY',
+      required: true,
+      dependsOn: ['packagist'],
+    }),
+    packagist_api_secret: Flags.string({
+      description: 'The API SECRET',
+      env: 'IROOTS_PACKAGIST_API_SECRET',
+      required: true,
+      dependsOn: ['packagist'],
+    }),
+    sendgrid: Flags.boolean({
+      description: 'whether or not to create a SendGrid API key for the new project',
+      default: true,
+      allowNo: true,
+    }),
+    sendgrid_api_key: Flags.string({
+      description: 'the SendGrid API key used to send requests to their API',
+      env: 'IROOTS_SENDGRID_API_KEY',
+      required: true,
+      dependsOn: ['sendgrid'],
+    }),
+    kinsta: Flags.boolean({
+      description: 'whether or not to create A Kinsta site',
+      default: true,
+      allowNo: true,
+    }),
+    kinsta_api_key: Flags.string({
+      description: 'the API key for using the Kinsta API',
+      env: 'IROOTS_KINSTA_API_KEY',
+      required: true,
+      dependsOn: ['kinsta'],
+    }),
+    kinsta_company: Flags.string({
+      description: 'the company ID of your Kinsta account',
+      env: 'IROOTS_KINSTA_COMPANY_ID',
+      required: true,
+      dependsOn: ['kinsta'],
+    }),
+    display_name: Flags.string({
+      description: 'the display name for the site',
+      env: 'IROOTS_NEW_DISPLAY_NAME',
+      required: true,
+      dependsOn: ['kinsta'],
+    }),
   }
 
   // eslint-disable-next-line no-warning-comments
@@ -175,6 +228,15 @@ export default class New extends Command {
       trellis_template_vault_pass,
       multisite,
       network_media_library_site_id,
+      packagist,
+      packagist_api_key,
+      packagist_api_secret,
+      sendgrid,
+      sendgrid_api_key,
+      kinsta,
+      kinsta_api_key,
+      kinsta_company,
+      display_name,
     } = flags
 
     if (existsSync(site)) {
@@ -187,6 +249,78 @@ export default class New extends Command {
     const bedrockRemote = `git@github.com:${bedrockRemoteOwner}/${bedrockRemoteRepo}`
     const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
     const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
+
+    // Create Kinsta site
+    if (kinsta) {
+      ux.action.start('Creating Kinsta site live environment')
+      const createSiteResponse = await createSite(kinsta_api_key, {
+        company: kinsta_company,
+        display_name: display_name,
+        region: 'europe-west2',
+      })
+      ux.action.stop()
+
+      ux.action.start('Creating Kinsta site staging environment')
+      const secondsToWait = 10
+      const {idSite: kinstaSiteId, idEnv: kinstaProductionEnvId} = createSiteResponse.data
+      // Wait a bit to ensure the site is ready to query.
+      await ux.wait(secondsToWait * 1000)
+      const kinstaSiteLive = await getSite(kinsta_api_key, kinstaSiteId)
+      const kinstaSiteName = kinstaSiteLive.name
+      process.env.IROOTS_NEW_xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
+
+      // Wait a bit to ensure the site is ready to query.
+      await ux.wait(secondsToWait * 1000)
+      await cloneEnvironment(kinsta_api_key, kinstaSiteId, {
+        display_name: 'Staging',
+        is_premium: false,
+        source_env_id: kinstaProductionEnvId,
+      })
+      ux.action.stop()
+
+      ux.action.start('Gathering environment details')
+      await ux.wait(secondsToWait * 1000)
+      const environments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
+      for (const env of environments) {
+        const envNameUppercase = env.name.toUpperCase()
+        process.env[`IROOTS_NEW_xxx${envNameUppercase}_SSH_PORTxxx`] = env.ssh_connection.ssh_port.toString()
+        // Kinsta use the same IP for all environments.
+        process.env.IROOTS_NEW_SSH_IP = env.ssh_connection.ssh_ip.external_ip
+        process.env.IROOTS_NEW_xxxSSH_IPxxx = process.env.IROOTS_NEW_SSH_IP
+      }
+
+      ux.action.stop()
+    }
+
+    // Generate a Private Packagist token
+    if (packagist) {
+      ux.action.start('Creating Packagist API key')
+      const response = await createToken(packagist_api_key, packagist_api_secret, {
+        description: trellisRemoteRepo,
+        access: 'read',
+        accessToAllPackages: true,
+      })
+      if (response.status === 'error' || !response.token) {
+        this.error(response.message.trim())
+      }
+
+      process.env.IROOTS_NEW_xxxPRIVATE_PACKAGIST_PASSWORDxxx = response.token
+      ux.action.stop()
+    }
+
+    // Generate a SendGrid API key
+    if (sendgrid) {
+      ux.action.start('Creating SendGrid API key')
+      const response = await createApiKey(sendgrid_api_key, trellisRemoteRepo, ['mail.send'])
+      if (response.errors) {
+        console.table(response.errors)
+        this.exit(1)
+      }
+
+      process.env.IROOTS_NEW_xxxSENDGRID_API_KEYxxx = response.api_key
+      ux.action.stop()
+    }
+
     if (github) {
       ux.action.start('Creating Bedrock and Trellis repos on GitHub')
       await gh.createRepo(bedrockRemoteOwner, bedrockRemoteRepo, {
@@ -376,6 +510,7 @@ export default class New extends Command {
       from: /cron: .*/g,
       to: `cron: "${cronValue}"`,
     })
+
     ux.action.stop()
 
     ux.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)

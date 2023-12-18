@@ -2,6 +2,8 @@ const apiUrl = 'https://api.sendgrid.com/v3'
 
 type SendGridApiKey = {
   // eslint-disable-next-line camelcase
+  api_key: string
+  // eslint-disable-next-line camelcase
   api_key_id: string
   name: string
   scopes: string[]

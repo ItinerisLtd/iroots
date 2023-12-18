@@ -14,9 +14,10 @@ export default class New extends PackagistCommand {
       required: true,
     }),
     access: Flags.string({
-      description: 'Type of access the token will have. Only read or update',
+      description: 'Type of access the token will have.',
       required: true,
       default: 'read',
+      options: ['read', 'update'],
     }),
     accessToAllPackages: Flags.boolean({
       description: 'Whether or not the token has access to all packages',
