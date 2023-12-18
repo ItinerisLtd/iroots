@@ -87,6 +87,7 @@ export type ResponseCodes = {
   200: string // Success/Finished/Complete
   202: string // In progress
   404: string // Not found
+  429: string // Too many requests
   500: string // Error
   [key: number]: string
 }
@@ -107,7 +108,6 @@ type KinstaOperationResponse = {
   status: keyof ResponseCodes
 }
 
-// TODO: handle rate-limits see https://kinsta.com/docs/kinsta-api#rate-limit
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   headers.set('Authorization', `Bearer ${token}`)

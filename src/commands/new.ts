@@ -195,7 +195,7 @@ export default class New extends Command {
     }),
     display_name: Flags.string({
       description: 'the display name for the site',
-      env: 'IROOTS_DISPLAY_NAME',
+      env: 'IROOTS_NEW_DISPLAY_NAME',
       required: true,
       dependsOn: ['kinsta'],
     }),
@@ -279,7 +279,7 @@ export default class New extends Command {
       ux.action.stop()
 
       ux.action.start('Gathering environment details')
-      await ux.wait(secondsToWait * 1000) // TODO: too many requests. see https://kinsta.com/docs/kinsta-api#rate-limit
+      await ux.wait(secondsToWait * 1000)
       const environments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
       for (const env of environments) {
         const envNameUppercase = env.name.toUpperCase()
