@@ -12,7 +12,7 @@ import * as wp from '../lib/wp.js'
 import {findLastMatch} from '../lib/misc.js'
 import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
-import {cloneEnvironment, createSite, getSite, getSiteEnvironments} from '../lib/kinsta.js'
+import {cloneEnvironment, createSite, getSite, getSiteEnvironments, setPhpVersion} from '../lib/kinsta.js'
 
 type QAndA = {
   from: string
@@ -193,6 +193,14 @@ export default class New extends Command {
       required: true,
       dependsOn: ['kinsta'],
     }),
+    kinsta_php_version: Flags.string({
+      description: 'the PHP version to set on site environments',
+      env: 'IROOTS_KINSTA_PHP_VERSION',
+      options: ['8.0', '8.1', '8.2'],
+      default: '8.1',
+      required: true,
+      dependsOn: ['kinsta'],
+    }),
     display_name: Flags.string({
       description: 'the display name for the site',
       env: 'IROOTS_NEW_DISPLAY_NAME',
@@ -236,6 +244,7 @@ export default class New extends Command {
       kinsta,
       kinsta_api_key,
       kinsta_company,
+      kinsta_php_version,
       display_name,
     } = flags
 
@@ -252,17 +261,23 @@ export default class New extends Command {
 
     // Create Kinsta site
     if (kinsta) {
+      const secondsToWait = 10
       ux.action.start('Creating Kinsta site live environment')
       const createSiteResponse = await createSite(kinsta_api_key, {
         company: kinsta_company,
         display_name: display_name,
         region: 'europe-west2',
       })
+      const {idSite: kinstaSiteId, idEnv: kinstaProductionEnvId} = createSiteResponse.data
+      ux.action.stop()
+
+      ux.action.start(`Setting PHP version to ${kinsta_php_version}`)
+      // Wait a bit to ensure the site is ready to query.
+      await ux.wait(secondsToWait * 1000)
+      await setPhpVersion(kinsta_api_key, kinstaProductionEnvId, kinsta_php_version)
       ux.action.stop()
 
       ux.action.start('Creating Kinsta site staging environment')
-      const secondsToWait = 10
-      const {idSite: kinstaSiteId, idEnv: kinstaProductionEnvId} = createSiteResponse.data
       // Wait a bit to ensure the site is ready to query.
       await ux.wait(secondsToWait * 1000)
       const kinstaSiteLive = await getSite(kinsta_api_key, kinstaSiteId)
