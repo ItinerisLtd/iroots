@@ -43,6 +43,8 @@ type SendGridAllowedIpsResponse = {
   result: SendGridAllowedIP[]
 }
 
+type SendGridAddAllowedIpsResponse = SendGridAllowedIpResponse
+
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   headers.set('authorization', `Bearer ${token}`)
@@ -51,13 +53,12 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   options.method ??= 'GET'
 
   const response = await fetch(`${apiUrl}/${url}`, options)
-  if (response.status === 403) {
+  console.log(response)
+  if (response.status > 400) {
     ux.error(response.statusText)
   }
 
-  const data = await response.json()
-
-  return data as TResponse
+  return (await response.json()) as TResponse
 }
 
 export async function getApiKey(token: string, key: string): Promise<SendGridApiKeyResponse> {
@@ -107,4 +108,13 @@ export async function getAllAllowedIp(token: string, ruleId: string) {
 
 export async function getAllAllowedIps(token: string) {
   return request<SendGridAllowedIpsResponse>(token, 'access_settings/whitelist')
+}
+
+export async function addAllowedIps(token: string, ipAddresses: string[]) {
+  return request<SendGridAddAllowedIpsResponse>(token, 'access_settings/whitelist', {
+    method: 'POST',
+    body: JSON.stringify({
+      ips: ipAddresses.map(ip => ({ip})),
+    }),
+  })
 }
