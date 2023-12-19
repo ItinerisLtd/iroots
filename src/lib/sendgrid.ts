@@ -35,6 +35,10 @@ type SendGridAllowedIP = {
   updated_at: Date
 }
 
+type SendGridAllowedIpResponse = {
+  result: SendGridAllowedIP
+}
+
 type SendGridAllowedIpsResponse = {
   result: SendGridAllowedIP[]
 }
@@ -95,6 +99,10 @@ export async function deleteApiKey(token: string, key: string): Promise<SendGrid
   }
 
   return true
+}
+
+export async function getAllAllowedIp(token: string, ruleId: string) {
+  return request<SendGridAllowedIpResponse>(token, `access_settings/whitelist/${ruleId}`)
 }
 
 export async function getAllAllowedIps(token: string) {
