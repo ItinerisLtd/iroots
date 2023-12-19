@@ -1,3 +1,5 @@
+import {ux} from '@oclif/core'
+
 const apiUrl = 'https://api.sendgrid.com/v3'
 
 type SendGridApiKey = {
@@ -24,6 +26,19 @@ type SendGridApiKeysResponse = {
   errors: SendGridError[]
 }
 
+type SendGridAllowedIP = {
+  id: number
+  ip: string
+  // eslint-disable-next-line camelcase
+  created_at: Date
+  // eslint-disable-next-line camelcase
+  updated_at: Date
+}
+
+type SendGridAllowedIpsResponse = {
+  result: SendGridAllowedIP[]
+}
+
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   headers.set('authorization', `Bearer ${token}`)
@@ -31,9 +46,14 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   options.headers = headers
   options.method ??= 'GET'
 
-  return fetch(`${apiUrl}/${url}`, options)
-    .then(resp => resp.json())
-    .then(data => data as TResponse)
+  const response = await fetch(`${apiUrl}/${url}`, options)
+  if (response.status === 403) {
+    ux.error(response.statusText)
+  }
+
+  const data = await response.json()
+
+  return data as TResponse
 }
 
 export async function getApiKey(token: string, key: string): Promise<SendGridApiKeyResponse> {
@@ -75,4 +95,8 @@ export async function deleteApiKey(token: string, key: string): Promise<SendGrid
   }
 
   return true
+}
+
+export async function getAllAllowedIps(token: string) {
+  return request<SendGridAllowedIpsResponse>(token, 'access_settings/whitelist')
 }
