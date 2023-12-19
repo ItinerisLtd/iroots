@@ -98,6 +98,9 @@
       "sendgrid:api-keys": {
         "description": "Manage SendGrid API keys"
       },
+      "sendgrid:access": {
+        "description": "Manage IP allowlist"
+      },
       "stackpath": {
         "description": "Manage StackPath services"
       },
