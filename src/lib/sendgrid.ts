@@ -53,12 +53,15 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   options.method ??= 'GET'
 
   const response = await fetch(`${apiUrl}/${url}`, options)
-  console.log(response)
   if (response.status > 400) {
     ux.error(response.statusText)
   }
 
-  return (await response.json()) as TResponse
+  if (response.body) {
+    return (await response.json()) as TResponse
+  }
+
+  return true as TResponse
 }
 
 export async function getApiKey(token: string, key: string): Promise<SendGridApiKeyResponse> {
@@ -115,6 +118,16 @@ export async function addAllowedIps(token: string, ipAddresses: string[]) {
     method: 'POST',
     body: JSON.stringify({
       ips: ipAddresses.map(ip => ({ip})),
+    }),
+  })
+}
+
+export async function deleteAllowedIps(token: string, ruleIds: string[]) {
+  const ids = ruleIds.map(id => Number.parseInt(id, 10))
+  return request<boolean>(token, 'access_settings/whitelist', {
+    method: 'DELETE',
+    body: JSON.stringify({
+      ids,
     }),
   })
 }
