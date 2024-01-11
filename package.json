@@ -112,6 +112,9 @@
       },
       "statuscake:uptime": {
         "description": "Manage StatusCake uptime monitors"
+      },
+      "sentry": {
+        "description": "Manage Sentry services"
       }
     }
   },
