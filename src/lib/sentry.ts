@@ -1,4 +1,5 @@
 import {ux} from '@oclif/core'
+import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 const apiUrl = 'https://sentry.io/api/0'
 
@@ -8,15 +9,27 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   headers.set('Content-Type', 'application/json')
   options.headers = headers
   options.method ??= 'GET'
+  if (options.body) {
+    options.method = 'POST'
+  }
 
   const fetchUrl = `${apiUrl}/${url}`
   const response = await fetch(fetchUrl.endsWith('/') ? '' : `${fetchUrl}/`, options)
+  let json: {detail?: string} = {}
+  if (response.body) {
+    json = await response.json()
+  }
+
   if (response.status > 400) {
+    if (json.detail) {
+      ux.error(json.detail)
+    }
+
     ux.error(response.statusText)
   }
 
-  if (response.body) {
-    return (await response.json()) as TResponse
+  if (json) {
+    return json as TResponse
   }
 
   return true as TResponse
@@ -83,4 +96,16 @@ export async function getProject(
 
 export async function getAllProjects(token: string): Promise<SentryListProjectsResponse[]> {
   return request<SentryListProjectsResponse[]>(token, 'projects')
+}
+
+export async function createProject(args: FlagOutput): Promise<SentryListProjectsResponse[]> {
+  const options = {
+    body: JSON.stringify(args),
+  }
+
+  return request<SentryListProjectsResponse[]>(
+    args.apiKey,
+    `teams/${args.organisationSlug}/${args.teamSlug}/projects`,
+    options,
+  )
 }
