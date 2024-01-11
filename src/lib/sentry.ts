@@ -73,6 +73,14 @@ type SentryListProjectsResponse = {
   }
 }
 
+export async function getProject(
+  token: string,
+  organisationSlug: string,
+  projectSlug: string,
+): Promise<SentryListProjectsResponse> {
+  return request<SentryListProjectsResponse>(token, `projects/${organisationSlug}/${projectSlug}`)
+}
+
 export async function getAllProjects(token: string): Promise<SentryListProjectsResponse[]> {
   return request<SentryListProjectsResponse[]>(token, 'projects')
 }
