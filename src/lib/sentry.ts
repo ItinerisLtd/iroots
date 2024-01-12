@@ -86,6 +86,40 @@ type SentryListProjectsResponse = {
   }
 }
 
+type SentryListProjectKeysResponse = {
+  id: string
+  name: string
+  label: string
+  public: string
+  secret: string
+  projectId: number
+  isActive: boolean
+  rateLimit: {
+    window: number
+    count: number
+  }
+  dsn: {
+    secret: string
+    public: string
+    csp: string
+    security: string
+    minidump: string
+    nel: string
+    unreal: string
+    cdn: string
+  }
+  browserSdkVersion: string
+  browserSdk: {
+    choices: Array<Array<Array<string>>>
+  }
+  dateCreated: string
+  dynamicSdkLoaderOptions: {
+    hasReplay: boolean
+    hasPerformance: boolean
+    hasDebug: boolean
+  }
+}
+
 export async function getProject(
   token: string,
   organisationSlug: string,
@@ -108,4 +142,12 @@ export async function createProject(args: FlagOutput): Promise<SentryListProject
     `teams/${args.organisationSlug}/${args.teamSlug}/projects`,
     options,
   )
+}
+
+export async function getAllProjectKeys(
+  token: string,
+  organisationSlug: string,
+  projectSlug: string,
+): Promise<SentryListProjectKeysResponse[]> {
+  return request<SentryListProjectKeysResponse[]>(token, `projects/${organisationSlug}/${projectSlug}/keys`)
 }
