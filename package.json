@@ -115,6 +115,12 @@
       },
       "sentry": {
         "description": "Manage Sentry services"
+      },
+      "sentry:projects": {
+        "description": "Manage Sentry projects"
+      },
+      "sentry:projects:keys": {
+        "description": "Manage Sentry project keys"
       }
     }
   },

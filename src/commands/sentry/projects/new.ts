@@ -3,7 +3,7 @@ import {SentryCommand} from '../../../lib/commands/sentry-command.js'
 import {createProject} from '../../../lib/sentry.js'
 
 export default class New extends SentryCommand {
-  static description = 'Create a specific project from Sentry account'
+  static description = 'Create a new project in Sentry'
 
   static flags = {
     organisationSlug: Flags.string({
