@@ -10,20 +10,20 @@ export default class New extends StatusCakeCommand {
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
-    name: Flags.string({
-      description: 'Name of the check',
+    // eslint-disable-next-line camelcase
+    website_url: Flags.string({
+      description: 'URL or IP address of the server under test',
       required: true,
+    }),
+    name: Flags.string({
+      description: 'Name of the check. If ommitted, we will extract the domain from --website_url and use this.',
+      required: false,
     }),
     // eslint-disable-next-line camelcase
     test_type: Flags.string({
       description: 'Uptime check type',
       options: ['DNS', 'HEAD', 'HTTP', 'PING', 'SMTP', 'SSH', 'TCP'],
       default: 'HEAD',
-    }),
-    // eslint-disable-next-line camelcase
-    website_url: Flags.string({
-      description: 'URL or IP address of the server under test',
-      required: true,
     }),
     // eslint-disable-next-line camelcase
     check_rate: Flags.integer({
@@ -81,6 +81,11 @@ export default class New extends StatusCakeCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(New)
+
+    if (!flags.name) {
+      const url = new URL(flags.website_url)
+      flags.name = url.hostname
+    }
 
     const test = await createUptimeTest(flags.apiKey, flags)
     console.log(test)
