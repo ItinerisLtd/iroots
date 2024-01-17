@@ -13,6 +13,8 @@ import {findLastMatch} from '../lib/misc.js'
 import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
 import {cloneEnvironment, createSite, getSite, getSiteEnvironments, setPhpVersion} from '../lib/kinsta.js'
+import {createProject, getAllProjectKeys} from '../lib/sentry.js'
+import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 type QAndA = {
   from: string
@@ -201,11 +203,57 @@ export default class New extends Command {
       required: true,
       dependsOn: ['kinsta'],
     }),
+    sentry: Flags.boolean({
+      description: 'whether or not to create a Sentry project',
+      default: true,
+      allowNo: true,
+    }),
+    sentry_api_key: Flags.string({
+      description: 'The API key',
+      env: 'IROOTS_SENTRY_API_KEY',
+      required: true,
+    }),
+    sentry_organisation_slug: Flags.string({
+      required: true,
+      env: 'IROOTS_SENTRY_ORGANISATION_SLUG',
+      description: 'The slug of the organization the resource belongs to.',
+      dependsOn: ['sentry'],
+    }),
+    sentry_team_slug: Flags.string({
+      required: true,
+      env: 'IROOTS_SENTRY_TEAM_SLUG',
+      description: 'The slug of the organization the resource belongs to.',
+      dependsOn: ['sentry'],
+    }),
+    sentry_project_slug: Flags.string({
+      required: false,
+      description: 'Uniquely identifies a project. If ommitted, we will use the project display name.',
+      dependsOn: ['sentry'],
+    }),
+    sentry_project_platform: Flags.string({
+      required: true,
+      default: 'php',
+      description: 'The platform for the project.',
+      dependsOn: ['sentry'],
+    }),
+    sentry_project_default_rules: Flags.boolean({
+      required: false,
+      default: true,
+      description:
+        'Defaults to true where the behavior is to alert the user on every new issue. Setting this to false will turn this off and the user must create their own alerts to be notified of new issues.',
+      dependsOn: ['sentry'],
+    }),
     display_name: Flags.string({
       description: 'the display name for the site',
       env: 'IROOTS_NEW_DISPLAY_NAME',
       required: true,
-      dependsOn: ['kinsta'],
+      relationships: [
+        // define complex relationships between flags
+        {
+          type: 'some',
+          flags: ['kinsta', 'sentry'],
+        },
+      ],
     }),
   }
 
@@ -245,6 +293,13 @@ export default class New extends Command {
       kinsta_api_key,
       kinsta_company,
       kinsta_php_version,
+      sentry,
+      sentry_api_key,
+      sentry_organisation_slug,
+      sentry_team_slug,
+      sentry_project_slug,
+      sentry_project_platform,
+      sentry_project_default_rules,
       display_name,
     } = flags
 
@@ -333,6 +388,31 @@ export default class New extends Command {
       }
 
       process.env.IROOTS_NEW_xxxSENDGRID_API_KEYxxx = response.api_key
+      ux.action.stop()
+    }
+
+    if (sentry) {
+      ux.action.start('Creating Sentry project and keys')
+      const sentryProjectSlug = sentry_project_slug
+        ? sentry_project_slug
+        : display_name.toLowerCase().replaceAll(/\s+/g, '-')
+      const createSentryProjectResponse = await createProject({
+        apiKey: sentry_api_key,
+        organisationSlug: sentry_organisation_slug,
+        teamSlug: sentry_team_slug,
+        name: display_name,
+        slug: sentryProjectSlug,
+        platform: sentry_project_platform,
+        defaultRules: sentry_project_default_rules,
+      } as FlagOutput)
+      if (createSentryProjectResponse) {
+        const projectKeys = await getAllProjectKeys(sentry_api_key, sentry_organisation_slug, sentryProjectSlug)
+        const firstProjectKeys = projectKeys.shift()
+        const secretDsn = firstProjectKeys?.dsn.secret
+
+        process.env.IROOTS_NEW_xxxWP_SENTRY_PHP_DSNxxx = secretDsn
+      }
+
       ux.action.stop()
     }
 
