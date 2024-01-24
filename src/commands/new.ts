@@ -457,6 +457,7 @@ export default class New extends Command {
       `${site}/bedrock/config/*`,
       `${site}/bedrock/web/app/themes/${site}/style.css`,
       `${site}/bedrock/web/app/themes/${site}/*.config.*`,
+      `${site}/bedrock/web/app/themes/${site}/app/View/Composers/*.php`,
     ])
     ux.action.stop()
 
