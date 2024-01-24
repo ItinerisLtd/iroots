@@ -1,3 +1,4 @@
+import {ux} from '@oclif/core'
 import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 const apiUrl = 'https://api.cloudflare.com/client/v4/accounts/{account_identifier}/challenges/widgets'
@@ -43,6 +44,16 @@ type CloudflareSitesRequest = {
   result: CloudflareSite[]
 }
 
+type CloudflareError = {
+  success: boolean
+  errors: [
+    {
+      code: number
+      message: string
+    },
+  ]
+}
+
 async function request<TResponse>(
   token: string,
   account: string,
@@ -60,9 +71,16 @@ async function request<TResponse>(
     requestUrl.pathname = `${requestUrl.pathname}/${url}`
   }
 
-  return fetch(requestUrl, options)
-    .then(resp => resp.json())
-    .then(data => data as TResponse)
+  const response = await fetch(requestUrl, options)
+  const data = await response.json()
+  const statusCode = data.status || response.status
+  if (statusCode !== 200) {
+    const error = data as CloudflareError
+    const errors = error.errors.map(err => `code: ${err.code} - message: ${err.message}`)
+    ux.error(errors.join('\n'))
+  }
+
+  return data as TResponse
 }
 
 export async function getAllSites(token: string, account: string): Promise<CloudflareSite[]> {
