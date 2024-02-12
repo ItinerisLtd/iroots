@@ -93,6 +93,7 @@ export type ResponseCodes = {
 }
 
 type KinstaError = {
+  error: string
   status: keyof ResponseCodes
   message: string
   data: {
@@ -134,9 +135,13 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
     return data as TResponse
   }
 
-  if ([404, 500].includes(statusCode)) {
+  if ([401, 404, 500].includes(statusCode)) {
     const kinstaError: KinstaError = data
-    if (data.status === 500) {
+    if (kinstaError.error) {
+      ux.error(kinstaError.error)
+    }
+
+    if (data && data.status === 500) {
       ux.error(kinstaError.data.message)
     }
 
