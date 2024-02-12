@@ -21,7 +21,7 @@
     "@oclif/core": "^3.19.1",
     "@oclif/plugin-help": "^6",
     "execa": "^8.0.1",
-    "globby": "^14.0.0",
+    "globby": "^14.0.1",
     "replace-in-file": "^7.1.0"
   },
   "devDependencies": {
