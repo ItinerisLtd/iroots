@@ -121,6 +121,13 @@ export default class New extends Command {
       default: 'master',
       required: true,
     }),
+    theme_clone: Flags.boolean({
+      description: 'whether or not to clone the theme',
+      env: 'IROOTS_NEW_THEME_CLONE',
+      default: true,
+      required: false,
+      allowNo: true,
+    }),
     theme_template_remote: Flags.string({
       description: 'theme template remote',
       env: 'IROOTS_NEW_THEME_TEMPLATE_REMOTE',
@@ -154,6 +161,7 @@ export default class New extends Command {
     packagist: Flags.boolean({
       description: 'whether or not to create a Private Packagist token for the new project',
       default: true,
+      allowNo: true,
     }),
     packagist_api_key: Flags.string({
       description: 'The API key',
@@ -284,6 +292,7 @@ export default class New extends Command {
       bedrock_repo_pat,
       bedrock_template_remote,
       bedrock_template_branch,
+      theme_clone,
       theme_template_remote,
       theme_template_branch,
       trellis_template_remote,
@@ -483,15 +492,17 @@ export default class New extends Command {
     })
     ux.action.stop()
 
-    ux.action.start('Cloning theme template repo')
-    await git.clone(theme_template_remote, {
-      dir: `${site}/bedrock/web/app/themes/${site}`,
-      branch: theme_template_branch,
-    })
-    rmSync(`${site}/bedrock/web/app/themes/${site}/.git`, {recursive: true, force: true})
-    rmSync(`${site}/bedrock/web/app/themes/${site}/.github`, {recursive: true, force: true})
-    rmSync(`${site}/bedrock/web/app/themes/${site}/.circleci`, {recursive: true, force: true})
-    ux.action.stop()
+    if (theme_clone) {
+      ux.action.start('Cloning theme template repo')
+      await git.clone(theme_template_remote, {
+        dir: `${site}/bedrock/web/app/themes/${site}`,
+        branch: theme_template_branch,
+      })
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.git`, {recursive: true, force: true})
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.github`, {recursive: true, force: true})
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.circleci`, {recursive: true, force: true})
+      ux.action.stop()
+    }
 
     ux.action.start('Cloning Trellis template repo')
     await git.clone(
@@ -538,15 +549,21 @@ export default class New extends Command {
     ux.action.stop()
 
     ux.action.start('Looking for files to perform search and replace')
-    const yamls = await globby([
+    const filesToReplace = [
       `${site}/trellis/hosts/*`,
       `${site}/trellis/group_vars/*/*.yml`,
       `${site}/bedrock/.github/workflows/*.yml`,
       `${site}/bedrock/config/*`,
-      `${site}/bedrock/web/app/themes/${site}/style.css`,
-      `${site}/bedrock/web/app/themes/${site}/*.config.*`,
-      `${site}/bedrock/web/app/themes/${site}/app/View/Composers/*.php`,
-    ])
+    ]
+    if (theme_clone) {
+      filesToReplace.push(
+        `${site}/bedrock/web/app/themes/${site}/style.css`,
+        `${site}/bedrock/web/app/themes/${site}/*.config.*`,
+        `${site}/bedrock/web/app/themes/${site}/app/View/Composers/*.php`,
+      )
+    }
+
+    const yamls = await globby(filesToReplace)
     ux.action.stop()
 
     ux.action.start('Searching for placeholders')
@@ -642,12 +659,15 @@ export default class New extends Command {
     ux.action.stop()
 
     ux.action.start('Commiting Bedrock changes')
-    await git.add([`web/app/themes/${site}`], {
-      cwd: `${site}/bedrock`,
-    })
-    await git.commit('iRoots: Add theme', {
-      cwd: `${site}/bedrock`,
-    })
+    if (theme_clone) {
+      await git.add([`web/app/themes/${site}`], {
+        cwd: `${site}/bedrock`,
+      })
+      await git.commit('iRoots: Add theme', {
+        cwd: `${site}/bedrock`,
+      })
+    }
+
     await git.add(['.'], {
       cwd: `${site}/bedrock`,
     })
