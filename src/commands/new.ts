@@ -255,6 +255,13 @@ export default class New extends Command {
         },
       ],
     }),
+    wp_ssh_aliases: Flags.boolean({
+      description: 'whether to generate SSH aliases for WP CLI or not',
+      env: 'IROOTS_NEW_WP_CLI_SSH_ALIASES',
+      required: false,
+      default: true,
+      allowNo: true,
+    }),
   }
 
   // eslint-disable-next-line no-warning-comments
@@ -301,6 +308,7 @@ export default class New extends Command {
       sentry_project_platform,
       sentry_project_default_rules,
       display_name,
+      wp_ssh_aliases,
     } = flags
 
     if (existsSync(site)) {
@@ -648,24 +656,26 @@ export default class New extends Command {
     })
     ux.action.stop()
 
-    ux.action.start('Creating SSH Aliases')
-    await trellis.alias({
-      cwd: `${site}/trellis`,
-    })
-    const trelliaAliasString = `_:
+    if (wp_ssh_aliases) {
+      ux.action.start('Creating SSH Aliases')
+      await trellis.alias({
+        cwd: `${site}/trellis`,
+      })
+      const trelliaAliasString = `_:
   inherit: wp-cli.trellis-alias.yml
 `
-    appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
-    ux.action.stop()
+      appendFileSync(`${site}/bedrock/wp-cli.yml`, trelliaAliasString)
+      ux.action.stop()
 
-    ux.action.start('Committing SSH Aliases')
-    await git.add(['wp-cli.yml', 'wp-cli.trellis-alias.yml'], {
-      cwd: `${site}/bedrock`,
-    })
-    await git.commit('iRoots: Add SSH aliases', {
-      cwd: `${site}/bedrock`,
-    })
-    ux.action.stop()
+      ux.action.start('Committing SSH Aliases')
+      await git.add(['wp-cli.yml', 'wp-cli.trellis-alias.yml'], {
+        cwd: `${site}/bedrock`,
+      })
+      await git.commit('iRoots: Add SSH aliases', {
+        cwd: `${site}/bedrock`,
+      })
+      ux.action.stop()
+    }
 
     if (multisite) {
       ux.action.start('Configuring Multisite')
