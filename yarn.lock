@@ -1630,10 +1630,10 @@
     node-gyp "^8.2.0"
     read-package-json-fast "^2.0.1"
 
-"@oclif/core@^3.18.2", "@oclif/core@^3.19.2", "@oclif/core@^3.19.7":
-  version "3.19.7"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-3.19.7.tgz#33d543d3c3e58850558a30021596e2b111e442bd"
-  integrity sha512-8Vq2shLqRd7+3CpAEG8VZ8b8F6ldkzhNh8pEFPPeY4bTO0xOGJB3WiggZ/zQ30EvLhZQwU/eJpN8Vw7M2x6NcA==
+"@oclif/core@^3.18.2", "@oclif/core@^3.19.2", "@oclif/core@^3.20.0":
+  version "3.20.0"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-3.20.0.tgz#534458dc6e8c46d8f03906aaadaca079e16a6554"
+  integrity sha512-8BajhglY8frYGAS1whAukeouFZUN9MgQoLfNXtScPVEAjPlaD2BbSIAYQH2yF2qb/iVvbj/1DwYS3gqicYOq1A==
   dependencies:
     "@types/cli-progress" "^3.11.5"
     ansi-escapes "^4.3.2"
