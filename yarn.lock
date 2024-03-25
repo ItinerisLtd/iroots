@@ -1169,7 +1169,7 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@oclif/core@^3.21.0", "@oclif/core@^3.23.0", "@oclif/core@^3.25.2", "@oclif/core@^3.25.3", "@oclif/core@^3.26.0":
+"@oclif/core@^3.21.0", "@oclif/core@^3.25.2", "@oclif/core@^3.25.3", "@oclif/core@^3.26.0":
   version "3.26.0"
   resolved "https://registry.yarnpkg.com/@oclif/core/-/core-3.26.0.tgz#959d5e9f13f4ad6a4e98235ad125189df9ee4279"
   integrity sha512-TpMdfD4tfA2tVVbd4l0PrP02o5KoUXYmudBbTC7CeguDo/GLoprw4uL8cMsaVA26+cbcy7WYtOEydQiHVtJixA==
@@ -1204,11 +1204,11 @@
     wrap-ansi "^7.0.0"
 
 "@oclif/plugin-help@^6", "@oclif/plugin-help@^6.0.18":
-  version "6.0.18"
-  resolved "https://registry.yarnpkg.com/@oclif/plugin-help/-/plugin-help-6.0.18.tgz#9ba4151b5d77b78a345ad1308620a1fbf9731ac8"
-  integrity sha512-Ly0gu/+eq7GfIMT76cirbHgElYGlu+PaZ5elrAKmDiegBh31AXqaPQAj8PH4+sG8RSv5srYtrkrygZaw8IF9CQ==
+  version "6.0.19"
+  resolved "https://registry.yarnpkg.com/@oclif/plugin-help/-/plugin-help-6.0.19.tgz#8fe370f3b14af4b23071de6fff0d9816cc3cc0b7"
+  integrity sha512-ib9wjiWi8afTIQrdDPDgUkKaC4R+78wnKWpzybMH0yG1dd3krVHu0zHYEJUtC3Ples/cRv7f4EHBkO3lQpnZcA==
   dependencies:
-    "@oclif/core" "^3.23.0"
+    "@oclif/core" "^3.26.0"
 
 "@oclif/plugin-not-found@^3.0.14":
   version "3.0.14"
