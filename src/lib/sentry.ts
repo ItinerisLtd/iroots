@@ -1,5 +1,6 @@
 import {ux} from '@oclif/core'
 import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {slugify} from './misc.js'
 
 const apiUrl = 'https://sentry.io/api/0'
 
@@ -20,7 +21,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
     json = await response.json()
   }
 
-  if (response.status > 400) {
+  if (response.status >= 400) {
     if (json.detail) {
       ux.error(json.detail)
     }
@@ -86,6 +87,32 @@ type SentryListProjectsResponse = {
   }
 }
 
+type SentryCreateProjectResponse = {
+  id: string
+  slug: string
+  name: string
+  platform: string
+  dateCreated: string
+  isBookmarked: boolean
+  isMember: boolean
+  features: string[]
+  firstEvent: string
+  firstTransactionEvent: boolean
+  access: string[]
+  hasAccess: boolean
+  hasMinifiedStackTrace: boolean
+  hasCustomMetrics: boolean
+  hasMonitors: boolean
+  hasProfiles: boolean
+  hasReplays: boolean
+  hasSessions: boolean
+  isInternal: boolean
+  isPublic: boolean
+  avatar: SentryAvatar
+  color: string
+  status: string
+}
+
 type SentryListProjectKeysResponse = {
   id: string
   name: string
@@ -132,12 +159,15 @@ export async function getAllProjects(token: string): Promise<SentryListProjectsR
   return request<SentryListProjectsResponse[]>(token, 'projects')
 }
 
-export async function createProject(args: FlagOutput): Promise<SentryListProjectsResponse[]> {
+export async function createProject(args: FlagOutput): Promise<SentryCreateProjectResponse> {
+  const slug = args.slug ?? args.name
+  // Ensure the slug is always safe to use.
+  args.slug = slugify(slug.toLowerCase())
   const options = {
     body: JSON.stringify(args),
   }
 
-  return request<SentryListProjectsResponse[]>(
+  return request<SentryCreateProjectResponse>(
     args.apiKey,
     `teams/${args.organisationSlug}/${args.teamSlug}/projects`,
     options,
