@@ -14,7 +14,6 @@ import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
 import {cloneEnvironment, createSite, getSite, getSiteEnvironments, setPhpVersion} from '../lib/kinsta.js'
 import {createProject, getAllProjectKeys} from '../lib/sentry.js'
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 type QAndA = {
   from: string
@@ -410,20 +409,21 @@ export default class New extends Command {
 
     if (sentry) {
       ux.action.start('Creating Sentry project and keys')
-      const sentryProjectSlug = sentry_project_slug
-        ? sentry_project_slug
-        : display_name.toLowerCase().replaceAll(/\s+/g, '-')
       const createSentryProjectResponse = await createProject({
         apiKey: sentry_api_key,
         organisationSlug: sentry_organisation_slug,
         teamSlug: sentry_team_slug,
         name: display_name,
-        slug: sentryProjectSlug,
+        slug: sentry_project_slug,
         platform: sentry_project_platform,
         defaultRules: sentry_project_default_rules,
-      } as FlagOutput)
+      })
       if (createSentryProjectResponse) {
-        const projectKeys = await getAllProjectKeys(sentry_api_key, sentry_organisation_slug, sentryProjectSlug)
+        const projectKeys = await getAllProjectKeys(
+          sentry_api_key,
+          sentry_organisation_slug,
+          createSentryProjectResponse.slug,
+        )
         const firstProjectKeys = projectKeys.shift()
         const secretDsn = firstProjectKeys?.dsn.secret
 
