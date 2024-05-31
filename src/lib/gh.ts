@@ -1,11 +1,6 @@
-import {execa, ExecaReturnValue, Options} from 'execa'
+import {execa, Result} from 'execa'
 
-export async function setSecret(
-  key: string,
-  value: string,
-  repo: string,
-  options?: Options,
-): Promise<ExecaReturnValue> {
+export async function setSecret(key: string, value: string, repo: string, options = {}): Promise<Result> {
   return execa('gh', ['secret', 'set', key, '--body', value, '--repo', repo], options)
 }
 
@@ -15,8 +10,8 @@ export async function setDeployKey(
   keyName: string,
   owner: string,
   repo: string,
-  options?: Options,
-): Promise<ExecaReturnValue> {
+  options = {},
+): Promise<Result> {
   return execa(
     'gh',
     ['api', `repos/${owner}/${repo}/keys`, '-f', `title=${keyName}`, '-f', `key=${key}`, '-f', 'read_only=true'],
@@ -32,17 +27,12 @@ export async function createRepo(
   owner: string,
   repo: string,
   {teamSlug = 'php-team'}: CreateRepoArgs,
-  options?: Options,
-): Promise<ExecaReturnValue> {
+  options = {},
+): Promise<Result> {
   return execa('gh', ['repo', 'create', `${owner}/${repo}`, '--private', '--team', teamSlug], options)
 }
 
-export async function editRepo(
-  owner: string,
-  repo: string,
-  flag: string,
-  options?: Options,
-): Promise<ExecaReturnValue> {
+export async function editRepo(owner: string, repo: string, flag: string, options = {}): Promise<Result> {
   return execa('gh', ['repo', 'edit', `${owner}/${repo}`, `--${flag}`], options)
 }
 
@@ -50,8 +40,8 @@ export async function setTeamPermissions(
   owner: string,
   repo: string,
   {teamSlug = 'php-team', teamPermission = 'admin'}: CreateRepoArgs,
-  options?: Options,
-): Promise<ExecaReturnValue> {
+  options = {},
+): Promise<Result> {
   return execa(
     'gh',
     [
@@ -68,7 +58,7 @@ export async function setTeamPermissions(
   )
 }
 
-export async function getRepositoryIdFromName(owner: string, repo: string, options?: Options): Promise<string> {
+export async function getRepositoryIdFromName(owner: string, repo: string, options = {}): Promise<string> {
   const {stdout} = await execa(
     'gh',
     ['api', 'graphql', '-f', `query='{repository(owner:"${owner}",name:"${repo}"){id}}'`, '-q', '.data.repository.id'],
@@ -100,8 +90,8 @@ export async function createBranchProtection(
     requiresStatusChecks,
     requiresStrictStatusChecks,
   }: BranchProtectionOptions,
-  options?: Options,
-): Promise<ExecaReturnValue> {
+  options = {},
+): Promise<Result> {
   const repoId = await getRepositoryIdFromName(owner, repo, options)
   const query = `
 mutation($repositoryId:ID!,$branch:String!,$isAdminEnforced:Boolean!,$requiresApprovingReviews:Boolean!,$requiresStatusChecks:Boolean!,$requiresStrictStatusChecks:Boolean!) {
