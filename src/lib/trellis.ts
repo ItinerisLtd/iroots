@@ -1,6 +1,6 @@
-import {execa, ExecaReturnValue, Options} from 'execa'
+import {execa, Result} from 'execa'
 
-export async function init(options?: Options): Promise<ExecaReturnValue> {
+export async function init(options = {}): Promise<Result> {
   const subprocess = execa('trellis', ['init'], options)
   // This is to pipe the command output to the main output in realtime.
   subprocess.stdout?.pipe(process.stdout)
@@ -8,31 +8,31 @@ export async function init(options?: Options): Promise<ExecaReturnValue> {
   return subprocess
 }
 
-export async function vaultDecrypt(env: string, options?: Options): Promise<ExecaReturnValue> {
+export async function vaultDecrypt(env: string, options = {}): Promise<Result> {
   return execa('trellis', ['vault', 'decrypt', env], options)
 }
 
-export async function vaultEncrypt(env: string, options?: Options): Promise<ExecaReturnValue> {
+export async function vaultEncrypt(env: string, options = {}): Promise<Result> {
   return execa('trellis', ['vault', 'encrypt', env], options)
 }
 
-export async function alias(options?: Options): Promise<ExecaReturnValue> {
+export async function alias(options = {}): Promise<Result> {
   return execa('trellis', ['alias'], options)
 }
 
-export async function dotenv(options?: Options): Promise<ExecaReturnValue> {
+export async function dotenv(options = {}): Promise<Result> {
   return execa('trellis', ['dotenv'], options)
 }
 
-export async function valetLink(options?: Options): Promise<ExecaReturnValue> {
+export async function valetLink(options = {}): Promise<Result> {
   return execa('trellis', ['valet', 'link'], options)
 }
 
-export async function galaxyInstall(options?: Options): Promise<ExecaReturnValue> {
+export async function galaxyInstall(options = {}): Promise<Result> {
   return execa('trellis', ['galaxy', 'install'], options)
 }
 
-export async function deploy(env: string, options?: Options): Promise<ExecaReturnValue> {
+export async function deploy(env: string, options = {}): Promise<Result> {
   const subprocess = execa('trellis', ['deploy', '--verbose', env], options)
 
   // This is to pipe the command output to the main output in realtime.
@@ -41,7 +41,7 @@ export async function deploy(env: string, options?: Options): Promise<ExecaRetur
   return subprocess
 }
 
-export async function getHosts(options?: Options): Promise<string[]> {
+export async function getHosts(options = {}): Promise<string[]> {
   const {stdout} = await execa(
     'trellis',
     ['exec', 'ansible', 'all', '--list-hosts', '--limit', '!development'],
@@ -57,7 +57,7 @@ export async function getHosts(options?: Options): Promise<string[]> {
   return [...output]
 }
 
-export async function keyGenerate(repo: string, knownHosts: string[], options?: Options): Promise<ExecaReturnValue> {
+export async function keyGenerate(repo: string, knownHosts: string[], options = {}): Promise<Result> {
   return execa(
     'trellis',
     ['key', 'generate', '--repo', repo, '--known-hosts', knownHosts.join(','), '--no-provision'],

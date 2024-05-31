@@ -7,10 +7,6 @@ jobs:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    strategy:
-      matrix:
-        node: ['18']
-
     steps:
       - name: Checkout the project
         uses: actions/checkout@v2
@@ -18,7 +14,7 @@ jobs:
       - name: Setup the Node ${{ matrix.node }} environment on ${{ runner.os }}
         uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node }}
+          node-version-file: '.nvmrc'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
