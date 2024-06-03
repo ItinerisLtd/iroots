@@ -2613,7 +2613,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^20.12.12", "@types/node@^20.14.0":
+"@types/node@*", "@types/node@^20.12.12", "@types/node@^20.12.13", "@types/node@^20.14.0":
   version "20.14.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-20.14.0.tgz#49ceec7b34f8621470cff44677fa9d461a477f17"
   integrity sha512-5cHBxFGJx6L4s56Bubp4fglrEpmyJypsqI6RgzMfBHWUJQGWAAi8cWcgetEbZXHYXo9C2Fa4EEds/uSyS4cxmA==
@@ -5191,10 +5191,10 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier@^3.2.5:
-  version "3.2.5"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.2.5.tgz#e52bc3090586e824964a8813b09aba6233b28368"
-  integrity sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==
+prettier@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.3.0.tgz#d173ea0524a691d4c0b1181752f2b46724328cdf"
+  integrity sha512-J9odKxERhCQ10OC2yb93583f6UnYutOeiV5i0zEDS7UGTdUt0u+y8erxl3lBKvwo/JHyyoEdXjwp4dke9oyZ/g==
 
 pretty-ms@^9.0.0:
   version "9.0.0"
