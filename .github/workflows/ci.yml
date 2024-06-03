@@ -4,32 +4,23 @@ on: push
 
 jobs:
   php:
-    name: Node ${{ matrix.node }}
+    name: Node
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
-      - name: Checkout the project
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Setup the Node ${{ matrix.node }} environment on ${{ runner.os }}
-        uses: actions/setup-node@v2
+      - name: Setup the Node environment on ${{ runner.os }}
+        uses: actions/setup-node@v4
         with:
+          cache: yarn
           node-version-file: '.nvmrc'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore the Yarn cache directory
-        id: yarncache
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - uses: actions/cache@v2
-        with:
-          path: ${{ steps.yarncache.outputs.dir }}
-          key: ${{ runner.os }}-${{ matrix.node }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.node }}-yarn-
-
       - name: Install dependencies using Yarn
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --prefer-offline
 
-      - name: Test package
-        run: yarn run test
+      - run: yarn run build
+
+      - run: yarn run test
