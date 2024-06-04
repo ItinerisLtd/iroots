@@ -186,6 +186,23 @@ type KinstaCloneEnvironmentArgs = {
   source_env_id: string
 }
 
+export function envNamesToCloneEnvironmentArgs(
+  displayNames: string[],
+  sourceEnvId: string,
+  isPremium: boolean = false,
+): KinstaCloneEnvironmentArgs[] {
+  return displayNames.map<KinstaCloneEnvironmentArgs>(displayName => {
+    return {
+      // eslint-disable-next-line camelcase
+      display_name: displayName,
+      // eslint-disable-next-line camelcase
+      is_premium: isPremium,
+      // eslint-disable-next-line camelcase
+      source_env_id: sourceEnvId,
+    }
+  })
+}
+
 export async function cloneEnvironment(
   token: string,
   siteId: string,

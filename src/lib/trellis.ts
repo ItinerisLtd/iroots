@@ -1,4 +1,5 @@
 import {execa, Result} from 'execa'
+import {readdirSync} from 'node:fs'
 
 export async function init(options = {}): Promise<Result> {
   const subprocess = execa('trellis', ['init'], options)
@@ -55,6 +56,14 @@ export async function getHosts(options = {}): Promise<string[]> {
     .filter(host => host.trim() !== '' && host.trim().startsWith('hosts (') === false)
 
   return [...output]
+}
+
+export async function getEnvironments(source: string): Promise<string[]> {
+  return readdirSync(`${source}/hosts`, {
+    withFileTypes: true,
+  })
+    .filter(item => !item.isDirectory())
+    .map(item => item.name)
 }
 
 export async function keyGenerate(repo: string, knownHosts: string[], options = {}): Promise<Result> {

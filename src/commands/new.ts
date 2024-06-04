@@ -9,10 +9,17 @@ import * as gh from '../lib/gh.js'
 import * as git from '../lib/git.js'
 import * as trellis from '../lib/trellis.js'
 import * as wp from '../lib/wp.js'
-import {findLastMatch} from '../lib/misc.js'
+import {findLastMatch, slugify} from '../lib/misc.js'
 import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
-import {cloneEnvironment, createSite, getSite, getSiteEnvironments, setPhpVersion} from '../lib/kinsta.js'
+import {
+  cloneEnvironment,
+  createSite,
+  getSite,
+  getSiteEnvironments,
+  setPhpVersion,
+  envNamesToCloneEnvironmentArgs,
+} from '../lib/kinsta.js'
 import {createProject, getAllProjectKeys} from '../lib/sentry.js'
 
 type QAndA = {
@@ -210,6 +217,18 @@ export default class New extends Command {
       required: true,
       dependsOn: ['kinsta'],
     }),
+    kinsta_free_environments: Flags.string({
+      description: 'the additional free environment names you wish to create',
+      env: 'IROOTS_NEW_KINSTA_FREE_ENVIRONMENTS',
+      default: ['Staging'],
+      multiple: true,
+    }),
+    kinsta_premium_environments: Flags.string({
+      description: 'the additional premium environment names you wish to create',
+      env: 'IROOTS_NEW_KINSTA_PREMIUM_ENVIRONMENTS',
+      default: ['UAT'],
+      multiple: true,
+    }),
     sentry: Flags.boolean({
       description: 'whether or not to create a Sentry project',
       default: true,
@@ -255,7 +274,6 @@ export default class New extends Command {
       env: 'IROOTS_NEW_DISPLAY_NAME',
       required: true,
       relationships: [
-        // define complex relationships between flags
         {
           type: 'some',
           flags: ['kinsta', 'sentry'],
@@ -308,6 +326,8 @@ export default class New extends Command {
       kinsta_api_key,
       kinsta_company,
       kinsta_php_version,
+      kinsta_free_environments,
+      kinsta_premium_environments,
       sentry,
       sentry_api_key,
       sentry_organisation_slug,
@@ -348,34 +368,42 @@ export default class New extends Command {
       await setPhpVersion(kinsta_api_key, kinstaProductionEnvId, kinsta_php_version)
       ux.action.stop()
 
-      ux.action.start('Creating Kinsta site staging environment')
-      // Wait a bit to ensure the site is ready to query.
-      await ux.wait(secondsToWait * 1000)
-      const kinstaSiteLive = await getSite(kinsta_api_key, kinstaSiteId)
-      const kinstaSiteName = kinstaSiteLive.name
-      process.env.IROOTS_NEW_xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
+      const kinstaEnvironments = [
+        ...envNamesToCloneEnvironmentArgs(kinsta_free_environments, kinstaProductionEnvId, false),
+        ...envNamesToCloneEnvironmentArgs(kinsta_premium_environments, kinstaProductionEnvId, true),
+      ]
+      if (kinstaEnvironments.length > 0) {
+        // Create environments sequentially to prevent async Kinsta errors.
+        for (const env of kinstaEnvironments) {
+          /* eslint-disable no-await-in-loop */
+          ux.action.start(`Creating Kinsta site ${env.display_name} environment`)
+          // Wait a bit to ensure the site is ready to query.
+          await ux.wait(secondsToWait * 1000)
+          const kinstaSiteLive = await getSite(kinsta_api_key, kinstaSiteId)
+          const kinstaSiteName = kinstaSiteLive.name
+          process.env.IROOTS_NEW_xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
 
-      // Wait a bit to ensure the site is ready to query.
-      await ux.wait(secondsToWait * 1000)
-      await cloneEnvironment(kinsta_api_key, kinstaSiteId, {
-        display_name: 'Staging',
-        is_premium: false,
-        source_env_id: kinstaProductionEnvId,
-      })
-      ux.action.stop()
+          // Wait a bit to ensure the site is ready to query.
+          await ux.wait(secondsToWait * 1000)
+          await cloneEnvironment(kinsta_api_key, kinstaSiteId, env)
+          ux.action.stop()
+          /* eslint-enable no-await-in-loop */
+        }
 
-      ux.action.start('Gathering environment details')
-      await ux.wait(secondsToWait * 1000)
-      const environments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
-      for (const env of environments) {
-        const envNameUppercase = env.name.toUpperCase()
-        process.env[`IROOTS_NEW_xxx${envNameUppercase}_SSH_PORTxxx`] = env.ssh_connection.ssh_port.toString()
-        // Kinsta use the same IP for all environments.
-        process.env.IROOTS_NEW_SSH_IP = env.ssh_connection.ssh_ip.external_ip
-        process.env.IROOTS_NEW_xxxSSH_IPxxx = process.env.IROOTS_NEW_SSH_IP
+        ux.action.start('Gathering environment details')
+        await ux.wait(secondsToWait * 1000)
+        const kinstaSiteEnvironments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
+        for (const env of kinstaSiteEnvironments) {
+          // Kinsta do not provide slugged environment names, so we try to replicate.
+          const envNameUppercase = slugify(env.display_name).toUpperCase()
+          process.env[`IROOTS_NEW_xxx${envNameUppercase}_SSH_PORTxxx`] = env.ssh_connection.ssh_port.toString()
+          // Kinsta use the same IP for all environments.
+          process.env.IROOTS_NEW_SSH_IP = env.ssh_connection.ssh_ip.external_ip
+          process.env.IROOTS_NEW_xxxSSH_IPxxx = process.env.IROOTS_NEW_SSH_IP
+        }
+
+        ux.action.stop()
       }
-
-      ux.action.stop()
     }
 
     // Generate a Private Packagist token
@@ -537,15 +565,15 @@ export default class New extends Command {
     })
 
     ux.action.start('Decrypting vault.yml')
-    await trellis.vaultDecrypt('development', {
-      cwd: `${site}/trellis`,
-    })
-    await trellis.vaultDecrypt('production', {
-      cwd: `${site}/trellis`,
-    })
-    await trellis.vaultDecrypt('staging', {
-      cwd: `${site}/trellis`,
-    })
+    const environments = await trellis.getEnvironments(`${site}/trellis`)
+    const pushToEnvironments = environments.filter(env => !['development', 'production'].includes(env))
+    for (const env of environments) {
+      // eslint-disable-next-line no-await-in-loop
+      await trellis.vaultDecrypt(env, {
+        cwd: `${site}/trellis`,
+      })
+    }
+
     ux.action.stop()
 
     ux.action.start('Looking for files to perform search and replace')
@@ -638,15 +666,13 @@ export default class New extends Command {
     rmSync(`${site}/trellis/.vault_pass`, {recursive: true, force: true})
     const vaultPass = randomBytes(256).toString('hex')
     writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
-    await trellis.vaultEncrypt('development', {
-      cwd: `${site}/trellis`,
-    })
-    await trellis.vaultEncrypt('production', {
-      cwd: `${site}/trellis`,
-    })
-    await trellis.vaultEncrypt('staging', {
-      cwd: `${site}/trellis`,
-    })
+    for (const env of environments) {
+      // eslint-disable-next-line no-await-in-loop
+      await trellis.vaultEncrypt(env, {
+        cwd: `${site}/trellis`,
+      })
+    }
+
     ux.action.stop()
 
     ux.action.start('Commiting Trellis changes')
@@ -808,9 +834,13 @@ export default class New extends Command {
       await git.push('origin', bedrock_remote_branch, {
         cwd: `${site}/bedrock`,
       })
-      await git.push('origin', `${bedrock_remote_branch}:staging`, {
-        cwd: `${site}/bedrock`,
-      })
+      for (const env of pushToEnvironments) {
+        // eslint-disable-next-line no-await-in-loop
+        await git.push('origin', `${bedrock_remote_branch}:${env}`, {
+          cwd: `${site}/bedrock`,
+        })
+      }
+
       ux.action.stop()
     }
 
@@ -945,11 +975,15 @@ export default class New extends Command {
       })
       ux.action.stop()
 
-      ux.action.start('Deploying to staging')
-      await trellis.deploy('staging', {
-        cwd: `${site}/trellis`,
-      })
-      ux.action.stop()
+      const deployToEnvironments = environments.filter(env => env !== 'development')
+      for (const env of deployToEnvironments) {
+        ux.action.start(`Deploying to ${env}`)
+        // eslint-disable-next-line no-await-in-loop
+        await trellis.deploy(env, {
+          cwd: `${site}/trellis`,
+        })
+        ux.action.stop()
+      }
 
       ux.action.start('Deploying to production')
       await trellis.deploy('production', {
