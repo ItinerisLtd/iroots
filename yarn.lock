@@ -1560,17 +1560,17 @@
     wordwrap "^1.0.0"
     wrap-ansi "^7.0.0"
 
-"@oclif/core@^4.0.0-beta.12", "@oclif/core@^4.0.0-beta.13":
-  version "4.0.0-beta.15"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-4.0.0-beta.15.tgz#6dc7d36e302c4ea0fa44cf6ee94c8742985f719f"
-  integrity sha512-pmtZk8IR4xqPrlmUpjZcg/dxI2OtMXpZERd9rmPUGsS9eta7gFBKFUXqxfL5Ey/0jL8sJmsbmHsSADml0ntMOg==
+"@oclif/core@^4", "@oclif/core@^4.0.0-beta.13":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-4.0.1.tgz#8a7947c91ebe7cfd726b5208ab0726206f657ed5"
+  integrity sha512-A+mOOjs5+iv1MUrIwYsdekwhFvjNPWYmS+Ovd6ZsPoP8XAa6YCc7P/omtkbGV4ojfj45p2hBpdnFUg+lOxqY0A==
   dependencies:
     ansi-escapes "^4.3.2"
     ansis "^3.1.1"
     clean-stack "^3.0.1"
     cli-spinners "^2.9.2"
     cosmiconfig "^9.0.0"
-    debug "^4.3.4"
+    debug "^4.3.5"
     ejs "^3.1.10"
     get-package-type "^0.1.0"
     globby "^11.1.0"
@@ -4941,17 +4941,17 @@ object.values@^1.1.6:
     define-properties "^1.2.0"
     es-abstract "^1.22.1"
 
-oclif@^4.12.3:
-  version "4.12.3"
-  resolved "https://registry.yarnpkg.com/oclif/-/oclif-4.12.3.tgz#26d0de9bdea9f710745f5cecc10cfeef6d88ad52"
-  integrity sha512-o4j5/n0LbI/OOasTiKSO4R2H+8NiG2Cn3nwVbp9GoSPfCZW7Tuup+xXNlh2/lURAYVD69Vx5XUs1PIY9QLgS5Q==
+oclif@^4.13.0:
+  version "4.13.0"
+  resolved "https://registry.yarnpkg.com/oclif/-/oclif-4.13.0.tgz#34e50d3a177290a7d54bb65f0b9a79e68f8fbb6b"
+  integrity sha512-wStOS+OWPCxRPKK8h6A3ZIAJru2UA3e29WjXka0gheD9ZKYDdUldjjtt8tKTDfrDrGQAnRfwbeMvS66ihiBybQ==
   dependencies:
     "@aws-sdk/client-cloudfront" "^3.574.0"
     "@aws-sdk/client-s3" "^3.583.0"
     "@inquirer/confirm" "^3.1.6"
     "@inquirer/input" "^2.1.9"
     "@inquirer/select" "^2.3.5"
-    "@oclif/core" "^4.0.0-beta.12"
+    "@oclif/core" "^4"
     "@oclif/plugin-help" "^6.0.21"
     "@oclif/plugin-not-found" "^3.2.1"
     "@oclif/plugin-warn-if-update-available" "^3.0.19"
