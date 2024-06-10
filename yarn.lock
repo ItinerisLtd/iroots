@@ -1472,7 +1472,7 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@oclif/core@^3.26.6", "@oclif/core@^3.26.9":
+"@oclif/core@^3.26.6":
   version "3.26.9"
   resolved "https://registry.yarnpkg.com/@oclif/core/-/core-3.26.9.tgz#fccf176f390408b2170d1970ded304b4b20b6808"
   integrity sha512-yB5Yxd62DsHqqCK/60L8IiGpTRIU4J+fzCqfbPRiIYE5+agfN63kppaM+TbqyMBdsnt/PQOnYD8Bhs1quUr6fg==
@@ -1506,10 +1506,10 @@
     wordwrap "^1.0.0"
     wrap-ansi "^7.0.0"
 
-"@oclif/core@^4":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-4.0.1.tgz#8a7947c91ebe7cfd726b5208ab0726206f657ed5"
-  integrity sha512-A+mOOjs5+iv1MUrIwYsdekwhFvjNPWYmS+Ovd6ZsPoP8XAa6YCc7P/omtkbGV4ojfj45p2hBpdnFUg+lOxqY0A==
+"@oclif/core@^4", "@oclif/core@^4.0.3":
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/@oclif/core/-/core-4.0.3.tgz#6231272447c7057813986860448613ed38cfdc47"
+  integrity sha512-yM8R/M2WfSNfL9eF8clS/SbQvanvHZJgoij5bLs3ro7uAFCkL/LYcagyj0UVGbysx5AI+SNIof6OHQUXYZpOZw==
   dependencies:
     ansi-escapes "^4.3.2"
     ansis "^3.1.1"
