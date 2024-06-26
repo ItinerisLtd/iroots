@@ -20,7 +20,7 @@
   "dependencies": {
     "@oclif/core": "^3.26.9",
     "@oclif/plugin-help": "^6",
-    "execa": "^9.2.0",
+    "execa": "^9.3.0",
     "globby": "^14.0.1",
     "replace-in-file": "^8.0.1"
   },
