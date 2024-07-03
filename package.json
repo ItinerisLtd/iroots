@@ -22,7 +22,7 @@
     "@oclif/plugin-help": "^6",
     "execa": "^9.3.0",
     "globby": "^14.0.2",
-    "replace-in-file": "^8.0.1"
+    "replace-in-file": "^8.1.0"
   },
   "devDependencies": {
     "@oclif/test": "^4.0.4",
