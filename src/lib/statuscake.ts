@@ -11,9 +11,12 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   const fetchUrl = new URL(`${apiUrl}/${url}`)
   fetchUrl.searchParams.delete('apiKey')
 
-  return fetch(fetchUrl, options)
-    .then(resp => resp.json())
-    .then(data => data as TResponse)
+  const response = await fetch(fetchUrl, options)
+  if (response.status === 204 || response.statusText.toLowerCase() === 'no content') {
+    return null as TResponse
+  }
+
+  return response.json() as TResponse
 }
 
 export type StatusCakeUptimeStatus = 'up' | 'down'
@@ -115,6 +118,14 @@ type StatusCakeUptimeCreateResponse = {
   }
 }
 
+type StatusCakeUptimeDeleteResponse = {
+  message?: string
+  errors?: {
+    length: number
+    [key: string]: string[] | number
+  }
+}
+
 type StatusCakeUptimeCreateQueryArgs = StatusCakeUptimeTest & {
   // eslint-disable-next-line camelcase
   basic_username: string
@@ -205,4 +216,8 @@ export async function createUptimeTest(token: string, args: FlagOutput): Promise
   const response = await request<StatusCakeUptimeCreateResponse>(token, url, {method: 'POST', body: query})
 
   return response
+}
+
+export async function deleteUptimeTest(token: string, testId: string): Promise<StatusCakeUptimeDeleteResponse | null> {
+  return request<StatusCakeUptimeDeleteResponse | null>(token, `uptime/${testId}`, {method: 'DELETE'})
 }
