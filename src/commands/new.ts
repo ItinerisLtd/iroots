@@ -2,7 +2,7 @@ import {ux, Command, Flags} from '@oclif/core'
 import {randomBytes} from 'node:crypto'
 import {appendFileSync, readFileSync, existsSync, writeFileSync, rmSync, mkdirSync} from 'node:fs'
 import {globby} from 'globby'
-import replaceInFilePkg from 'replace-in-file'
+import {replaceInFile} from 'replace-in-file'
 
 import * as composer from '../lib/composer.js'
 import * as gh from '../lib/gh.js'
@@ -629,7 +629,6 @@ export default class New extends Command {
     ux.action.stop()
 
     ux.action.start('Searching and replacing')
-    const {replaceInFile} = replaceInFilePkg
     for (const {from, to} of qAndAs) {
       const regex = new RegExp(from, 'img')
 
