@@ -50,7 +50,7 @@ export default class New extends CloudflareCommand {
     const {apiKey, account, ...args} = flags
 
     if ((args.name?.length || 0) === 0 && args.domains.length > 0) {
-      args.name = args.domains.find(Boolean) as string
+      args.name = args.domains.at(0) as string
     }
 
     const site = await createSite(apiKey, account, args)
