@@ -14,13 +14,14 @@ import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
 import {
   cloneEnvironment,
-  createSite,
+  createSite as createKinstaSite,
   getSite,
   getSiteEnvironments,
   setPhpVersion,
   envNamesToCloneEnvironmentArgs,
 } from '../lib/kinsta.js'
 import {createProject, getAllProjectKeys} from '../lib/sentry.js'
+import {createSite as createTurnstileSite} from '../lib/cloudflare.js'
 
 type QAndA = {
   from: string
@@ -238,6 +239,7 @@ export default class New extends Command {
       description: 'The API key',
       env: 'IROOTS_SENTRY_API_KEY',
       required: true,
+      dependsOn: ['sentry'],
     }),
     sentry_organisation_slug: Flags.string({
       required: true,
@@ -276,7 +278,7 @@ export default class New extends Command {
       relationships: [
         {
           type: 'some',
-          flags: ['kinsta', 'sentry'],
+          flags: ['kinsta', 'sentry', 'turnstile'],
         },
       ],
     }),
@@ -286,6 +288,23 @@ export default class New extends Command {
       required: false,
       default: true,
       allowNo: true,
+    }),
+    turnstile: Flags.boolean({
+      description: 'whether or not to create a Clouflare Turnstile instance',
+      default: true,
+      allowNo: true,
+    }),
+    turnstile_api_key: Flags.string({
+      description: 'The API key',
+      env: 'IROOTS_CLOUDFLARE_API_KEY',
+      required: true,
+      dependsOn: ['turnstile'],
+    }),
+    turnstile_account: Flags.string({
+      description: 'The account identifier',
+      required: true,
+      env: 'IROOTS_CLOUDFLARE_ACCOUNT_ID',
+      dependsOn: ['turnstile'],
     }),
   }
 
@@ -337,6 +356,9 @@ export default class New extends Command {
       sentry_project_default_rules,
       display_name,
       wp_ssh_aliases,
+      turnstile,
+      turnstile_account,
+      turnstile_api_key,
     } = flags
 
     if (existsSync(site)) {
@@ -354,7 +376,7 @@ export default class New extends Command {
     if (kinsta) {
       const secondsToWait = 10
       ux.action.start('Creating Kinsta site live environment')
-      const createSiteResponse = await createSite(kinsta_api_key, {
+      const createSiteResponse = await createKinstaSite(kinsta_api_key, {
         company: kinsta_company,
         display_name: display_name,
         region: 'europe-west2',
@@ -456,6 +478,37 @@ export default class New extends Command {
         const secretDsn = firstProjectKeys?.dsn.secret
 
         process.env.IROOTS_NEW_xxxWP_SENTRY_PHP_DSNxxx = secretDsn
+      }
+
+      ux.action.stop()
+    }
+
+    if (turnstile) {
+      ux.action.start('Creating Turnstile instance')
+
+      const domains = [
+        process.env.IROOTS_NEW_xxxDEV_DOMAINxxx,
+        process.env.IROOTS_NEW_xxxSTAGING_DOMAINxxx,
+        process.env.IROOTS_NEW_xxxUAT_DOMAINxxx,
+        process.env.IROOTS_NEW_xxxLIVE_DOMAINxxx,
+      ].filter(Boolean)
+      const createTurnstileSiteResponse = await createTurnstileSite(turnstile_api_key, turnstile_account, {
+        bot_fight_mode: false,
+        clearance_level: 'no_clearance',
+        domains,
+        mode: 'managed',
+        name: display_name,
+        offlabel: false,
+        region: 'world',
+      })
+      if (createTurnstileSiteResponse) {
+        const {sitekey, secret} = createTurnstileSiteResponse
+
+        ux.info(`Cloudflare Turnstile siteKey: ${sitekey}`)
+        ux.info(`Cloudflare Turnstile secret: ${secret}`)
+
+        process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SITE_KEY = sitekey
+        process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SECRET = secret
       }
 
       ux.action.stop()
