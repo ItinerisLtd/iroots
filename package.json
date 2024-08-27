@@ -39,7 +39,7 @@
     "prettier": "^3.3.3",
     "shx": "^0.3.4",
     "ts-node": "^10",
-    "tslib": "^2.6.3",
+    "tslib": "^2.7.0",
     "typescript": "^5.5.4"
   },
   "engines": {
