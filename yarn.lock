@@ -1642,10 +1642,10 @@
     http-call "^5.2.2"
     lodash "^4.17.21"
 
-"@oclif/test@^4.0.10":
-  version "4.0.10"
-  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-4.0.10.tgz#9668789c1a33a703e36f49a86867c9840ee98cfe"
-  integrity sha512-NXS6gw0McR0pURpYD2PlWXbzMGnMzEXCoNLW4tfqP93E1D350G0EwSyz03ucvJIzbcnMnjDNnj2sVPHsf1c8XQ==
+"@oclif/test@^4.1.0":
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-4.1.0.tgz#7935e3707cf07480790139e02973196d18d16822"
+  integrity sha512-2ugir6NhRsWJqHM9d2lMEWNiOTD678Jlx5chF/fg6TCAlc7E6E/6+zt+polrCTnTIpih5P/HxOtDekgtjgARwQ==
   dependencies:
     ansis "^3.3.2"
     debug "^4.3.6"
