@@ -12,13 +12,22 @@ export default class List extends KinstaCommand {
       required: true,
       env: 'IROOTS_KINSTA_COMPANY_ID',
     }),
+    format: Flags.string({
+      required: false,
+      default: 'table',
+      options: ['json', 'table'],
+    }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const {apiKey, company} = flags
+    const {apiKey, company, format} = flags
 
     const sites = await getAllSites(apiKey, company)
-    console.table(sites)
+    if (format === 'json') {
+      console.log(JSON.stringify(sites))
+    } else {
+      console.table(sites)
+    }
   }
 }
