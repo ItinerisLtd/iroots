@@ -278,7 +278,7 @@ export default class New extends Command {
       relationships: [
         {
           type: 'some',
-          flags: ['kinsta', 'sentry', 'turnstile'],
+          flags: ['kinsta', 'sentry'],
         },
       ],
     }),
@@ -291,7 +291,7 @@ export default class New extends Command {
     }),
     turnstile: Flags.boolean({
       description: 'whether or not to create a Clouflare Turnstile instance',
-      default: true,
+      default: false,
       allowNo: true,
     }),
     turnstile_api_key: Flags.string({
