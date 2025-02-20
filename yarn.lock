@@ -1380,12 +1380,12 @@
     lodash "^4.17.21"
     registry-auth-token "^5.0.3"
 
-"@oclif/test@^4.1.9":
-  version "4.1.9"
-  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-4.1.9.tgz#3cc2254178a196a40affc04054aff992a13a37a3"
-  integrity sha512-bfh3uskNNUsK2LBU+/NOAG9dDZkOLOY29E233aRBwEIGvNSxyPs4LOYqdH9E/5N8Z1kBKCVC9tfHdE/B0Z8qCQ==
+"@oclif/test@^4.1.10":
+  version "4.1.10"
+  resolved "https://registry.yarnpkg.com/@oclif/test/-/test-4.1.10.tgz#2eccf034141f95fa1a7b1af0e8cfd68ebbc2d78b"
+  integrity sha512-46Uu4hXOa2JKrivE9b14R+QzV15z/d8ig4ZGyjhzf2oOV2b11HV6H7ZEXsupVLPS6Dp5TmIlVXo7/kdrlXmAHQ==
   dependencies:
-    ansis "^3.10.0"
+    ansis "^3.14.0"
     debug "^4.4.0"
 
 "@oclif/tslint@^3":
@@ -2215,10 +2215,10 @@ ansicolors@~0.3.2:
   resolved "https://registry.yarnpkg.com/ansicolors/-/ansicolors-0.3.2.tgz#665597de86a9ffe3aa9bfbe6cae5c6ea426b4979"
   integrity sha1-ZlWX3oap/+Oqm/vmyuXG6kJrSXk=
 
-ansis@^3.10.0, ansis@^3.5.2, ansis@^3.8.1:
-  version "3.10.0"
-  resolved "https://registry.yarnpkg.com/ansis/-/ansis-3.10.0.tgz#6886afb0f729b1fa865df6b710b97a9915b7d0d4"
-  integrity sha512-hxDKLYT7hy3Y4sF3HxI926A3urzPxi73mZBB629m9bCVF+NyKNxbwCqqm+C/YrGPtxLwnl6d8/ZASCsz6SyvJA==
+ansis@^3.14.0, ansis@^3.5.2, ansis@^3.8.1:
+  version "3.15.0"
+  resolved "https://registry.yarnpkg.com/ansis/-/ansis-3.15.0.tgz#8c2c5546685ceba0944dad9485903851b6e704f6"
+  integrity sha512-zIcWDJ+Kwqxfdnogx66Gxzr0kVmCcRAdat9nlY2IHsshqTN4fBH6tMeRMPA/2w0rpBayIJvjQAaa2/4RDrNqwg==
 
 arg@^4.1.0:
   version "4.1.3"
