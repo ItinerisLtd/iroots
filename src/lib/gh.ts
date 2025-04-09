@@ -129,3 +129,63 @@ mutation($repositoryId:ID!,$branch:String!,$isAdminEnforced:Boolean!,$requiresAp
     options,
   )
 }
+
+export async function getOrganizationId(login: string) {
+  const query = `
+{
+  organization(login: "${login}") {
+    id
+  }
+}
+`
+
+  const {stdout} = await execa('gh', ['api', 'graphql', '-f', `query=${query}`, '-q', '.data.organization.id'])
+
+  return stdout.trim()
+}
+
+export async function getEnterpriseId(slug: string) {
+  const query = `
+{
+  enterprise(slug: "${slug}") {
+    id
+  }
+}
+`
+
+  const {stdout} = await execa('gh', ['api', 'graphql', '-f', `query=${query}`, '-q', '.data.enterprise.id'])
+
+  return stdout.trim()
+}
+
+export async function createIpAllowListEntry(
+  ownerId: string,
+  ip: string,
+  name: string = '',
+  options = {},
+): Promise<Result> {
+  const query = `
+mutation() {
+  createIpAllowListEntry(
+    input: {
+      allowListValue: "${ip}"
+      clientMutationId: "iroots"
+      isActive: true
+      name: "${name}"
+      ownerId: "${ownerId}"
+    }
+  ) {
+    clientMutationId
+    ipAllowListEntry {
+      id
+      name
+      allowListValue
+      createdAt
+      updatedAt
+    }
+  }
+}
+  `
+
+  return execa('gh', ['api', 'graphql', '-f', `query=${query}`], options)
+}

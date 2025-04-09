@@ -77,6 +77,12 @@
       "cloudflare:turnstile": {
         "description": "Manage Cloudflare Turnstile instances"
       },
+      "github": {
+        "description": "Manage GitHub services"
+      },
+      "github:ip-allow-list": {
+        "description": "Manage GitHub IP allow list"
+      },
       "kinsta": {
         "description": "Manage Kinsta services"
       },
