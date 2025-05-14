@@ -323,3 +323,32 @@ export async function setPhpVersion(
 
   return response
 }
+
+export async function setWebroot(
+  token: string,
+  environmentId: string,
+  webroot: string,
+  clearAllCache: boolean,
+  refreshPluginsAndThemes: boolean,
+): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(
+    token,
+    `sites/environments/${environmentId}/change-webroot-subfolder`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        // eslint-disable-next-line camelcase
+        web_root_subfolder: webroot,
+        // eslint-disable-next-line camelcase
+        clear_all_cache: clearAllCache,
+        // eslint-disable-next-line camelcase
+        refresh_plugins_and_themes: refreshPluginsAndThemes,
+      }),
+    },
+  )
+
+  return response
+}
