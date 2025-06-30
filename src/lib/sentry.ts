@@ -16,6 +16,10 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
 
   const fetchUrl = `${apiUrl}/${url}`
   const response = await fetch(fetchUrl.endsWith('/') ? '' : `${fetchUrl}/`, options)
+  if (options.method === 'DELETE' && response.status === 204) {
+    return response as TResponse
+  }
+
   let json: {detail?: string} = {}
   if (response.body) {
     json = await response.json()
@@ -147,6 +151,11 @@ type SentryListProjectKeysResponse = {
   }
 }
 
+type SentryDeleteProjectResponse = {
+  status: number
+  statusText: string
+}
+
 export async function getProject(
   token: string,
   organisationSlug: string,
@@ -180,4 +189,12 @@ export async function getAllProjectKeys(
   projectSlug: string,
 ): Promise<SentryListProjectKeysResponse[]> {
   return request<SentryListProjectKeysResponse[]>(token, `projects/${organisationSlug}/${projectSlug}/keys`)
+}
+
+export async function deleteProject(
+  token: string,
+  organisation: string,
+  project: string,
+): Promise<SentryDeleteProjectResponse> {
+  return request<SentryDeleteProjectResponse>(token, `projects/${organisation}/${project}`, {method: 'DELETE'})
 }
