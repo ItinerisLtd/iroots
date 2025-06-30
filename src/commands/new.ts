@@ -162,7 +162,7 @@ export default class New extends Command {
       description: 'the site ID you wish to use for the network media library',
       env: 'IROOTS_NEW_NETWORK_MEDIA_LIBRARY_SITE_ID',
       required: false,
-      default: 2,
+      default: 1,
       dependsOn: ['multisite'],
     }),
     packagist: Flags.boolean({
