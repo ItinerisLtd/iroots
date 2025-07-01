@@ -155,3 +155,10 @@ export async function createDnsRecord(token: string, zoneId: string, args: FlagO
   })
   return response.result as CloudflareSite
 }
+
+export async function listDnsRecords(token: string, zoneId: string): Promise<CloudflareSite> {
+  const response = await dnsRequest<CloudflareSiteRequest>(token, zoneId, {
+    method: 'GET',
+  })
+  return response.result as CloudflareSite
+}
