@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
-import {createSite} from '../../../lib/cloudflare.js'
+import {createTurnstileWidget} from '../../../lib/cloudflare.js'
 
 export default class New extends CloudflareCommand {
   static description = 'Create a new Turnstile instance'
@@ -53,7 +53,7 @@ export default class New extends CloudflareCommand {
       args.name = args.domains.at(0) as string
     }
 
-    const site = await createSite(apiKey, account, args)
+    const site = await createTurnstileWidget(apiKey, account, args)
     console.table(site)
   }
 }
