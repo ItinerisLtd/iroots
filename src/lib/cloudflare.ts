@@ -136,8 +136,18 @@ async function zoneRequest<TResponse>(
   return request<TResponse>(token, requestUrl, options)
 }
 
-async function dnsRequest<TResponse>(token: string, zoneId: string, options: RequestInit = {}): Promise<TResponse> {
-  return zoneRequest<TResponse>(token, zoneId, 'dns_records', options)
+async function dnsRequest<TResponse>(
+  token: string,
+  zoneId: string,
+  options: RequestInit = {},
+  endpoint: string = '',
+): Promise<TResponse> {
+  let url = 'dns_records'
+  if (endpoint.length > 0) {
+    url = `${url}/${endpoint}`
+  }
+
+  return zoneRequest<TResponse>(token, zoneId, url, options)
 }
 
 export async function createDnsRecord(token: string, zoneId: string, args: FlagOutput): Promise<CloudflareSite> {
@@ -160,5 +170,17 @@ export async function listDnsRecords(token: string, zoneId: string): Promise<Clo
   const response = await dnsRequest<CloudflareSiteRequest>(token, zoneId, {
     method: 'GET',
   })
+  return response.result as CloudflareSite
+}
+
+export async function deleteDnsRecord(token: string, zoneId: string, recordId: string): Promise<CloudflareSite> {
+  const response = await dnsRequest<CloudflareSiteRequest>(
+    token,
+    zoneId,
+    {
+      method: 'DELETE',
+    },
+    recordId,
+  )
   return response.result as CloudflareSite
 }
