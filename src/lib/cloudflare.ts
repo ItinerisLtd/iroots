@@ -121,3 +121,37 @@ export async function deleteTurnstileWidget(token: string, account: string, site
 
   return response.result as CloudflareSite
 }
+
+async function zoneRequest<TResponse>(
+  token: string,
+  zoneId: string,
+  url: string = '',
+  options: RequestInit = {},
+): Promise<TResponse> {
+  const requestUrl = new URL(zonesApiUrl.replace('{zone_id}', zoneId))
+  if (url.length > 0) {
+    requestUrl.pathname = `${requestUrl.pathname}/${url}`
+  }
+
+  return request<TResponse>(token, requestUrl, options)
+}
+
+async function dnsRequest<TResponse>(token: string, zoneId: string, options: RequestInit = {}): Promise<TResponse> {
+  return zoneRequest<TResponse>(token, zoneId, 'dns_records', options)
+}
+
+export async function createDnsRecord(token: string, zoneId: string, args: FlagOutput): Promise<CloudflareSite> {
+  // Cloudflare requires TXT content to be wrapped in quotes
+  if (args.type === 'TXT') {
+    // Remove all quotes from the content
+    args.content = args.content.replace(/"/g, '')
+    // Wrap the content in quotes if it is not already
+    args.content = `"${args.content}"`
+  }
+
+  const response = await dnsRequest<CloudflareSiteRequest>(token, zoneId, {
+    method: 'POST',
+    body: JSON.stringify(args),
+  })
+  return response.result as CloudflareSite
+}
