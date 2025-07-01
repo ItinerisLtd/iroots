@@ -21,7 +21,7 @@ import {
   envNamesToCloneEnvironmentArgs,
 } from '../lib/kinsta.js'
 import {createProject, getAllProjectKeys} from '../lib/sentry.js'
-import {createSite as createTurnstileSite} from '../lib/cloudflare.js'
+import {createTurnstileWidget as createTurnstileSite} from '../lib/cloudflare.js'
 
 type QAndA = {
   from: string

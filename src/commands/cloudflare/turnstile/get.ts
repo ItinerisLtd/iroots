@@ -1,5 +1,5 @@
 import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
-import {getSite} from '../../../lib/cloudflare.js'
+import {getTurnstileWidget} from '../../../lib/cloudflare.js'
 import {Flags} from '@oclif/core'
 
 export default class Get extends CloudflareCommand {
@@ -18,7 +18,7 @@ export default class Get extends CloudflareCommand {
     const {flags} = await this.parse(Get)
     const {apiKey, account, siteKey} = flags
 
-    const sites = await getSite(apiKey, account, siteKey)
+    const sites = await getTurnstileWidget(apiKey, account, siteKey)
     console.table(sites)
   }
 }

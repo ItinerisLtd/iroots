@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {CloudflareCommand} from '../../../lib/commands/cloudflare-command.js'
-import {deleteSite} from '../../../lib/cloudflare.js'
+import {deleteTurnstileWidget} from '../../../lib/cloudflare.js'
 
 export default class Delete extends CloudflareCommand {
   static description = 'Delete a Turnstile instance'
@@ -18,7 +18,7 @@ export default class Delete extends CloudflareCommand {
     const {flags} = await this.parse(Delete)
     const {apiKey, account, siteKey} = flags
 
-    const sites = await deleteSite(apiKey, account, siteKey)
+    const sites = await deleteTurnstileWidget(apiKey, account, siteKey)
     console.table(sites)
   }
 }

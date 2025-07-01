@@ -1,7 +1,9 @@
 import {ux} from '@oclif/core'
 import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 
-const apiUrl = 'https://api.cloudflare.com/client/v4/accounts/{account_identifier}/challenges/widgets'
+const apiUrl = 'https://api.cloudflare.com/client/v4'
+const turnstileApiUrl = `${apiUrl}/accounts/{account_identifier}/challenges/widgets`
+const zonesApiUrl = `${apiUrl}/zones/{zone_id}`
 
 type CloudflareSite = {
   // eslint-disable-next-line camelcase
@@ -56,8 +58,7 @@ type CloudflareError = {
 
 async function request<TResponse>(
   token: string,
-  account: string,
-  url: string = '',
+  url: URL | string = '',
   options: RequestInit = {},
 ): Promise<TResponse> {
   const headers = new Headers(options?.headers)
@@ -66,12 +67,7 @@ async function request<TResponse>(
   options.headers = headers
   options.method ??= 'GET'
 
-  const requestUrl = new URL(apiUrl.replace('{account_identifier}', account))
-  if (url.length > 0) {
-    requestUrl.pathname = `${requestUrl.pathname}/${url}`
-  }
-
-  const response = await fetch(requestUrl, options)
+  const response = await fetch(url, options)
   const data = await response.json()
   const statusCode = data.status || response.status
   if (statusCode !== 200) {
@@ -83,20 +79,34 @@ async function request<TResponse>(
   return data as TResponse
 }
 
-export async function getAllSites(token: string, account: string): Promise<CloudflareSite[]> {
-  const response = await request<CloudflareSitesRequest>(token, account)
+async function turnstileRequest<TResponse>(
+  token: string,
+  account: string,
+  url: string = '',
+  options: RequestInit = {},
+): Promise<TResponse> {
+  const requestUrl = new URL(turnstileApiUrl.replace('{account_identifier}', account))
+  if (url.length > 0) {
+    requestUrl.pathname = `${requestUrl.pathname}/${url}`
+  }
+
+  return request<TResponse>(token, requestUrl, options)
+}
+
+export async function getAllTurnstileWidgets(token: string, account: string): Promise<CloudflareSite[]> {
+  const response = await turnstileRequest<CloudflareSitesRequest>(token, account)
 
   return response.result as CloudflareSite[]
 }
 
-export async function getSite(token: string, account: string, siteKey: string): Promise<CloudflareSite> {
-  const response = await request<CloudflareSiteRequest>(token, account, siteKey)
+export async function getTurnstileWidget(token: string, account: string, siteKey: string): Promise<CloudflareSite> {
+  const response = await turnstileRequest<CloudflareSiteRequest>(token, account, siteKey)
 
   return response.result as CloudflareSite
 }
 
-export async function createSite(token: string, account: string, args: FlagOutput): Promise<CloudflareSite> {
-  const response = await request<CloudflareSiteRequest>(token, account, '', {
+export async function createTurnstileWidget(token: string, account: string, args: FlagOutput): Promise<CloudflareSite> {
+  const response = await turnstileRequest<CloudflareSiteRequest>(token, account, '', {
     method: 'POST',
     body: JSON.stringify(args),
   })
@@ -104,8 +114,8 @@ export async function createSite(token: string, account: string, args: FlagOutpu
   return response.result as CloudflareSite
 }
 
-export async function deleteSite(token: string, account: string, siteKey: string): Promise<CloudflareSite> {
-  const response = await request<CloudflareSiteRequest>(token, account, siteKey, {
+export async function deleteTurnstileWidget(token: string, account: string, siteKey: string): Promise<CloudflareSite> {
+  const response = await turnstileRequest<CloudflareSiteRequest>(token, account, siteKey, {
     method: 'DELETE',
   })
 
