@@ -86,6 +86,9 @@
       "kinsta:sites": {
         "description": "Manage Kinsta WordPress sites"
       },
+      "kinsta:sites:domains": {
+        "description": "Manage Kinsta site environment domains"
+      },
       "kinsta:sites:tools": {
         "description": "Tools for Kinsta sites"
       },
