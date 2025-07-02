@@ -1,8 +1,6 @@
 import {Command, Flags} from '@oclif/core'
 
 export abstract class PackagistCommand extends Command {
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
   static baseFlags = {
     apiKey: Flags.string({
       description: 'The API key',
@@ -15,4 +13,5 @@ export abstract class PackagistCommand extends Command {
       required: true,
     }),
   }
+static examples = ['<%= config.bin %> <%= command.id %>']
 }

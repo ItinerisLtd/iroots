@@ -1,4 +1,4 @@
-import {execa, Result, Options} from 'execa'
+import {execa, Options, Result} from 'execa'
 
 export async function install(options?: Options): Promise<Result> {
   return execa('composer', ['install'], options)

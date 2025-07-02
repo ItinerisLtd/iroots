@@ -1,13 +1,12 @@
+import {Flags} from '@oclif/core'
+
 import {SendGridCommand} from '../../../lib/commands/sendgrid-command.js'
 import {getApiKey} from '../../../lib/sendgrid.js'
-import {Flags} from '@oclif/core'
 
 export default class Get extends SendGridCommand {
   static description = 'Get information about an API key'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {
     apiKeyId: Flags.string({
       description: 'The API key ID',
       required: true,

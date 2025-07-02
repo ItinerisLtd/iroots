@@ -1,5 +1,5 @@
 import {ux} from '@oclif/core'
-import {ExecaError, execa} from 'execa'
+import {execa, ExecaError} from 'execa'
 
 export async function dbCreate(options = {}): Promise<boolean> {
   try {

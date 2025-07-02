@@ -1,12 +1,12 @@
 import {Flags} from '@oclif/core'
+import {inspect} from 'node:util'
+
 import {KinstaCommand} from '../../../../lib/commands/kinsta-command.js'
 import {getSite} from '../../../../lib/kinsta.js'
-import {inspect} from 'node:util'
 
 export default class Get extends KinstaCommand {
   static description = 'Get information about a Kinsta site'
-
-  static flags = {
+static flags = {
     siteId: Flags.string({
       required: true,
     }),

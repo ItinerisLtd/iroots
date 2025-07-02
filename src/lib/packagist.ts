@@ -1,25 +1,26 @@
-import {ukSort} from './utility.js'
 import {createHmac, randomUUID} from 'node:crypto'
+
+import {ukSort} from './utility.js'
 
 const apiHost = 'https://packagist.com'
 
 type PackagistApiResponseError = {
-  status: string
-  message: string
   documentationUrl: string
+  message: string
+  status: string
 }
 
 type PackagistApiResponseSuccess = {
-  description: string
   access: string
+  accessToAllPackages: boolean
+  description: string
   expiresAt: string
   id: number
-  url: string
-  user: string
-  token: string
   lastUsed: string
   teamId: number
-  accessToAllPackages: boolean
+  token: string
+  url: string
+  user: string
 }
 
 type PackagistApiParams = {
@@ -38,16 +39,16 @@ export type PackagistNewTokenParam = {
 }
 
 export type PackagistRegenerateTokenParam = {
-  tokenId: number
-  IConfirmOldTokenWillStopWorkingImmediately: boolean
   expiresAt?: string
+  IConfirmOldTokenWillStopWorkingImmediately: boolean
+  tokenId: number
 }
 
 type PackagistApiKeyResponse = PackagistApiResponseError & PackagistApiResponseSuccess
 
 function signHmacSha256(key: string, str: string): string {
   const hmac = createHmac('sha256', key)
-  return hmac.update(Buffer.from(str, 'utf-8')).digest('base64')
+  return hmac.update(Buffer.from(str, 'utf8')).digest('base64')
 }
 
 function generateSignature(url: string, params: PackagistApiParams, secret: string, options: RequestInit = {}) {
@@ -112,8 +113,8 @@ export async function createToken(
   params: PackagistNewTokenParam,
 ): Promise<PackagistApiKeyResponse> {
   return request<PackagistApiKeyResponse>(key, secret, 'api/tokens/', {
-    method: 'POST',
     body: JSON.stringify(params),
+    method: 'POST',
   })
 }
 
@@ -125,7 +126,7 @@ export async function regenerateToken(
   const {tokenId, ...params} = args
 
   return request<PackagistApiKeyResponse>(key, secret, `api/tokens/${tokenId}/regenerate`, {
-    method: 'POST',
     body: JSON.stringify(params),
+    method: 'POST',
   })
 }

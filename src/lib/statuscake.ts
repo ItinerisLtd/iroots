@@ -19,30 +19,30 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   return response.json() as TResponse
 }
 
-export type StatusCakeUptimeStatus = 'up' | 'down'
+export type StatusCakeUptimeStatus = 'down' | 'up'
 
 type StatusCakeUptimeListQueryArgs = {
-  status: StatusCakeUptimeStatus
-  page: number
+  [key: string]: boolean | number | string | string[] | undefined
   limit: number
-  tags: string[]
   matchany: boolean
   nouptime: boolean
-  [key: string]: string | string[] | number | boolean | undefined
+  page: number
+  status: StatusCakeUptimeStatus
+  tags: string[]
 }
 
 type StatusCakeUptimeTestBaseType = {
-  name: string
-  // eslint-disable-next-line camelcase
-  website_url: string
-  // eslint-disable-next-line camelcase
-  test_type: 'DNS' | 'HEAD' | 'HTTP' | 'PING' | 'SMTP' | 'SSH' | 'TCP'
-  // eslint-disable-next-line camelcase
+
   check_rate: number
-  // eslint-disable-next-line camelcase
+
   contact_groups: string[]
+  name: string
   paused: boolean
   tags?: string[]
+
+  test_type: 'DNS' | 'HEAD' | 'HTTP' | 'PING' | 'SMTP' | 'SSH' | 'TCP'
+
+  website_url: string
 }
 
 type StatusCakeUptimeTestOverview = StatusCakeUptimeTestBaseType & {
@@ -51,49 +51,49 @@ type StatusCakeUptimeTestOverview = StatusCakeUptimeTestBaseType & {
 
 type StatusCakeUptimeTest = StatusCakeUptimeTestOverview & {
   confirmation: number
-  // eslint-disable-next-line camelcase
+
   dns_ips: string[]
-  // eslint-disable-next-line camelcase
+
   do_not_find: boolean
-  // eslint-disable-next-line camelcase
+
   enable_ssl_alert: boolean
-  // eslint-disable-next-line camelcase
+
   follow_redirects: boolean
   host: string
-  // eslint-disable-next-line camelcase
+
   include_header: boolean
-  // eslint-disable-next-line camelcase
+
   last_tested_at: Date
-  // eslint-disable-next-line camelcase
+
   next_location: string
   paused: boolean
   processing: boolean
-  // eslint-disable-next-line camelcase
+
   processing_on: string
-  // eslint-disable-next-line camelcase
+
   processing_state: 'complete' | 'pretest' | 'retest' | 'up_retest'
   servers: string[]
-  status: 'up' | 'down'
-  // eslint-disable-next-line camelcase
+  status: 'down' | 'up'
+
   status_codes: string[]
   tags: []
   timeout: number
-  // eslint-disable-next-line camelcase
+
   trigger_rate: number
   uptime: number // is actually a float
-  // eslint-disable-next-line camelcase
+
   use_jar: boolean
-  // eslint-disable-next-line camelcase
+
   user_agent: string
 }
 
 type StatusCakePagination = {
   page: number
-  // eslint-disable-next-line camelcase
-  per_page: number
-  // eslint-disable-next-line camelcase
+
   page_count: number
-  // eslint-disable-next-line camelcase
+
+  per_page: number
+
   total_count: number
 }
 
@@ -108,50 +108,50 @@ type StatusCakeUptimeGetResponse = {
 
 type StatusCakeUptimeCreateResponse = {
   data: {
-    // eslint-disable-next-line camelcase
+
     new_id: string
   }
-  message?: string
   errors?: {
+    [key: string]: number | string[]
     length: number
-    [key: string]: string[] | number
   }
+  message?: string
 }
 
 type StatusCakeUptimeDeleteResponse = {
-  message?: string
   errors?: {
+    [key: string]: number | string[]
     length: number
-    [key: string]: string[] | number
   }
+  message?: string
 }
 
 type StatusCakeUptimeCreateQueryArgs = StatusCakeUptimeTest & {
-  // eslint-disable-next-line camelcase
-  basic_username: string
-  // eslint-disable-next-line camelcase
+
+  [key: string]: boolean | number | Record<'new_id', string> | string | string[]
+
   basic_password: string
-  // eslint-disable-next-line camelcase
+
+  basic_username: string
+
   custom_header: string
-  // eslint-disable-next-line camelcase
+
   dns_server: string
-  // eslint-disable-next-line camelcase
+
   enable_ssl_alert: boolean
-  // eslint-disable-next-line camelcase
+
   final_endpoint: string
-  // eslint-disable-next-line camelcase
+
   find_string: string
-  // eslint-disable-next-line camelcase
   follow_redirects: boolean
+
   port: number
-  // eslint-disable-next-line camelcase
+
   post_body: string
-  // eslint-disable-next-line camelcase
   post_raw: string
+
   regions: string[]
-  // eslint-disable-next-line camelcase
   status_codes_csv: string
-  [key: string]: string | string[] | boolean | number | Record<'new_id', string>
 }
 
 export async function getAllUptimes(
@@ -160,7 +160,7 @@ export async function getAllUptimes(
 ): Promise<StatusCakeUptimeTestOverview[]> {
   const query = new URLSearchParams()
   for (const key in queryArgs) {
-    if (!Object.prototype.hasOwnProperty.call(queryArgs, key)) {
+    if (!Object.hasOwn(queryArgs, key)) {
       continue
     }
 
@@ -188,7 +188,7 @@ export async function createUptimeTest(token: string, args: OutputFlags<any>): P
   const queryArgs = args as StatusCakeUptimeCreateQueryArgs
   const query = new URLSearchParams()
   for (const key in queryArgs) {
-    if (!Object.prototype.hasOwnProperty.call(queryArgs, key)) {
+    if (!Object.hasOwn(queryArgs, key)) {
       continue
     }
 
@@ -213,11 +213,11 @@ export async function createUptimeTest(token: string, args: OutputFlags<any>): P
   }
 
   const url = `uptime`
-  const response = await request<StatusCakeUptimeCreateResponse>(token, url, {method: 'POST', body: query})
+  const response = await request<StatusCakeUptimeCreateResponse>(token, url, {body: query, method: 'POST'})
 
   return response
 }
 
-export async function deleteUptimeTest(token: string, testId: string): Promise<StatusCakeUptimeDeleteResponse | null> {
-  return request<StatusCakeUptimeDeleteResponse | null>(token, `uptime/${testId}`, {method: 'DELETE'})
+export async function deleteUptimeTest(token: string, testId: string): Promise<null | StatusCakeUptimeDeleteResponse> {
+  return request<null | StatusCakeUptimeDeleteResponse>(token, `uptime/${testId}`, {method: 'DELETE'})
 }

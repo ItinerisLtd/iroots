@@ -3,8 +3,7 @@ import {getAllTokens} from '../../../lib/packagist.js'
 
 export default class List extends PackagistCommand {
   static description = 'List all the tokens'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
+static examples = ['<%= config.bin %> <%= command.id %>']
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(List)

@@ -1,13 +1,12 @@
 import {Flags} from '@oclif/core'
+
 import {SendGridCommand} from '../../../lib/commands/sendgrid-command.js'
 import {deleteApiKey} from '../../../lib/sendgrid.js'
 
 export default class Delete extends SendGridCommand {
   static description = 'Delete an API key'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {
     apiKeyId: Flags.string({
       description: 'The API key ID',
       required: true,

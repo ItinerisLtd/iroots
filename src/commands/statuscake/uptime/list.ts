@@ -1,53 +1,52 @@
 import {Flags} from '@oclif/core'
-import {StatusCakeUptimeStatus, getAllUptimes} from '../../../lib/statuscake.js'
+
 import {StatusCakeCommand} from '../../../lib/commands/statuscake-command.js'
+import {getAllUptimes, StatusCakeUptimeStatus} from '../../../lib/statuscake.js'
 
 export default class List extends StatusCakeCommand {
   static description = 'List uptime monitors'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {
-    status: Flags.string({
-      description: 'Uptime check status',
-      options: ['up', 'down'],
-      default: 'up',
-    }),
-    page: Flags.integer({
-      description: 'Page of results',
-      default: 1,
-    }),
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {
     limit: Flags.integer({
-      description: 'Page of results',
       default: 25,
+      description: 'Page of results',
       max: 100,
     }),
-    tags: Flags.string({
-      description: 'Comma separated list of tags assocaited with a check',
-      multiple: true,
-      default: [],
-    }),
     matchany: Flags.boolean({
-      description: 'Include uptime checks in response that match any specified tag or all tags',
       default: false,
+      description: 'Include uptime checks in response that match any specified tag or all tags',
     }),
     nouptime: Flags.boolean({
-      description: 'Do not calculate uptime percentages for results',
       default: false,
+      description: 'Do not calculate uptime percentages for results',
+    }),
+    page: Flags.integer({
+      default: 1,
+      description: 'Page of results',
+    }),
+    status: Flags.string({
+      default: 'up',
+      description: 'Uptime check status',
+      options: ['up', 'down'],
+    }),
+    tags: Flags.string({
+      default: [],
+      description: 'Comma separated list of tags assocaited with a check',
+      multiple: true,
     }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const {apiKey, status, page, limit, tags, matchany, nouptime} = flags
+    const {apiKey, limit, matchany, nouptime, page, status, tags} = flags
 
     const list = await getAllUptimes(apiKey, {
-      status: status as StatusCakeUptimeStatus,
-      page,
       limit,
-      tags,
       matchany,
       nouptime,
+      page,
+      status: status as StatusCakeUptimeStatus,
+      tags,
     })
     console.table(list)
   }

@@ -1,15 +1,19 @@
+import {confirm} from '@inquirer/prompts'
 import {Flags} from '@oclif/core'
+
+import type {PackagistRegenerateTokenParam} from '../../../lib/packagist.js'
+
 import {PackagistCommand} from '../../../lib/commands/packagist-command.js'
 import {regenerateToken} from '../../../lib/packagist.js'
-import type {PackagistRegenerateTokenParam} from '../../../lib/packagist.js'
-import {confirm} from '@inquirer/prompts'
 
 export default class New extends PackagistCommand {
   static description = 'Regenerate a token'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {
+    expiresAt: Flags.string({
+      description: 'Time at which the token expires. Example: 2023-11-20T11:36:00+00:00',
+      required: false,
+    }),
     IConfirmOldTokenWillStopWorkingImmediately: Flags.boolean({
       description: 'The required confirmation field',
       required: false,
@@ -17,10 +21,6 @@ export default class New extends PackagistCommand {
     tokenId: Flags.integer({
       description: 'The ID of token we want to regenerate.',
       required: true,
-    }),
-    expiresAt: Flags.string({
-      description: 'Time at which the token expires. Example: 2023-11-20T11:36:00+00:00',
-      required: false,
     }),
   }
 

@@ -1,14 +1,14 @@
 import {Flags} from '@oclif/core'
+
 import {SentryCommand} from '../../../lib/commands/sentry-command.js'
 import {deleteProject} from '../../../lib/sentry.js'
 
 export default class Delete extends SentryCommand {
   static description = 'Delete a specific project from Sentry account'
-
-  static flags = {
+static flags = {
     organisation: Flags.string({
-      required: true,
       env: 'IROOTS_SENTRY_ORGANISATION_SLUG',
+      required: true,
     }),
     project: Flags.string({
       required: true,
