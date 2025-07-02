@@ -504,8 +504,8 @@ export default class New extends Command {
       if (createTurnstileSiteResponse) {
         const {sitekey, secret} = createTurnstileSiteResponse
 
-        ux.info(`Cloudflare Turnstile siteKey: ${sitekey}`)
-        ux.info(`Cloudflare Turnstile secret: ${secret}`)
+        ux.stdout(`Cloudflare Turnstile siteKey: ${sitekey}`)
+        ux.stdout(`Cloudflare Turnstile secret: ${secret}`)
 
         process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SITE_KEY = sitekey
         process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SECRET = secret
@@ -1014,7 +1014,7 @@ export default class New extends Command {
       })
       ux.action.stop()
 
-      ux.info('Linking Valet site')
+      ux.stdout('Linking Valet site')
       await trellis.valetLink({
         cwd: `${site}/trellis`,
       })
@@ -1046,12 +1046,12 @@ export default class New extends Command {
 
     if (github) {
       const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join(',')
-      ux.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
+      ux.stdout(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
     }
 
     if (multisite) {
-      ux.info("Don't forget to install the multisite DB!")
-      ux.info(
+      ux.stdout("Don't forget to install the multisite DB!")
+      ux.stdout(
         '$ wp core multisite-install --title="site title" --admin_user="username" --admin_password="password" --admin_email="you@example.com"',
       )
     }
