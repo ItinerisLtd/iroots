@@ -1,5 +1,5 @@
 import {ux} from '@oclif/core'
-import {ExecaError, execa} from 'execa'
+import {execa, ExecaError} from 'execa'
 
 export async function dbCreate(options = {}): Promise<boolean> {
   try {
@@ -7,7 +7,7 @@ export async function dbCreate(options = {}): Promise<boolean> {
     return true
   } catch (error) {
     if (error instanceof ExecaError && 'stdout' in error) {
-      ux.log(error?.stdout)
+      ux.stdout(error?.stdout)
     }
 
     return false

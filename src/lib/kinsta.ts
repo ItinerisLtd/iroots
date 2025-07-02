@@ -1,5 +1,7 @@
 import {ux} from '@oclif/core'
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags} from '@oclif/core/interfaces'
+
+import {wait} from './misc.js'
 
 const apiUrl = 'https://api.kinsta.com/v2'
 
@@ -14,43 +16,43 @@ type KinstaDomain = {
 }
 
 type KinstaEnvironment = {
-  id: string
-  name: string
-  // eslint-disable-next-line camelcase
-  display_name: string
-  // eslint-disable-next-line camelcase
-  is_premium: boolean
-  // eslint-disable-next-line camelcase
-  is_blocked: boolean
-  // eslint-disable-next-line camelcase
-  id_edge_cache?: string
-  // eslint-disable-next-line camelcase
+   
   cdn_cache_id?: string
+   
+  display_name: string
   domains?: KinstaDomain[]
+  id: string
+   
+  id_edge_cache?: string
+   
+  is_blocked: boolean
+   
+  is_premium: boolean
+  name: string
   primaryDomain?: KinstaDomain
-  // eslint-disable-next-line camelcase
+   
   ssh_connection: {
-    // eslint-disable-next-line camelcase
-    ssh_port: number
-    // eslint-disable-next-line camelcase
+     
     ssh_ip: {
-      // eslint-disable-next-line camelcase
+       
       external_ip: string
     }
+     
+    ssh_port: number
   }
 }
 
 export type KinstaSite = {
+   
+  company_id: string
+   
+  display_name: string
+  environments?: KinstaEnvironment[]
   id: string
   name: string
-  // eslint-disable-next-line camelcase
-  display_name: string
-  status?: string
-  // eslint-disable-next-line camelcase
-  company_id: string
-  // eslint-disable-next-line camelcase
+   
   site_labels?: KinstaSiteLabel[]
-  environments?: KinstaEnvironment[]
+  status?: string
 }
 
 type KinstaCompany = {
@@ -72,14 +74,14 @@ type KinstaEnvironmentsRequest = {
 }
 
 type KinstaBasicResponse = {
-  status: keyof ResponseCodes
   message: string
+  status: keyof ResponseCodes
 }
 
 type KinstaCreateSiteResponse = KinstaBasicResponse & {
   data: {
-    idSite: string
     idEnv: string
+    idSite: string
   }
 }
 
@@ -93,19 +95,19 @@ export type ResponseCodes = {
 }
 
 type KinstaError = {
-  error: string
-  status: keyof ResponseCodes
-  message: string
   data: {
-    status: keyof ResponseCodes
     message: string
+    status: keyof ResponseCodes
   }
+  error: string
+  message: string
+  status: keyof ResponseCodes
 }
 
 type KinstaOperationResponse = {
-  // eslint-disable-next-line camelcase
-  operation_id: string
+   
   message: string
+  operation_id: string
   status: keyof ResponseCodes
 }
 
@@ -122,12 +124,12 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   // const rateLimitLimit = Number.parseInt(response.headers.get('x-ratelimit-limit') || '0', 10)
   const rateLimitRemaining = Number.parseInt(response.headers.get('x-ratelimit-remaining') || '0', 10)
   if (rateLimitRemaining < 5) {
-    await ux.wait((retryAfter + 1) * 1000)
+    await wait((retryAfter + 1) * 1000)
   }
 
   // Too many requests. Wait and try again.
   if (statusCode === 429 || response.statusText.toLowerCase() === 'too many requests') {
-    await ux.wait((retryAfter + 1) * 1000)
+    await wait((retryAfter + 1) * 1000)
     return request<TResponse>(token, url, options)
   }
 
@@ -151,7 +153,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   // The response is still in progress, wait until it is finished.
   if ('operation_id' in data) {
     // Wait 5 seconds to ensure the operation can be queried
-    await ux.wait((retryAfter > 5 ? retryAfter : 5) * 1000)
+    await wait((Math.max(retryAfter, 5)) * 1000)
     const operationStatus = await checkOperationStatus(token, data.operation_id)
     return operationStatus as TResponse
   }
@@ -178,11 +180,11 @@ export async function getSiteEnvironments(token: string, siteId: string): Promis
 }
 
 type KinstaCloneEnvironmentArgs = {
-  // eslint-disable-next-line camelcase
+   
   display_name: string
-  // eslint-disable-next-line camelcase
+   
   is_premium: boolean
-  // eslint-disable-next-line camelcase
+   
   source_env_id: string
 }
 
@@ -191,29 +193,27 @@ export function envNamesToCloneEnvironmentArgs(
   sourceEnvId: string,
   isPremium: boolean = false,
 ): KinstaCloneEnvironmentArgs[] {
-  return displayNames.map<KinstaCloneEnvironmentArgs>(displayName => {
-    return {
+  return displayNames.map<KinstaCloneEnvironmentArgs>(displayName => ({
       // eslint-disable-next-line camelcase
       display_name: displayName,
       // eslint-disable-next-line camelcase
       is_premium: isPremium,
       // eslint-disable-next-line camelcase
       source_env_id: sourceEnvId,
-    }
-  })
+    }))
 }
 
 export async function cloneEnvironment(
   token: string,
   siteId: string,
   args: KinstaCloneEnvironmentArgs,
-): Promise<KinstaBasicResponse | Error> {
+): Promise<Error | KinstaBasicResponse> {
   const response = await request<KinstaBasicResponse>(token, `sites/${siteId}/environments/clone`, {
-    method: 'POST',
+    body: JSON.stringify(args),
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(args),
+    method: 'POST',
   })
 
   return response
@@ -259,13 +259,13 @@ export function getRegions(): string[] {
   ]
 }
 
-export async function createSite(token: string, args: FlagOutput): Promise<KinstaCreateSiteResponse> {
+export async function createSite(token: string, args: OutputFlags<any>): Promise<KinstaCreateSiteResponse> {
   const response = await request<KinstaCreateSiteResponse>(token, 'sites/plain', {
-    method: 'POST',
+    body: JSON.stringify(args),
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(args),
+    method: 'POST',
   })
 
   return response
@@ -281,7 +281,7 @@ export async function checkOperationStatus<TResponse>(
   apiKey: string,
   operationId: string,
   secondsToWait: number = 5,
-): Promise<TResponse | Error> {
+): Promise<Error | TResponse> {
   let operationStatus = null
   let operationStatusCode = 404
 
@@ -289,7 +289,7 @@ export async function checkOperationStatus<TResponse>(
     // This is to make sure that Kinsta have created the operation for us to query.
     // If we send the request too soon, it will not be ready to view.
     // eslint-disable-next-line no-await-in-loop
-    await ux.wait(secondsToWait * 1000)
+    await wait(secondsToWait * 1000)
 
     // eslint-disable-next-line no-await-in-loop
     operationStatus = await getOperationStatus(apiKey, operationId)
@@ -309,16 +309,16 @@ export async function setPhpVersion(
   version: string,
 ): Promise<KinstaBasicResponse> {
   const response = await request<KinstaBasicResponse>(token, 'sites/tools/modify-php-version', {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({
       // eslint-disable-next-line camelcase
       environment_id: environmentId,
       // eslint-disable-next-line camelcase
       php_version: version,
     }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'PUT',
   })
 
   return response
@@ -327,14 +327,14 @@ export async function setPhpVersion(
 export async function addDomainToEnvironment(
   token: string,
   environmentId: string,
-  args: FlagOutput,
+  args: OutputFlags<any>,
 ): Promise<KinstaBasicResponse> {
   const response = await request<KinstaBasicResponse>(token, `sites/environments/${environmentId}/domains`, {
-    method: 'POST',
+    body: JSON.stringify(args),
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(args),
+    method: 'POST',
   })
   return response
 }

@@ -1,13 +1,12 @@
-import {getNewAccessToken, getSite} from '../../../lib/stackpath.js'
-import {StackPathCommand} from '../../../lib/commands/stackpath-command.js'
 import {Flags} from '@oclif/core'
+
+import {StackPathCommand} from '../../../lib/commands/stackpath-command.js'
+import {getNewAccessToken, getSite} from '../../../lib/stackpath.js'
 
 export default class GetSite extends StackPathCommand {
   static description = 'Get an individual site'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {
     siteId: Flags.string({
       description: 'The site ID',
       env: 'IROOTS_STACKPATH_SITE_ID',
@@ -17,7 +16,7 @@ export default class GetSite extends StackPathCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(GetSite)
-    const {clientId, clientSecret, stackId, siteId} = flags
+    const {clientId, clientSecret, siteId, stackId} = flags
 
     const token = await getNewAccessToken(clientId, clientSecret)
     if (!token) {

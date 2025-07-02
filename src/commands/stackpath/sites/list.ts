@@ -1,12 +1,10 @@
-import {getAllSites, getNewAccessToken} from '../../../lib/stackpath.js'
 import {StackPathCommand} from '../../../lib/commands/stackpath-command.js'
+import {getAllSites, getNewAccessToken} from '../../../lib/stackpath.js'
 
 export default class GetAllSites extends StackPathCommand {
   static description = 'Get list of all sites'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {}
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {}
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(GetAllSites)

@@ -1,14 +1,14 @@
 import {Flags} from '@oclif/core'
+
 import {SentryCommand} from '../../../lib/commands/sentry-command.js'
 import {getProject} from '../../../lib/sentry.js'
 
 export default class Get extends SentryCommand {
   static description = 'Get a specific project from Sentry account'
-
-  static flags = {
+static flags = {
     organisationSlug: Flags.string({
-      required: true,
       env: 'IROOTS_SENTRY_ORGANISATION_SLUG',
+      required: true,
     }),
     projectSlug: Flags.string({
       required: true,

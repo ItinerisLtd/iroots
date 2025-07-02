@@ -3,9 +3,9 @@ import {ux} from '@oclif/core'
 const apiUrl = 'https://api.sendgrid.com/v3'
 
 type SendGridApiKey = {
-  // eslint-disable-next-line camelcase
+
   api_key: string
-  // eslint-disable-next-line camelcase
+
   api_key_id: string
   name: string
   scopes: string[]
@@ -22,16 +22,16 @@ type SendGridApiKeyResponse = SendGridApiKey & {
 }
 
 type SendGridApiKeysResponse = {
-  result: SendGridApiKey[]
   errors: SendGridError[]
+  result: SendGridApiKey[]
 }
 
 type SendGridAllowedIP = {
+
+  created_at: Date
   id: number
   ip: string
-  // eslint-disable-next-line camelcase
-  created_at: Date
-  // eslint-disable-next-line camelcase
+
   updated_at: Date
 }
 
@@ -79,12 +79,12 @@ export async function getAllApiKeys(token: string, limit: number = 0): Promise<S
 
 export async function createApiKey(token: string, name: string, scopes: string[]): Promise<SendGridApiKeyResponse> {
   const body = {
-    name: name,
-    scopes: scopes,
+    name,
+    scopes,
   }
   return request<SendGridApiKeyResponse>(token, 'api_keys', {
-    method: 'POST',
     body: JSON.stringify(body),
+    method: 'POST',
   })
 }
 
@@ -115,19 +115,19 @@ export async function getAllAllowedIps(token: string) {
 
 export async function addAllowedIps(token: string, ipAddresses: string[]) {
   return request<SendGridAddAllowedIpsResponse>(token, 'access_settings/whitelist', {
-    method: 'POST',
     body: JSON.stringify({
       ips: ipAddresses.map(ip => ({ip})),
     }),
+    method: 'POST',
   })
 }
 
 export async function deleteAllowedIps(token: string, ruleIds: string[]) {
   const ids = ruleIds.map(id => Number.parseInt(id, 10))
   return request<boolean>(token, 'access_settings/whitelist', {
-    method: 'DELETE',
     body: JSON.stringify({
       ids,
     }),
+    method: 'DELETE',
   })
 }

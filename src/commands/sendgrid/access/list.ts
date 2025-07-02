@@ -3,8 +3,7 @@ import {getAllAllowedIps} from '../../../lib/sendgrid.js'
 
 export default class List extends SendGridCommand {
   static description = 'List allowed IPs in SendGrid account'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
+static examples = ['<%= config.bin %> <%= command.id %>']
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(List)

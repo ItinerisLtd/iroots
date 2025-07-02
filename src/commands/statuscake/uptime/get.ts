@@ -1,13 +1,12 @@
 import {Flags} from '@oclif/core'
-import {getSiteUptime} from '../../../lib/statuscake.js'
+
 import {StatusCakeCommand} from '../../../lib/commands/statuscake-command.js'
+import {getSiteUptime} from '../../../lib/statuscake.js'
 
 export default class Get extends StatusCakeCommand {
   static description = 'Get information about an uptime monitor'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {
     // eslint-disable-next-line camelcase
     test_id: Flags.integer({
       description: 'Uptime check ID',

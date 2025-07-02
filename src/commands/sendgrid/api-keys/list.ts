@@ -1,16 +1,15 @@
 import {Flags} from '@oclif/core'
+
 import {SendGridCommand} from '../../../lib/commands/sendgrid-command.js'
 import {getAllApiKeys} from '../../../lib/sendgrid.js'
 
 export default class List extends SendGridCommand {
   static description = 'List API keys in SendGrid account'
-
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
-  static flags = {
+static examples = ['<%= config.bin %> <%= command.id %>']
+static flags = {
     limit: Flags.integer({
-      description: 'Specifies the number of results to be returned by the API.',
       default: 0,
+      description: 'Specifies the number of results to be returned by the API.',
     }),
   }
 

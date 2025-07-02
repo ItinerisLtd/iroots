@@ -1,14 +1,14 @@
-import {execa, Result, Options} from 'execa'
+import {execa, Options, Result} from 'execa'
 
 type GitCloneArgs = {
-  dir: string
   branch: string
+  dir: string
   origin?: string
 }
 
 export async function clone(
   remote: string,
-  {dir = '', branch = 'master', origin = 'origin'}: GitCloneArgs,
+  {branch = 'master', dir = '', origin = 'origin'}: GitCloneArgs,
   options?: Options,
 ): Promise<Result> {
   return execa('git', ['clone', '--branch', branch, '--origin', origin, '--single-branch', remote, dir], options)
@@ -45,7 +45,7 @@ export type Remote = {
 
 export async function parseRemote(remote: string): Promise<Remote> {
   const ownerAndRepo = remote
-    .replace(/.*github.com(:|\/)/gim, '')
+    .replaceAll(/.*github.com(:|\/)/gim, '')
     .replace('.git', '')
     .split('/')
 

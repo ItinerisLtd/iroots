@@ -7,17 +7,15 @@
       "DOM.Iterable",
       "ES2022"
     ],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "Node16",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
-    "target": "ES2022"
+    "target": "es2022",
+    "moduleResolution": "node16"
   },
+  "include": ["./src/**/*"],
   "ts-node": {
     "esm": true
-  },
-  "include": [
-    "src/**/*"
-  ]
+  }
 }

@@ -1,8 +1,6 @@
 import {Command, Flags} from '@oclif/core'
 
 export abstract class StackPathCommand extends Command {
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
   static baseFlags = {
     clientId: Flags.string({
       description: 'The API client ID',
@@ -20,4 +18,5 @@ export abstract class StackPathCommand extends Command {
       required: true,
     }),
   }
+static examples = ['<%= config.bin %> <%= command.id %>']
 }

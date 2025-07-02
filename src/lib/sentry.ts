@@ -1,5 +1,6 @@
 import {ux} from '@oclif/core'
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags} from '@oclif/core/interfaces'
+
 import {slugify} from './misc.js'
 
 const apiUrl = 'https://sentry.io/api/0'
@@ -42,113 +43,113 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
 
 type SentryAvatar = {
   avatarType: string
-  avatarUuid?: string | null
-  avatarUrl?: string | null
+  avatarUrl?: null | string
+  avatarUuid?: null | string
 }
 
 type SentryListProjectsResponse = {
-  id: string
-  slug: string
-  name: string
-  platform: string
+  access: string[]
+  avatar: SentryAvatar
+  color: string
   dateCreated: string
-  isBookmarked: boolean
-  isMember: boolean
   features: string[]
   firstEvent: string
   firstTransactionEvent: boolean
-  access: string[]
   hasAccess: boolean
   hasCustomMetrics: boolean
+  hasFeedbacks: boolean
   hasMinifiedStackTrace: boolean
   hasMonitors: boolean
+  hasNewFeedbacks: boolean
   hasProfiles: boolean
   hasReplays: boolean
-  hasFeedbacks: boolean
-  hasNewFeedbacks: boolean
   hasSessions: boolean
+  id: string
+  isBookmarked: boolean
   isInternal: boolean
+  isMember: boolean
   isPublic: boolean
-  avatar: SentryAvatar
-  color: string
-  status: string
+  name: string
   organization: {
-    id: string
-    slug: string
-    status: string[]
-    name: string
-    dateCreated: string
-    isEarlyAdopter: boolean
-    require2FA: boolean
-    requireEmailVerification: boolean
     avatar: SentryAvatar
+    dateCreated: string
     features: string[]
+    hasAuthProvider: boolean
+    id: string
+    isEarlyAdopter: boolean
     links: {
       organizationUrl: string
       regionUrl: string
     }
-    hasAuthProvider: boolean
+    name: string
+    require2FA: boolean
+    requireEmailVerification: boolean
+    slug: string
+    status: string[]
   }
+  platform: string
+  slug: string
+  status: string
 }
 
 type SentryCreateProjectResponse = {
-  id: string
-  slug: string
-  name: string
-  platform: string
+  access: string[]
+  avatar: SentryAvatar
+  color: string
   dateCreated: string
-  isBookmarked: boolean
-  isMember: boolean
   features: string[]
   firstEvent: string
   firstTransactionEvent: boolean
-  access: string[]
   hasAccess: boolean
-  hasMinifiedStackTrace: boolean
   hasCustomMetrics: boolean
+  hasMinifiedStackTrace: boolean
   hasMonitors: boolean
   hasProfiles: boolean
   hasReplays: boolean
   hasSessions: boolean
+  id: string
+  isBookmarked: boolean
   isInternal: boolean
+  isMember: boolean
   isPublic: boolean
-  avatar: SentryAvatar
-  color: string
+  name: string
+  platform: string
+  slug: string
   status: string
 }
 
 type SentryListProjectKeysResponse = {
-  id: string
-  name: string
-  label: string
-  public: string
-  secret: string
-  projectId: number
-  isActive: boolean
-  rateLimit: {
-    window: number
-    count: number
-  }
-  dsn: {
-    secret: string
-    public: string
-    csp: string
-    security: string
-    minidump: string
-    nel: string
-    unreal: string
-    cdn: string
-  }
-  browserSdkVersion: string
   browserSdk: {
     choices: Array<Array<Array<string>>>
   }
+  browserSdkVersion: string
   dateCreated: string
-  dynamicSdkLoaderOptions: {
-    hasReplay: boolean
-    hasPerformance: boolean
-    hasDebug: boolean
+  dsn: {
+    cdn: string
+    csp: string
+    minidump: string
+    nel: string
+    public: string
+    secret: string
+    security: string
+    unreal: string
   }
+  dynamicSdkLoaderOptions: {
+    hasDebug: boolean
+    hasPerformance: boolean
+    hasReplay: boolean
+  }
+  id: string
+  isActive: boolean
+  label: string
+  name: string
+  projectId: number
+  public: string
+  rateLimit: {
+    count: number
+    window: number
+  }
+  secret: string
 }
 
 type SentryDeleteProjectResponse = {
@@ -168,7 +169,7 @@ export async function getAllProjects(token: string): Promise<SentryListProjectsR
   return request<SentryListProjectsResponse[]>(token, 'projects')
 }
 
-export async function createProject(args: FlagOutput): Promise<SentryCreateProjectResponse> {
+export async function createProject(args: OutputFlags<any>): Promise<SentryCreateProjectResponse> {
   const slug = args.slug ?? args.name
   // Ensure the slug is always safe to use.
   args.slug = slugify(slug.toLowerCase())

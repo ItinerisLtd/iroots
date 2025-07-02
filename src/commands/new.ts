@@ -1,27 +1,28 @@
-import {ux, Command, Flags} from '@oclif/core'
-import {randomBytes} from 'node:crypto'
-import {appendFileSync, readFileSync, existsSync, writeFileSync, rmSync, mkdirSync} from 'node:fs'
+import {password} from '@inquirer/prompts'
+import {Command, Flags, ux} from '@oclif/core'
 import {globby} from 'globby'
+import {randomBytes} from 'node:crypto'
+import {appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
 import {replaceInFile} from 'replace-in-file'
 
+import {createTurnstileWidget as createTurnstileSite} from '../lib/cloudflare.js'
 import * as composer from '../lib/composer.js'
 import * as gh from '../lib/gh.js'
 import * as git from '../lib/git.js'
-import * as trellis from '../lib/trellis.js'
-import * as wp from '../lib/wp.js'
-import {findLastMatch, slugify} from '../lib/misc.js'
-import {createApiKey} from '../lib/sendgrid.js'
-import {createToken} from '../lib/packagist.js'
 import {
   cloneEnvironment,
   createSite as createKinstaSite,
+  envNamesToCloneEnvironmentArgs,
   getSite,
   getSiteEnvironments,
   setPhpVersion,
-  envNamesToCloneEnvironmentArgs,
 } from '../lib/kinsta.js'
+import {findLastMatch, slugify, wait} from '../lib/misc.js'
+import {createToken} from '../lib/packagist.js'
+import {createApiKey} from '../lib/sendgrid.js'
 import {createProject, getAllProjectKeys} from '../lib/sentry.js'
-import {createTurnstileWidget as createTurnstileSite} from '../lib/cloudflare.js'
+import * as trellis from '../lib/trellis.js'
+import * as wp from '../lib/wp.js'
 
 type QAndA = {
   from: string
@@ -29,54 +30,15 @@ type QAndA = {
 }
 
 type GitHubSecret = {
-  name: string
-  value: string
-  remote: string
   app: string
+  name: string
+  remote: string
+  value: string
 }
 
 export default class New extends Command {
   static description = 'Create a new project'
-  static strict = false
-
   static flags = {
-    help: Flags.help({char: 'h'}),
-    site: Flags.string({
-      char: 's',
-      description: 'site key',
-      env: 'IROOTS_NEW_SITE',
-      required: true,
-    }),
-    deploy: Flags.boolean({
-      char: 'd',
-      description: 'whether to deploy or not',
-      default: false,
-      allowNo: true,
-    }),
-    local: Flags.boolean({
-      char: 'l',
-      description: 'whether to setup local site or not',
-      default: true,
-      allowNo: true,
-    }),
-    git_push: Flags.boolean({
-      description: 'whether to push to git remotes or not',
-      default: true,
-      allowNo: true,
-    }),
-    github: Flags.boolean({
-      description: 'whether to use GH CLI/API or not',
-      default: true,
-      allowNo: true,
-    }),
-    github_team: Flags.string({
-      description: 'the team to add to the created GitHub repositories',
-      default: 'php-team',
-    }),
-    github_team_permission: Flags.string({
-      description: 'the permission to set for the specified GitHub team',
-      default: 'maintain',
-    }),
     bedrock_remote: Flags.string({
       char: 'b',
       description: 'bedrock importremote',
@@ -84,13 +46,211 @@ export default class New extends Command {
       required: true,
     }),
     bedrock_remote_branch: Flags.string({
+      default: 'main',
       description: 'the branch to use for your new bedrock remote',
       env: 'IROOTS_NEW_BEDROCK_REMOTE_BRANCH',
-      default: 'main',
     }),
     bedrock_repo_pat: Flags.string({
       description: 'the bedrock personal access token for GitHub Actions to clone trellis',
       env: 'IROOTS_NEW_BEDROCK_REPO_PAT',
+      required: true,
+    }),
+    bedrock_template_branch: Flags.string({
+      default: 'master',
+      description: 'bedrock template branch',
+      env: 'IROOTS_NEW_BEDROCK_TEMPLATE_BRANCH',
+      required: true,
+    }),
+    bedrock_template_remote: Flags.string({
+      default: 'git@github.com:ItinerisLtd/bedrock.git',
+      description: 'bedrock template remote',
+      env: 'IROOTS_NEW_BEDROCK_TEMPLATE_REMOTE',
+      required: true,
+    }),
+    deploy: Flags.boolean({
+      allowNo: true,
+      char: 'd',
+      default: false,
+      description: 'whether to deploy or not',
+    }),
+    display_name: Flags.string({
+      description: 'the display name for the site',
+      env: 'IROOTS_NEW_DISPLAY_NAME',
+      relationships: [
+        {
+          flags: ['kinsta', 'sentry'],
+          type: 'some',
+        },
+      ],
+      required: true,
+    }),
+    git_push: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether to push to git remotes or not',
+    }),
+    github: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether to use GH CLI/API or not',
+    }),
+    github_team: Flags.string({
+      default: 'php-team',
+      description: 'the team to add to the created GitHub repositories',
+    }),
+    github_team_permission: Flags.string({
+      default: 'maintain',
+      description: 'the permission to set for the specified GitHub team',
+    }),
+    help: Flags.help({char: 'h'}),
+    kinsta: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether or not to create A Kinsta site',
+    }),
+    kinsta_api_key: Flags.string({
+      dependsOn: ['kinsta'],
+      description: 'the API key for using the Kinsta API',
+      env: 'IROOTS_KINSTA_API_KEY',
+      required: true,
+    }),
+    kinsta_company: Flags.string({
+      dependsOn: ['kinsta'],
+      description: 'the company ID of your Kinsta account',
+      env: 'IROOTS_KINSTA_COMPANY_ID',
+      required: true,
+    }),
+    kinsta_free_environments: Flags.string({
+      default: ['Staging'],
+      description: 'the additional free environment names you wish to create',
+      env: 'IROOTS_NEW_KINSTA_FREE_ENVIRONMENTS',
+      multiple: true,
+    }),
+    kinsta_php_version: Flags.string({
+      default: '8.1',
+      dependsOn: ['kinsta'],
+      description: 'the PHP version to set on site environments',
+      env: 'IROOTS_KINSTA_PHP_VERSION',
+      options: ['8.0', '8.1', '8.2'],
+      required: true,
+    }),
+    kinsta_premium_environments: Flags.string({
+      default: ['UAT'],
+      description: 'the additional premium environment names you wish to create',
+      env: 'IROOTS_NEW_KINSTA_PREMIUM_ENVIRONMENTS',
+      multiple: true,
+    }),
+    local: Flags.boolean({
+      allowNo: true,
+      char: 'l',
+      default: true,
+      description: 'whether to setup local site or not',
+    }),
+    multisite: Flags.boolean({
+      default: false,
+      description: 'whether or not to setup a WordPress multisite network',
+      env: 'IROOTS_NEW_IS_MULTISITE',
+      required: false,
+    }),
+    network_media_library_site_id: Flags.integer({
+      default: 1,
+      dependsOn: ['multisite'],
+      description: 'the site ID you wish to use for the network media library',
+      env: 'IROOTS_NEW_NETWORK_MEDIA_LIBRARY_SITE_ID',
+      required: false,
+    }),
+    packagist: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether or not to create a Private Packagist token for the new project',
+    }),
+    packagist_api_key: Flags.string({
+      dependsOn: ['packagist'],
+      description: 'The API key',
+      env: 'IROOTS_PACKAGIST_API_KEY',
+      required: true,
+    }),
+    packagist_api_secret: Flags.string({
+      dependsOn: ['packagist'],
+      description: 'The API SECRET',
+      env: 'IROOTS_PACKAGIST_API_SECRET',
+      required: true,
+    }),
+    sendgrid: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether or not to create a SendGrid API key for the new project',
+    }),
+    sendgrid_api_key: Flags.string({
+      dependsOn: ['sendgrid'],
+      description: 'the SendGrid API key used to send requests to their API',
+      env: 'IROOTS_SENDGRID_API_KEY',
+      required: true,
+    }),
+    sentry: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether or not to create a Sentry project',
+    }),
+    sentry_api_key: Flags.string({
+      dependsOn: ['sentry'],
+      description: 'The API key',
+      env: 'IROOTS_SENTRY_API_KEY',
+      required: true,
+    }),
+    sentry_organisation_slug: Flags.string({
+      dependsOn: ['sentry'],
+      description: 'The slug of the organization the resource belongs to.',
+      env: 'IROOTS_SENTRY_ORGANISATION_SLUG',
+      required: true,
+    }),
+    sentry_project_default_rules: Flags.boolean({
+      default: true,
+      dependsOn: ['sentry'],
+      description:
+        'Defaults to true where the behavior is to alert the user on every new issue. Setting this to false will turn this off and the user must create their own alerts to be notified of new issues.',
+      required: false,
+    }),
+    sentry_project_platform: Flags.string({
+      default: 'php',
+      dependsOn: ['sentry'],
+      description: 'The platform for the project.',
+      required: true,
+    }),
+    sentry_project_slug: Flags.string({
+      dependsOn: ['sentry'],
+      description: 'Uniquely identifies a project. If ommitted, we will use the project display name.',
+      required: false,
+    }),
+    sentry_team_slug: Flags.string({
+      dependsOn: ['sentry'],
+      description: 'The slug of the organization the resource belongs to.',
+      env: 'IROOTS_SENTRY_TEAM_SLUG',
+      required: true,
+    }),
+    site: Flags.string({
+      char: 's',
+      description: 'site key',
+      env: 'IROOTS_NEW_SITE',
+      required: true,
+    }),
+    theme_clone: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether or not to clone the theme',
+      env: 'IROOTS_NEW_THEME_CLONE',
+      required: false,
+    }),
+    theme_template_branch: Flags.string({
+      default: 'main',
+      description: 'theme template branch',
+      env: 'IROOTS_NEW_THEME_TEMPLATE_BRANCH',
+      required: true,
+    }),
+    theme_template_remote: Flags.string({
+      default: 'git@github.com:ItinerisLtd/sage.git',
+      description: 'theme template remote',
+      env: 'IROOTS_NEW_THEME_TEMPLATE_REMOTE',
       required: true,
     }),
     trellis_remote: Flags.string({
@@ -100,51 +260,20 @@ export default class New extends Command {
       required: true,
     }),
     trellis_remote_branch: Flags.string({
+      default: 'main',
       description: 'the branch to use for your new trellis remote',
       env: 'IROOTS_NEW_TRELLIS_REMOTE_BRANCH',
-      default: 'main',
     }),
-    bedrock_template_remote: Flags.string({
-      description: 'bedrock template remote',
-      env: 'IROOTS_NEW_BEDROCK_TEMPLATE_REMOTE',
-      default: 'git@github.com:ItinerisLtd/bedrock.git',
-      required: true,
-    }),
-    bedrock_template_branch: Flags.string({
-      description: 'bedrock template branch',
-      env: 'IROOTS_NEW_BEDROCK_TEMPLATE_BRANCH',
+    trellis_template_branch: Flags.string({
       default: 'master',
+      description: 'trellis template branch',
+      env: 'IROOTS_NEW_TRELLIS_TEMPLATE_BRANCH',
       required: true,
     }),
     trellis_template_remote: Flags.string({
+      default: 'git@github.com:ItinerisLtd/trellis-kinsta.git',
       description: 'trellis template remote',
       env: 'IROOTS_NEW_TRELLIS_TEMPLATE_REMOTE',
-      default: 'git@github.com:ItinerisLtd/trellis-kinsta.git',
-      required: true,
-    }),
-    trellis_template_branch: Flags.string({
-      description: 'trellis template branch',
-      env: 'IROOTS_NEW_TRELLIS_TEMPLATE_BRANCH',
-      default: 'master',
-      required: true,
-    }),
-    theme_clone: Flags.boolean({
-      description: 'whether or not to clone the theme',
-      env: 'IROOTS_NEW_THEME_CLONE',
-      default: true,
-      required: false,
-      allowNo: true,
-    }),
-    theme_template_remote: Flags.string({
-      description: 'theme template remote',
-      env: 'IROOTS_NEW_THEME_TEMPLATE_REMOTE',
-      default: 'git@github.com:ItinerisLtd/sage.git',
-      required: true,
-    }),
-    theme_template_branch: Flags.string({
-      description: 'theme template branch',
-      env: 'IROOTS_NEW_THEME_TEMPLATE_BRANCH',
-      default: 'main',
       required: true,
     }),
     trellis_template_vault_pass: Flags.string({
@@ -152,161 +281,32 @@ export default class New extends Command {
       env: 'IROOTS_NEW_TRELLIS_TEMPLATE_VAULT_PASS',
       required: true,
     }),
-    multisite: Flags.boolean({
-      description: 'whether or not to setup a WordPress multisite network',
-      env: 'IROOTS_NEW_IS_MULTISITE',
-      required: false,
-      default: false,
-    }),
-    network_media_library_site_id: Flags.integer({
-      description: 'the site ID you wish to use for the network media library',
-      env: 'IROOTS_NEW_NETWORK_MEDIA_LIBRARY_SITE_ID',
-      required: false,
-      default: 1,
-      dependsOn: ['multisite'],
-    }),
-    packagist: Flags.boolean({
-      description: 'whether or not to create a Private Packagist token for the new project',
-      default: true,
-      allowNo: true,
-    }),
-    packagist_api_key: Flags.string({
-      description: 'The API key',
-      env: 'IROOTS_PACKAGIST_API_KEY',
-      required: true,
-      dependsOn: ['packagist'],
-    }),
-    packagist_api_secret: Flags.string({
-      description: 'The API SECRET',
-      env: 'IROOTS_PACKAGIST_API_SECRET',
-      required: true,
-      dependsOn: ['packagist'],
-    }),
-    sendgrid: Flags.boolean({
-      description: 'whether or not to create a SendGrid API key for the new project',
-      default: true,
-      allowNo: true,
-    }),
-    sendgrid_api_key: Flags.string({
-      description: 'the SendGrid API key used to send requests to their API',
-      env: 'IROOTS_SENDGRID_API_KEY',
-      required: true,
-      dependsOn: ['sendgrid'],
-    }),
-    kinsta: Flags.boolean({
-      description: 'whether or not to create A Kinsta site',
-      default: true,
-      allowNo: true,
-    }),
-    kinsta_api_key: Flags.string({
-      description: 'the API key for using the Kinsta API',
-      env: 'IROOTS_KINSTA_API_KEY',
-      required: true,
-      dependsOn: ['kinsta'],
-    }),
-    kinsta_company: Flags.string({
-      description: 'the company ID of your Kinsta account',
-      env: 'IROOTS_KINSTA_COMPANY_ID',
-      required: true,
-      dependsOn: ['kinsta'],
-    }),
-    kinsta_php_version: Flags.string({
-      description: 'the PHP version to set on site environments',
-      env: 'IROOTS_KINSTA_PHP_VERSION',
-      options: ['8.0', '8.1', '8.2'],
-      default: '8.1',
-      required: true,
-      dependsOn: ['kinsta'],
-    }),
-    kinsta_free_environments: Flags.string({
-      description: 'the additional free environment names you wish to create',
-      env: 'IROOTS_NEW_KINSTA_FREE_ENVIRONMENTS',
-      default: ['Staging'],
-      multiple: true,
-    }),
-    kinsta_premium_environments: Flags.string({
-      description: 'the additional premium environment names you wish to create',
-      env: 'IROOTS_NEW_KINSTA_PREMIUM_ENVIRONMENTS',
-      default: ['UAT'],
-      multiple: true,
-    }),
-    sentry: Flags.boolean({
-      description: 'whether or not to create a Sentry project',
-      default: true,
-      allowNo: true,
-    }),
-    sentry_api_key: Flags.string({
-      description: 'The API key',
-      env: 'IROOTS_SENTRY_API_KEY',
-      required: true,
-      dependsOn: ['sentry'],
-    }),
-    sentry_organisation_slug: Flags.string({
-      required: true,
-      env: 'IROOTS_SENTRY_ORGANISATION_SLUG',
-      description: 'The slug of the organization the resource belongs to.',
-      dependsOn: ['sentry'],
-    }),
-    sentry_team_slug: Flags.string({
-      required: true,
-      env: 'IROOTS_SENTRY_TEAM_SLUG',
-      description: 'The slug of the organization the resource belongs to.',
-      dependsOn: ['sentry'],
-    }),
-    sentry_project_slug: Flags.string({
-      required: false,
-      description: 'Uniquely identifies a project. If ommitted, we will use the project display name.',
-      dependsOn: ['sentry'],
-    }),
-    sentry_project_platform: Flags.string({
-      required: true,
-      default: 'php',
-      description: 'The platform for the project.',
-      dependsOn: ['sentry'],
-    }),
-    sentry_project_default_rules: Flags.boolean({
-      required: false,
-      default: true,
-      description:
-        'Defaults to true where the behavior is to alert the user on every new issue. Setting this to false will turn this off and the user must create their own alerts to be notified of new issues.',
-      dependsOn: ['sentry'],
-    }),
-    display_name: Flags.string({
-      description: 'the display name for the site',
-      env: 'IROOTS_NEW_DISPLAY_NAME',
-      required: true,
-      relationships: [
-        {
-          type: 'some',
-          flags: ['kinsta', 'sentry'],
-        },
-      ],
-    }),
-    wp_ssh_aliases: Flags.boolean({
-      description: 'whether to generate SSH aliases for WP CLI or not',
-      env: 'IROOTS_NEW_WP_CLI_SSH_ALIASES',
-      required: false,
-      default: true,
-      allowNo: true,
-    }),
     turnstile: Flags.boolean({
-      description: 'whether or not to create a Clouflare Turnstile instance',
-      default: false,
       allowNo: true,
+      default: false,
+      description: 'whether or not to create a Clouflare Turnstile instance',
+    }),
+    turnstile_account: Flags.string({
+      dependsOn: ['turnstile'],
+      description: 'The account identifier',
+      env: 'IROOTS_CLOUDFLARE_ACCOUNT_ID',
+      required: true,
     }),
     turnstile_api_key: Flags.string({
+      dependsOn: ['turnstile'],
       description: 'The API key',
       env: 'IROOTS_CLOUDFLARE_API_KEY',
       required: true,
-      dependsOn: ['turnstile'],
     }),
-    turnstile_account: Flags.string({
-      description: 'The account identifier',
-      required: true,
-      env: 'IROOTS_CLOUDFLARE_ACCOUNT_ID',
-      dependsOn: ['turnstile'],
+    wp_ssh_aliases: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'whether to generate SSH aliases for WP CLI or not',
+      env: 'IROOTS_NEW_WP_CLI_SSH_ALIASES',
+      required: false,
     }),
   }
+static strict = false
 
   // eslint-disable-next-line no-warning-comments
   // TODO: needs a nice refactor.
@@ -314,26 +314,24 @@ export default class New extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(New)
     const {
-      site,
+      bedrock_remote,
+      bedrock_remote_branch,
+      bedrock_repo_pat,
+      bedrock_template_branch,
+      bedrock_template_remote,
       deploy,
-      local,
+      display_name,
       git_push,
       github,
       github_team,
       github_team_permission,
-      bedrock_remote,
-      bedrock_remote_branch,
-      trellis_remote,
-      trellis_remote_branch,
-      bedrock_repo_pat,
-      bedrock_template_remote,
-      bedrock_template_branch,
-      theme_clone,
-      theme_template_remote,
-      theme_template_branch,
-      trellis_template_remote,
-      trellis_template_branch,
-      trellis_template_vault_pass,
+      kinsta,
+      kinsta_api_key,
+      kinsta_company,
+      kinsta_free_environments,
+      kinsta_php_version,
+      kinsta_premium_environments,
+      local,
       multisite,
       network_media_library_site_id,
       packagist,
@@ -341,24 +339,26 @@ export default class New extends Command {
       packagist_api_secret,
       sendgrid,
       sendgrid_api_key,
-      kinsta,
-      kinsta_api_key,
-      kinsta_company,
-      kinsta_php_version,
-      kinsta_free_environments,
-      kinsta_premium_environments,
       sentry,
       sentry_api_key,
       sentry_organisation_slug,
-      sentry_team_slug,
-      sentry_project_slug,
-      sentry_project_platform,
       sentry_project_default_rules,
-      display_name,
-      wp_ssh_aliases,
+      sentry_project_platform,
+      sentry_project_slug,
+      sentry_team_slug,
+      site,
+      theme_clone,
+      theme_template_branch,
+      theme_template_remote,
+      trellis_remote,
+      trellis_remote_branch,
+      trellis_template_branch,
+      trellis_template_remote,
+      trellis_template_vault_pass,
       turnstile,
       turnstile_account,
       turnstile_api_key,
+      wp_ssh_aliases,
     } = flags
 
     if (existsSync(site)) {
@@ -378,15 +378,15 @@ export default class New extends Command {
       ux.action.start('Creating Kinsta site live environment')
       const createSiteResponse = await createKinstaSite(kinsta_api_key, {
         company: kinsta_company,
-        display_name: display_name,
+        display_name,
         region: 'europe-west2',
       })
-      const {idSite: kinstaSiteId, idEnv: kinstaProductionEnvId} = createSiteResponse.data
+      const {idEnv: kinstaProductionEnvId, idSite: kinstaSiteId} = createSiteResponse.data
       ux.action.stop()
 
       ux.action.start(`Setting PHP version to ${kinsta_php_version}`)
       // Wait a bit to ensure the site is ready to query.
-      await ux.wait(secondsToWait * 1000)
+      await wait(secondsToWait * 1000)
       await setPhpVersion(kinsta_api_key, kinstaProductionEnvId, kinsta_php_version)
       ux.action.stop()
 
@@ -400,20 +400,20 @@ export default class New extends Command {
           /* eslint-disable no-await-in-loop */
           ux.action.start(`Creating Kinsta site ${env.display_name} environment`)
           // Wait a bit to ensure the site is ready to query.
-          await ux.wait(secondsToWait * 1000)
+          await wait(secondsToWait * 1000)
           const kinstaSiteLive = await getSite(kinsta_api_key, kinstaSiteId)
           const kinstaSiteName = kinstaSiteLive.name
           process.env.IROOTS_NEW_xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
 
           // Wait a bit to ensure the site is ready to query.
-          await ux.wait(secondsToWait * 1000)
+          await wait(secondsToWait * 1000)
           await cloneEnvironment(kinsta_api_key, kinstaSiteId, env)
           ux.action.stop()
           /* eslint-enable no-await-in-loop */
         }
 
         ux.action.start('Gathering environment details')
-        await ux.wait(secondsToWait * 1000)
+        await wait(secondsToWait * 1000)
         const kinstaSiteEnvironments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
         for (const env of kinstaSiteEnvironments) {
           // Kinsta do not provide slugged environment names, so we try to replicate.
@@ -432,9 +432,9 @@ export default class New extends Command {
     if (packagist) {
       ux.action.start('Creating Packagist API key')
       const response = await createToken(packagist_api_key, packagist_api_secret, {
-        description: trellisRemoteRepo,
         access: 'read',
         accessToAllPackages: true,
+        description: trellisRemoteRepo,
       })
       if (response.status === 'error' || !response.token) {
         this.error(response.message.trim())
@@ -461,12 +461,12 @@ export default class New extends Command {
       ux.action.start('Creating Sentry project and keys')
       const createSentryProjectResponse = await createProject({
         apiKey: sentry_api_key,
-        organisationSlug: sentry_organisation_slug,
-        teamSlug: sentry_team_slug,
-        name: display_name,
-        slug: sentry_project_slug,
-        platform: sentry_project_platform,
         defaultRules: sentry_project_default_rules,
+        name: display_name,
+        organisationSlug: sentry_organisation_slug,
+        platform: sentry_project_platform,
+        slug: sentry_project_slug,
+        teamSlug: sentry_team_slug,
       })
       if (createSentryProjectResponse) {
         const projectKeys = await getAllProjectKeys(
@@ -502,10 +502,10 @@ export default class New extends Command {
         region: 'world',
       })
       if (createTurnstileSiteResponse) {
-        const {sitekey, secret} = createTurnstileSiteResponse
+        const {secret, sitekey} = createTurnstileSiteResponse
 
-        ux.info(`Cloudflare Turnstile siteKey: ${sitekey}`)
-        ux.info(`Cloudflare Turnstile secret: ${secret}`)
+        ux.stdout(`Cloudflare Turnstile siteKey: ${sitekey}`)
+        ux.stdout(`Cloudflare Turnstile secret: ${secret}`)
 
         process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SITE_KEY = sitekey
         process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SECRET = secret
@@ -532,20 +532,20 @@ export default class New extends Command {
       }
 
       await gh.setTeamPermissions(bedrockRemoteOwner, bedrockRemoteRepo, {
-        teamSlug: 'senior-team',
         teamPermission: 'admin',
+        teamSlug: 'senior-team',
       })
       await gh.setTeamPermissions(bedrockRemoteOwner, bedrockRemoteRepo, {
-        teamSlug: github_team,
         teamPermission: github_team_permission,
+        teamSlug: github_team,
       })
       await gh.setTeamPermissions(trellisRemoteOwner, trellisRemoteRepo, {
-        teamSlug: 'senior-team',
         teamPermission: 'admin',
+        teamSlug: 'senior-team',
       })
       await gh.setTeamPermissions(trellisRemoteOwner, trellisRemoteRepo, {
-        teamSlug: github_team,
         teamPermission: github_team_permission,
+        teamSlug: github_team,
       })
       ux.action.stop()
     }
@@ -554,8 +554,8 @@ export default class New extends Command {
     await git.clone(
       bedrock_template_remote,
       {
-        dir: 'bedrock',
         branch: bedrock_template_branch,
+        dir: 'bedrock',
         origin: 'upstream',
       },
       {
@@ -576,12 +576,12 @@ export default class New extends Command {
     if (theme_clone) {
       ux.action.start('Cloning theme template repo')
       await git.clone(theme_template_remote, {
-        dir: `${site}/bedrock/web/app/themes/${site}`,
         branch: theme_template_branch,
+        dir: `${site}/bedrock/web/app/themes/${site}`,
       })
-      rmSync(`${site}/bedrock/web/app/themes/${site}/.git`, {recursive: true, force: true})
-      rmSync(`${site}/bedrock/web/app/themes/${site}/.github`, {recursive: true, force: true})
-      rmSync(`${site}/bedrock/web/app/themes/${site}/.circleci`, {recursive: true, force: true})
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.git`, {force: true, recursive: true})
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.github`, {force: true, recursive: true})
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.circleci`, {force: true, recursive: true})
       ux.action.stop()
     }
 
@@ -589,8 +589,8 @@ export default class New extends Command {
     await git.clone(
       trellis_template_remote,
       {
-        dir: 'trellis',
         branch: trellis_template_branch,
+        dir: 'trellis',
         origin: 'upstream',
       },
       {
@@ -667,7 +667,7 @@ export default class New extends Command {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
         // eslint-disable-next-line no-await-in-loop
-        answer = (await ux.prompt(`What is ${placeholder}?`, {type: 'mask'})) as string
+        answer = await password({message: `What is ${placeholder}?`})
       }
 
       qAndAs = [
@@ -715,7 +715,7 @@ export default class New extends Command {
     ux.action.stop()
 
     ux.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)
-    rmSync(`${site}/trellis/.vault_pass`, {recursive: true, force: true})
+    rmSync(`${site}/trellis/.vault_pass`, {force: true, recursive: true})
     const vaultPass = randomBytes(256).toString('hex')
     writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
     for (const env of environments) {
@@ -836,8 +836,8 @@ export default class New extends Command {
       if (lastMatch?.length) {
         const result = await replaceInFile({
           files: bedrockConfigFile,
-          // eslint-disable-next-line unicorn/better-regex
-          from: new RegExp(lastMatch.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&')),
+           
+          from: new RegExp(lastMatch.replaceAll(/[/\-\\^$*+?.()|[\]{}]/g, String.raw`\$&`)),
           to: `${lastMatch}\n${wp.multisiteConfigTemplate}`,
         })
         hasInsertedMultisiteBedrockConstants = result.shift()?.hasChanged || false
@@ -931,32 +931,32 @@ export default class New extends Command {
       ux.action.start('Setting additional Bedrock repo secrets')
       const repoSecrets: GitHubSecret[] = [
         {
+          app: 'actions',
           name: 'REPO_PAT',
+          remote: bedrock_remote,
           value: bedrock_repo_pat,
-          remote: bedrock_remote,
-          app: 'actions',
         },
         {
-          name: 'ANSIBLE_VAULT_PASSWORD',
-          value: vaultPass,
-          remote: bedrock_remote,
           app: 'actions',
+          name: 'ANSIBLE_VAULT_PASSWORD',
+          remote: bedrock_remote,
+          value: vaultPass,
         },
         {
+          app: 'actions',
           name: 'ANSIBLE_VAULT_PASSWORD',
-          value: vaultPass,
           remote: trellis_remote,
-          app: 'actions',
+          value: vaultPass,
         },
         {
-          name: 'THEME_NAME',
-          value: site,
-          remote: bedrock_remote,
           app: 'codespaces',
+          name: 'THEME_NAME',
+          remote: bedrock_remote,
+          value: site,
         },
       ]
 
-      for (const {name, value, remote} of repoSecrets) {
+      for (const {name, remote, value} of repoSecrets) {
         // eslint-disable-next-line no-await-in-loop
         await gh.setSecret(name, value, remote)
       }
@@ -966,10 +966,10 @@ export default class New extends Command {
       ux.action.start('Creating branch protection rules')
       await gh.createBranchProtection(
         {
-          owner: bedrockRemoteOwner,
-          repo: bedrockRemoteRepo,
           branch: bedrock_remote_branch,
           isAdminEnforced: true,
+          owner: bedrockRemoteOwner,
+          repo: bedrockRemoteRepo,
           requiresApprovingReviews: true,
           requiresStatusChecks: true,
           requiresStrictStatusChecks: true,
@@ -980,10 +980,10 @@ export default class New extends Command {
       )
       await gh.createBranchProtection(
         {
-          owner: trellisRemoteOwner,
-          repo: trellisRemoteRepo,
           branch: trellis_remote_branch,
           isAdminEnforced: true,
+          owner: trellisRemoteOwner,
+          repo: trellisRemoteRepo,
           requiresApprovingReviews: true,
           requiresStatusChecks: true,
           requiresStrictStatusChecks: true,
@@ -1014,7 +1014,7 @@ export default class New extends Command {
       })
       ux.action.stop()
 
-      ux.info('Linking Valet site')
+      ux.stdout('Linking Valet site')
       await trellis.valetLink({
         cwd: `${site}/trellis`,
       })
@@ -1046,12 +1046,12 @@ export default class New extends Command {
 
     if (github) {
       const remoteBranches = [...new Set([bedrock_remote_branch, trellis_remote_branch])].join(',')
-      ux.info(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
+      ux.stdout(`Don't forget to set your branch protection rules for ${remoteBranches}!`)
     }
 
     if (multisite) {
-      ux.info("Don't forget to install the multisite DB!")
-      ux.info(
+      ux.stdout("Don't forget to install the multisite DB!")
+      ux.stdout(
         '$ wp core multisite-install --title="site title" --admin_user="username" --admin_password="password" --admin_email="you@example.com"',
       )
     }

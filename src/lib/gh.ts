@@ -20,8 +20,8 @@ export async function setDeployKey(
 }
 
 export type CreateRepoArgs = {
-  teamSlug: string
   teamPermission?: string
+  teamSlug: string
 }
 export async function createRepo(
   owner: string,
@@ -39,7 +39,7 @@ export async function editRepo(owner: string, repo: string, flag: string, option
 export async function setTeamPermissions(
   owner: string,
   repo: string,
-  {teamSlug = 'php-team', teamPermission = 'admin'}: CreateRepoArgs,
+  {teamPermission = 'admin', teamSlug = 'php-team'}: CreateRepoArgs,
   options = {},
 ): Promise<Result> {
   return execa(
@@ -71,10 +71,10 @@ export async function getRepositoryIdFromName(owner: string, repo: string, optio
 // export async function getActorIdsByName(actor: string, options?: Options): Promise<string> {}
 
 type BranchProtectionOptions = {
-  owner: string
-  repo: string
   branch: string
   isAdminEnforced: boolean
+  owner: string
+  repo: string
   requiresApprovingReviews: boolean
   requiresStatusChecks: boolean
   requiresStrictStatusChecks: boolean
@@ -82,10 +82,10 @@ type BranchProtectionOptions = {
 
 export async function createBranchProtection(
   {
-    owner,
-    repo,
     branch,
     isAdminEnforced,
+    owner,
+    repo,
     requiresApprovingReviews,
     requiresStatusChecks,
     requiresStrictStatusChecks,
