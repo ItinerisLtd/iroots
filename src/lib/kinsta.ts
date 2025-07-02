@@ -1,5 +1,6 @@
 import {ux} from '@oclif/core'
 import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {wait} from './misc.js'
 
 const apiUrl = 'https://api.kinsta.com/v2'
 
@@ -122,12 +123,12 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   // const rateLimitLimit = Number.parseInt(response.headers.get('x-ratelimit-limit') || '0', 10)
   const rateLimitRemaining = Number.parseInt(response.headers.get('x-ratelimit-remaining') || '0', 10)
   if (rateLimitRemaining < 5) {
-    await ux.wait((retryAfter + 1) * 1000)
+    await wait((retryAfter + 1) * 1000)
   }
 
   // Too many requests. Wait and try again.
   if (statusCode === 429 || response.statusText.toLowerCase() === 'too many requests') {
-    await ux.wait((retryAfter + 1) * 1000)
+    await wait((retryAfter + 1) * 1000)
     return request<TResponse>(token, url, options)
   }
 
@@ -151,7 +152,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   // The response is still in progress, wait until it is finished.
   if ('operation_id' in data) {
     // Wait 5 seconds to ensure the operation can be queried
-    await ux.wait((retryAfter > 5 ? retryAfter : 5) * 1000)
+    await wait((retryAfter > 5 ? retryAfter : 5) * 1000)
     const operationStatus = await checkOperationStatus(token, data.operation_id)
     return operationStatus as TResponse
   }
@@ -289,7 +290,7 @@ export async function checkOperationStatus<TResponse>(
     // This is to make sure that Kinsta have created the operation for us to query.
     // If we send the request too soon, it will not be ready to view.
     // eslint-disable-next-line no-await-in-loop
-    await ux.wait(secondsToWait * 1000)
+    await wait(secondsToWait * 1000)
 
     // eslint-disable-next-line no-await-in-loop
     operationStatus = await getOperationStatus(apiKey, operationId)

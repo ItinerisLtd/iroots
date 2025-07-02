@@ -26,3 +26,9 @@ export function slugify(string: string): string {
     .replace(/\s+/g, '-') // replace spaces with hyphens
     .replace(/-+/g, '-') // remove consecutive hyphens
 }
+
+export function wait(ms = 1000): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
+}

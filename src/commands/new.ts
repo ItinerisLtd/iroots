@@ -9,7 +9,7 @@ import * as gh from '../lib/gh.js'
 import * as git from '../lib/git.js'
 import * as trellis from '../lib/trellis.js'
 import * as wp from '../lib/wp.js'
-import {findLastMatch, slugify} from '../lib/misc.js'
+import {findLastMatch, slugify, wait} from '../lib/misc.js'
 import {createApiKey} from '../lib/sendgrid.js'
 import {createToken} from '../lib/packagist.js'
 import {
@@ -386,7 +386,7 @@ export default class New extends Command {
 
       ux.action.start(`Setting PHP version to ${kinsta_php_version}`)
       // Wait a bit to ensure the site is ready to query.
-      await ux.wait(secondsToWait * 1000)
+      await wait(secondsToWait * 1000)
       await setPhpVersion(kinsta_api_key, kinstaProductionEnvId, kinsta_php_version)
       ux.action.stop()
 
@@ -400,20 +400,20 @@ export default class New extends Command {
           /* eslint-disable no-await-in-loop */
           ux.action.start(`Creating Kinsta site ${env.display_name} environment`)
           // Wait a bit to ensure the site is ready to query.
-          await ux.wait(secondsToWait * 1000)
+          await wait(secondsToWait * 1000)
           const kinstaSiteLive = await getSite(kinsta_api_key, kinstaSiteId)
           const kinstaSiteName = kinstaSiteLive.name
           process.env.IROOTS_NEW_xxxKINSTA_SSH_USERNAMExxx = kinstaSiteName
 
           // Wait a bit to ensure the site is ready to query.
-          await ux.wait(secondsToWait * 1000)
+          await wait(secondsToWait * 1000)
           await cloneEnvironment(kinsta_api_key, kinstaSiteId, env)
           ux.action.stop()
           /* eslint-enable no-await-in-loop */
         }
 
         ux.action.start('Gathering environment details')
-        await ux.wait(secondsToWait * 1000)
+        await wait(secondsToWait * 1000)
         const kinstaSiteEnvironments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
         for (const env of kinstaSiteEnvironments) {
           // Kinsta do not provide slugged environment names, so we try to replicate.
