@@ -31,7 +31,7 @@
     "@types/globby": "^9.1.0",
     "@types/node": "^24.0.10",
     "eslint": "^7.32.0",
-    "eslint-config-oclif": "^4.0.0",
+    "eslint-config-oclif": "^6.0.80",
     "eslint-config-oclif-typescript": "^2.0.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
