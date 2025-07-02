@@ -1,6 +1,6 @@
 import {ux} from '@oclif/core'
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 import {slugify} from './misc.js'
+import {OutputFlags} from '@oclif/core/interfaces'
 
 const apiUrl = 'https://sentry.io/api/0'
 
@@ -168,7 +168,7 @@ export async function getAllProjects(token: string): Promise<SentryListProjectsR
   return request<SentryListProjectsResponse[]>(token, 'projects')
 }
 
-export async function createProject(args: FlagOutput): Promise<SentryCreateProjectResponse> {
+export async function createProject(args: OutputFlags<any>): Promise<SentryCreateProjectResponse> {
   const slug = args.slug ?? args.name
   // Ensure the slug is always safe to use.
   args.slug = slugify(slug.toLowerCase())

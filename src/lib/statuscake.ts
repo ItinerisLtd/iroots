@@ -1,4 +1,4 @@
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags} from '@oclif/core/interfaces'
 
 const apiUrl = 'https://api.statuscake.com/v1'
 
@@ -184,7 +184,7 @@ export async function getSiteUptime(token: string, testId: number): Promise<Stat
   return response.data
 }
 
-export async function createUptimeTest(token: string, args: FlagOutput): Promise<StatusCakeUptimeCreateResponse> {
+export async function createUptimeTest(token: string, args: OutputFlags<any>): Promise<StatusCakeUptimeCreateResponse> {
   const queryArgs = args as StatusCakeUptimeCreateQueryArgs
   const query = new URLSearchParams()
   for (const key in queryArgs) {

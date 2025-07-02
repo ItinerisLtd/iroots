@@ -1,5 +1,5 @@
 import {ux} from '@oclif/core'
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags} from '@oclif/core/parser'
 
 const apiUrl = 'https://api.cloudflare.com/client/v4'
 const turnstileApiUrl = `${apiUrl}/accounts/{account_identifier}/challenges/widgets`
@@ -105,7 +105,11 @@ export async function getTurnstileWidget(token: string, account: string, siteKey
   return response.result as CloudflareSite
 }
 
-export async function createTurnstileWidget(token: string, account: string, args: FlagOutput): Promise<CloudflareSite> {
+export async function createTurnstileWidget(
+  token: string,
+  account: string,
+  args: OutputFlags<any>,
+): Promise<CloudflareSite> {
   const response = await turnstileRequest<CloudflareSiteRequest>(token, account, '', {
     method: 'POST',
     body: JSON.stringify(args),
@@ -150,7 +154,7 @@ async function dnsRequest<TResponse>(
   return zoneRequest<TResponse>(token, zoneId, url, options)
 }
 
-export async function createDnsRecord(token: string, zoneId: string, args: FlagOutput): Promise<CloudflareSite> {
+export async function createDnsRecord(token: string, zoneId: string, args: OutputFlags<any>): Promise<CloudflareSite> {
   // Cloudflare requires TXT content to be wrapped in quotes
   if (args.type === 'TXT') {
     // Remove all quotes from the content

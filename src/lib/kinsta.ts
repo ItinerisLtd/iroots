@@ -1,6 +1,6 @@
 import {ux} from '@oclif/core'
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 import {wait} from './misc.js'
+import {OutputFlags} from '@oclif/core/interfaces'
 
 const apiUrl = 'https://api.kinsta.com/v2'
 
@@ -260,7 +260,7 @@ export function getRegions(): string[] {
   ]
 }
 
-export async function createSite(token: string, args: FlagOutput): Promise<KinstaCreateSiteResponse> {
+export async function createSite(token: string, args: OutputFlags<any>): Promise<KinstaCreateSiteResponse> {
   const response = await request<KinstaCreateSiteResponse>(token, 'sites/plain', {
     method: 'POST',
     headers: {
@@ -328,7 +328,7 @@ export async function setPhpVersion(
 export async function addDomainToEnvironment(
   token: string,
   environmentId: string,
-  args: FlagOutput,
+  args: OutputFlags<any>,
 ): Promise<KinstaBasicResponse> {
   const response = await request<KinstaBasicResponse>(token, `sites/environments/${environmentId}/domains`, {
     method: 'POST',
