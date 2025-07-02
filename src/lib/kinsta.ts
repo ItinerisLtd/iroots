@@ -323,3 +323,18 @@ export async function setPhpVersion(
 
   return response
 }
+
+export async function addDomainToEnvironment(
+  token: string,
+  environmentId: string,
+  args: FlagOutput,
+): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(token, `sites/environments/${environmentId}/domains`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(args),
+  })
+  return response
+}
