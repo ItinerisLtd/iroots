@@ -1,7 +1,8 @@
-import {Flags, ux} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {PackagistCommand} from '../../../lib/commands/packagist-command.js'
 import {regenerateToken} from '../../../lib/packagist.js'
 import type {PackagistRegenerateTokenParam} from '../../../lib/packagist.js'
+import {confirm} from '@inquirer/prompts'
 
 export default class New extends PackagistCommand {
   static description = 'Regenerate a token'
@@ -27,11 +28,19 @@ export default class New extends PackagistCommand {
     const {flags} = await this.parse(New)
     const {apiKey, apiSecret, ...params} = flags
     if (!params.IConfirmOldTokenWillStopWorkingImmediately) {
-      const answer = (await ux.prompt(`Are you sure you wish to regenerate token ${flags.tokenId}? [y/n]`)) as string
-      params.IConfirmOldTokenWillStopWorkingImmediately = /y(?:es)?|1/i.test(answer)
+      const answer = await confirm({message: `Are you sure you wish to regenerate token ${flags.tokenId}? [y/n]`})
+      params.IConfirmOldTokenWillStopWorkingImmediately = answer
+    }
+
+    if (!params.IConfirmOldTokenWillStopWorkingImmediately) {
+      this.error('You must confirm that the old token will stop working immediately.')
     }
 
     const response = await regenerateToken(apiKey, apiSecret, params as PackagistRegenerateTokenParam)
+    if (response.status === 'error') {
+      this.error(`Error regenerating token: ${response.message}`)
+    }
+
     console.table(response)
   }
 }

@@ -22,6 +22,7 @@ import {
 } from '../lib/kinsta.js'
 import {createProject, getAllProjectKeys} from '../lib/sentry.js'
 import {createTurnstileWidget as createTurnstileSite} from '../lib/cloudflare.js'
+import {password} from '@inquirer/prompts'
 
 type QAndA = {
   from: string
@@ -667,7 +668,7 @@ export default class New extends Command {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
         // eslint-disable-next-line no-await-in-loop
-        answer = (await ux.prompt(`What is ${placeholder}?`, {type: 'mask'})) as string
+        answer = await password({message: `What is ${placeholder}?`})
       }
 
       qAndAs = [
