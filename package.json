@@ -33,7 +33,7 @@
     "@types/chai": "^5",
     "@types/fs-extra": "^11.0.4",
     "@types/globby": "^9.1.0",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "chai": "^5",
     "eslint": "^9",
     "eslint-config-oclif": "^6",
