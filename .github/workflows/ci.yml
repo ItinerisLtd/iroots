@@ -13,14 +13,14 @@ jobs:
       - name: Setup the Node environment on ${{ runner.os }}
         uses: actions/setup-node@v4
         with:
-          cache: yarn
+          cache: npm
           node-version-file: '.nvmrc'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies using Yarn
-        run: yarn install --frozen-lockfile --prefer-offline
+      - name: Install dependencies using NPM
+        run: npm ci
 
-      - run: yarn run build
+      - run: npm run build
 
-      - run: yarn run test
+      - run: npm run test
