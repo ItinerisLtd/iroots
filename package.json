@@ -138,11 +138,10 @@
     "build": "shx rm -rf dist && tsc -b",
     "lint": "eslint",
     "postpack": "shx rm -f oclif.manifest.json",
-    "posttest": "yarn lint",
+    "posttest": "npm run lint",
     "prepack": "oclif manifest && oclif readme",
     "test": "echo NO TESTS",
     "version": "oclif readme && git add README.md"
   },
-  "types": "dist/index.d.ts",
-  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
+  "types": "dist/index.d.ts"
 }
