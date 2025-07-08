@@ -15,6 +15,7 @@ const ourRules = [
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+      'perfectionist/sort-objects': 'off',
     },
   },
   {
