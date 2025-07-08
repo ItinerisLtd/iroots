@@ -16,41 +16,41 @@ type KinstaDomain = {
 }
 
 type KinstaEnvironment = {
-   
+
   cdn_cache_id?: string
-   
+
   display_name: string
   domains?: KinstaDomain[]
   id: string
-   
+
   id_edge_cache?: string
-   
+
   is_blocked: boolean
-   
+
   is_premium: boolean
   name: string
   primaryDomain?: KinstaDomain
-   
+
   ssh_connection: {
-     
+
     ssh_ip: {
-       
+
       external_ip: string
     }
-     
+
     ssh_port: number
   }
 }
 
 export type KinstaSite = {
-   
+
   company_id: string
-   
+
   display_name: string
   environments?: KinstaEnvironment[]
   id: string
   name: string
-   
+
   site_labels?: KinstaSiteLabel[]
   status?: string
 }
@@ -105,7 +105,7 @@ type KinstaError = {
 }
 
 type KinstaOperationResponse = {
-   
+
   message: string
   operation_id: string
   status: keyof ResponseCodes
@@ -180,11 +180,11 @@ export async function getSiteEnvironments(token: string, siteId: string): Promis
 }
 
 type KinstaCloneEnvironmentArgs = {
-   
+
   display_name: string
-   
+
   is_premium: boolean
-   
+
   source_env_id: string
 }
 
@@ -335,6 +335,21 @@ export async function addDomainToEnvironment(
       'Content-Type': 'application/json',
     },
     method: 'POST',
+  })
+  return response
+}
+
+export async function pushEnvironment(
+  token: string,
+  siteId: string,
+  args: OutputFlags<any>,
+): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(token, `sites/${siteId}/environments`, {
+    body: JSON.stringify(args),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'PUT',
   })
   return response
 }
