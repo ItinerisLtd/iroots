@@ -22,6 +22,7 @@ import { createToken } from '../lib/packagist.js'
 import { createApiKey } from '../lib/sendgrid.js'
 import { createProject, getAllProjectKeys } from '../lib/sentry.js'
 import * as trellis from '../lib/trellis.js'
+import { use as valetUse } from '../lib/valet.js'
 import * as wp from '../lib/wp.js'
 
 type QAndA = {
@@ -126,11 +127,11 @@ export default class New extends Command {
       env: 'IROOTS_NEW_KINSTA_FREE_ENVIRONMENTS',
       multiple: true,
     }),
-    kinsta_php_version: Flags.string({
+    php_version: Flags.string({
       default: '8.2',
       dependsOn: ['kinsta'],
       description: 'the PHP version to set on site environments',
-      env: 'IROOTS_KINSTA_PHP_VERSION',
+      env: 'IROOTS_PHP_VERSION',
       options: ['8.0', '8.1', '8.2', '8.3', '8.4'],
       required: true,
     }),
@@ -329,7 +330,7 @@ export default class New extends Command {
       kinsta_api_key,
       kinsta_company,
       kinsta_free_environments,
-      kinsta_php_version,
+      php_version,
       kinsta_premium_environments,
       local,
       multisite,
@@ -384,10 +385,10 @@ export default class New extends Command {
       const { idEnv: kinstaProductionEnvId, idSite: kinstaSiteId } = createSiteResponse.data
       ux.action.stop()
 
-      ux.action.start(`Setting PHP version to ${kinsta_php_version}`)
+      ux.action.start(`Setting PHP version to ${php_version}`)
       // Wait a bit to ensure the site is ready to query.
       await wait(secondsToWait * 1000)
-      await setPhpVersion(kinsta_api_key, kinstaProductionEnvId, kinsta_php_version)
+      await setPhpVersion(kinsta_api_key, kinstaProductionEnvId, php_version)
       ux.action.stop()
 
       const kinstaEnvironments = [
@@ -996,6 +997,11 @@ export default class New extends Command {
     }
 
     if (local) {
+      this.log(`Setting local PHP version to ${php_version}...`)
+      await valetUse(php_version, {
+        cwd: `${site}/bedrock`,
+      })
+
       ux.action.start('Populating local `.env`')
       await trellis.dotenv({
         cwd: `${site}/trellis`,
