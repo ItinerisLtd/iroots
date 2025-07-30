@@ -131,7 +131,7 @@ export default class New extends Command {
       dependsOn: ['kinsta'],
       description: 'the PHP version to set on site environments',
       env: 'IROOTS_KINSTA_PHP_VERSION',
-      options: ['8.0', '8.1', '8.2'],
+      options: ['8.0', '8.1', '8.2', '8.3', '8.4'],
       required: true,
     }),
     kinsta_premium_environments: Flags.string({
