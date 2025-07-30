@@ -1,11 +1,11 @@
-import {password} from '@inquirer/prompts'
-import {Command, Flags, ux} from '@oclif/core'
-import {globby} from 'globby'
-import {randomBytes} from 'node:crypto'
-import {appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
-import {replaceInFile} from 'replace-in-file'
+import { password } from '@inquirer/prompts'
+import { Command, Flags, ux } from '@oclif/core'
+import { globby } from 'globby'
+import { randomBytes } from 'node:crypto'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { replaceInFile } from 'replace-in-file'
 
-import {createTurnstileWidget as createTurnstileSite} from '../lib/cloudflare.js'
+import { createTurnstileWidget as createTurnstileSite } from '../lib/cloudflare.js'
 import * as composer from '../lib/composer.js'
 import * as gh from '../lib/gh.js'
 import * as git from '../lib/git.js'
@@ -17,10 +17,10 @@ import {
   getSiteEnvironments,
   setPhpVersion,
 } from '../lib/kinsta.js'
-import {findLastMatch, slugify, wait} from '../lib/misc.js'
-import {createToken} from '../lib/packagist.js'
-import {createApiKey} from '../lib/sendgrid.js'
-import {createProject, getAllProjectKeys} from '../lib/sentry.js'
+import { findLastMatch, slugify, wait } from '../lib/misc.js'
+import { createToken } from '../lib/packagist.js'
+import { createApiKey } from '../lib/sendgrid.js'
+import { createProject, getAllProjectKeys } from '../lib/sentry.js'
 import * as trellis from '../lib/trellis.js'
 import * as wp from '../lib/wp.js'
 
@@ -102,7 +102,7 @@ export default class New extends Command {
       default: 'maintain',
       description: 'the permission to set for the specified GitHub team',
     }),
-    help: Flags.help({char: 'h'}),
+    help: Flags.help({ char: 'h' }),
     kinsta: Flags.boolean({
       allowNo: true,
       default: true,
@@ -127,7 +127,7 @@ export default class New extends Command {
       multiple: true,
     }),
     kinsta_php_version: Flags.string({
-      default: '8.1',
+      default: '8.2',
       dependsOn: ['kinsta'],
       description: 'the PHP version to set on site environments',
       env: 'IROOTS_KINSTA_PHP_VERSION',
@@ -306,13 +306,13 @@ export default class New extends Command {
       required: false,
     }),
   }
-static strict = false
+  static strict = false
 
   // eslint-disable-next-line no-warning-comments
   // TODO: needs a nice refactor.
   // eslint-disable-next-line complexity
   async run(): Promise<void> {
-    const {flags} = await this.parse(New)
+    const { flags } = await this.parse(New)
     const {
       bedrock_remote,
       bedrock_remote_branch,
@@ -362,14 +362,14 @@ static strict = false
     } = flags
 
     if (existsSync(site)) {
-      this.error(`Abort! Directory ${site} already exists`, {exit: 1})
+      this.error(`Abort! Directory ${site} already exists`, { exit: 1 })
     }
 
-    mkdirSync(site, {recursive: true})
+    mkdirSync(site, { recursive: true })
 
-    const {owner: bedrockRemoteOwner, repo: bedrockRemoteRepo} = await git.parseRemote(bedrock_remote)
+    const { owner: bedrockRemoteOwner, repo: bedrockRemoteRepo } = await git.parseRemote(bedrock_remote)
     const bedrockRemote = `git@github.com:${bedrockRemoteOwner}/${bedrockRemoteRepo}`
-    const {owner: trellisRemoteOwner, repo: trellisRemoteRepo} = await git.parseRemote(trellis_remote)
+    const { owner: trellisRemoteOwner, repo: trellisRemoteRepo } = await git.parseRemote(trellis_remote)
     const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
 
     // Create Kinsta site
@@ -381,7 +381,7 @@ static strict = false
         display_name,
         region: 'europe-west2',
       })
-      const {idEnv: kinstaProductionEnvId, idSite: kinstaSiteId} = createSiteResponse.data
+      const { idEnv: kinstaProductionEnvId, idSite: kinstaSiteId } = createSiteResponse.data
       ux.action.stop()
 
       ux.action.start(`Setting PHP version to ${kinsta_php_version}`)
@@ -502,7 +502,7 @@ static strict = false
         region: 'world',
       })
       if (createTurnstileSiteResponse) {
-        const {secret, sitekey} = createTurnstileSiteResponse
+        const { secret, sitekey } = createTurnstileSiteResponse
 
         ux.stdout(`Cloudflare Turnstile siteKey: ${sitekey}`)
         ux.stdout(`Cloudflare Turnstile secret: ${secret}`)
@@ -579,9 +579,9 @@ static strict = false
         branch: theme_template_branch,
         dir: `${site}/bedrock/web/app/themes/${site}`,
       })
-      rmSync(`${site}/bedrock/web/app/themes/${site}/.git`, {force: true, recursive: true})
-      rmSync(`${site}/bedrock/web/app/themes/${site}/.github`, {force: true, recursive: true})
-      rmSync(`${site}/bedrock/web/app/themes/${site}/.circleci`, {force: true, recursive: true})
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.git`, { force: true, recursive: true })
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.github`, { force: true, recursive: true })
+      rmSync(`${site}/bedrock/web/app/themes/${site}/.circleci`, { force: true, recursive: true })
       ux.action.stop()
     }
 
@@ -667,7 +667,7 @@ static strict = false
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
         // eslint-disable-next-line no-await-in-loop
-        answer = await password({message: `What is ${placeholder}?`})
+        answer = await password({ message: `What is ${placeholder}?` })
       }
 
       qAndAs = [
@@ -682,7 +682,7 @@ static strict = false
     ux.action.stop()
 
     ux.action.start('Searching and replacing')
-    for (const {from, to} of qAndAs) {
+    for (const { from, to } of qAndAs) {
       const regex = new RegExp(from, 'img')
 
       // eslint-disable-next-line no-await-in-loop
@@ -703,7 +703,7 @@ static strict = false
     const firstHour = 10
     const lastHour = 14
     const step = 1
-    const hours = Array.from({length: (lastHour - firstHour) / step + 1}, (_, index) => firstHour + index * step)
+    const hours = Array.from({ length: (lastHour - firstHour) / step + 1 }, (_, index) => firstHour + index * step)
     const chosenHour = Math.floor(Math.random() * hours.length)
     const cronValue = `0 ${hours[chosenHour]} * * 1,2,3,4,5`
     await replaceInFile({
@@ -715,7 +715,7 @@ static strict = false
     ux.action.stop()
 
     ux.action.start(`Rekeying \`${site}/trellis/.vault_pass\``)
-    rmSync(`${site}/trellis/.vault_pass`, {force: true, recursive: true})
+    rmSync(`${site}/trellis/.vault_pass`, { force: true, recursive: true })
     const vaultPass = randomBytes(256).toString('hex')
     writeFileSync(`${site}/trellis/.vault_pass`, vaultPass)
     for (const env of environments) {
@@ -836,7 +836,7 @@ static strict = false
       if (lastMatch?.length) {
         const result = await replaceInFile({
           files: bedrockConfigFile,
-           
+
           from: new RegExp(lastMatch.replaceAll(/[/\-\\^$*+?.()|[\]{}]/g, String.raw`\$&`)),
           to: `${lastMatch}\n${wp.multisiteConfigTemplate}`,
         })
@@ -956,7 +956,7 @@ static strict = false
         },
       ]
 
-      for (const {name, remote, value} of repoSecrets) {
+      for (const { name, remote, value } of repoSecrets) {
         // eslint-disable-next-line no-await-in-loop
         await gh.setSecret(name, value, remote)
       }
