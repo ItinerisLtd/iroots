@@ -32,7 +32,7 @@ if (! (defined('WP_CLI') && WP_CLI)) {
     Config::define('COOKIE_DOMAIN', $_SERVER['HTTP_HOST']);
 }`
 
-export const multisiteNetworkMediaLibrarySiteIdFilter = (siteId = 2): string => `
+export const multisiteNetworkMediaLibrarySiteIdFilter = (siteId = 1): string => `
 /**
  * Set the ID of which site to get network media from.
  * Typically, ID 1 will be the "main/group" site

@@ -159,9 +159,16 @@ export default class New extends Command {
       env: 'IROOTS_NEW_IS_MULTISITE',
       required: false,
     }),
+    network_media_library: Flags.boolean({
+      default: false,
+      dependsOn: ['multisite'],
+      description: 'whether or not to setup Network Media Library instead of WP Media Folder',
+      env: 'IROOTS_NEW_NETWORK_MEDIA_LIBRARY',
+      required: false,
+    }),
     network_media_library_site_id: Flags.integer({
       default: 1,
-      dependsOn: ['multisite'],
+      dependsOn: ['multisite', 'network_media_library'],
       description: 'the site ID you wish to use for the network media library',
       env: 'IROOTS_NEW_NETWORK_MEDIA_LIBRARY_SITE_ID',
       required: false,
@@ -341,6 +348,7 @@ export default class New extends Command {
       kinsta_premium_environments,
       local,
       multisite,
+      network_media_library,
       network_media_library_site_id,
       packagist,
       packagist_api_key,
@@ -788,31 +796,30 @@ export default class New extends Command {
     }
 
     if (multisite) {
+      this.log(`Setting local PHP version to ${php_version}...`)
+      await valetUse(php_version, {
+        cwd: `${site}/bedrock`,
+      })
       ux.action.start('Configuring Multisite')
-      const composerRequirePackages = [
-        'itinerisltd/network-media-library',
-        'itinerisltd/multisite-url-fixer',
-        'wpackagist-plugin/threewp-broadcast',
-      ]
-      for (const dependency of composerRequirePackages) {
-        // eslint-disable-next-line no-await-in-loop
-        await composer.require(dependency, ['--no-install'], {
+      const composerRemovePackages = []
+      const composerRequirePackages = ['itinerisltd/multisite-url-fixer', 'wpackagist-plugin/threewp-broadcast']
+
+      // Why? It is not compatible with `itinerisltd/network-media-library`.
+      if (network_media_library) {
+        composerRemovePackages.push('itinerisltd/wp-media-folder')
+        composerRequirePackages.push('itinerisltd/network-media-library')
+
+        appendFileSync(
+          `${site}/bedrock/web/app/mu-plugins/site/Hooks/filters.php`,
+          wp.multisiteNetworkMediaLibrarySiteIdFilter(network_media_library_site_id),
+        )
+        await git.add([`web/app/mu-plugins/site/Hooks/filters.php`], {
           cwd: `${site}/bedrock`,
         })
-        // eslint-disable-next-line no-await-in-loop
-        await git.add(['composer.json', 'composer.lock'], {
-          cwd: `${site}/bedrock`,
-        })
-        // eslint-disable-next-line no-await-in-loop
-        await git.commit(`iRoots: add \`${dependency}\``, {
+        await git.commit('iRoots: add `network-media-library` site ID config', {
           cwd: `${site}/bedrock`,
         })
       }
-
-      const composerRemovePackages = [
-        // Why? It is not compatible with `itinerisltd/network-media-library`.
-        'itinerisltd/wp-media-folder',
-      ]
 
       for (const dependency of composerRemovePackages) {
         // eslint-disable-next-line no-await-in-loop
@@ -829,16 +836,20 @@ export default class New extends Command {
         })
       }
 
-      appendFileSync(
-        `${site}/bedrock/web/app/mu-plugins/site/Hooks/filters.php`,
-        wp.multisiteNetworkMediaLibrarySiteIdFilter(network_media_library_site_id),
-      )
-      await git.add([`web/app/mu-plugins/site/Hooks/filters.php`], {
-        cwd: `${site}/bedrock`,
-      })
-      await git.commit('iRoots: add `network-media-library` site ID config', {
-        cwd: `${site}/bedrock`,
-      })
+      for (const dependency of composerRequirePackages) {
+        // eslint-disable-next-line no-await-in-loop
+        await composer.require(dependency, ['--no-install'], {
+          cwd: `${site}/bedrock`,
+        })
+        // eslint-disable-next-line no-await-in-loop
+        await git.add(['composer.json', 'composer.lock'], {
+          cwd: `${site}/bedrock`,
+        })
+        // eslint-disable-next-line no-await-in-loop
+        await git.commit(`iRoots: add \`${dependency}\``, {
+          cwd: `${site}/bedrock`,
+        })
+      }
 
       const bedrockConfigFile = `${site}/bedrock/config/application.php`
       const bedrockConfigFileContents = readFileSync(bedrockConfigFile, 'utf8')
