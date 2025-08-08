@@ -1,7 +1,7 @@
-import { ux } from '@oclif/core'
-import { OutputFlags } from '@oclif/core/interfaces'
+import {ux} from '@oclif/core'
+import {OutputFlags} from '@oclif/core/interfaces'
 
-import { wait } from './misc.js'
+import {wait} from './misc.js'
 
 const apiUrl = 'https://api.kinsta.com/v2'
 
@@ -354,8 +354,8 @@ export async function setWebroot(
   token: string,
   env: string,
   web_root_subfolder: string,
-  clear_all_cache: boolean,
-  refresh_plugins_and_themes: boolean,
+  clear_all_cache: boolean = true,
+  refresh_plugins_and_themes: boolean = true,
 ): Promise<KinstaBasicResponse> {
   // Trim the web root subfolder and remove trailing slashes.
   web_root_subfolder = web_root_subfolder.trim().replace(/\/$/, '')
