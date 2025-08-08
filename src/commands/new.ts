@@ -16,6 +16,7 @@ import {
   getSite,
   getSiteEnvironments,
   setPhpVersion,
+  setWebroot,
 } from '../lib/kinsta.js'
 import { findLastMatch, slugify, wait } from '../lib/misc.js'
 import { createToken } from '../lib/packagist.js'
@@ -133,6 +134,11 @@ export default class New extends Command {
       description: 'the PHP version to set on site environments',
       env: 'IROOTS_PHP_VERSION',
       options: ['8.0', '8.1', '8.2', '8.3', '8.4'],
+      required: true,
+    }),
+    webroot: Flags.string({
+      default: '/current/web',
+      dependsOn: ['kinsta'],
       required: true,
     }),
     kinsta_premium_environments: Flags.string({
@@ -331,6 +337,7 @@ export default class New extends Command {
       kinsta_company,
       kinsta_free_environments,
       php_version,
+      webroot,
       kinsta_premium_environments,
       local,
       multisite,
@@ -389,6 +396,10 @@ export default class New extends Command {
       // Wait a bit to ensure the site is ready to query.
       await wait(secondsToWait * 1000)
       await setPhpVersion(kinsta_api_key, kinstaProductionEnvId, php_version)
+      ux.action.stop()
+
+      ux.action.start(`Setting webroot to ${webroot}`)
+      await setWebroot(kinsta_api_key, kinstaProductionEnvId, webroot)
       ux.action.stop()
 
       const kinstaEnvironments = [

@@ -16,7 +16,6 @@ type KinstaDomain = {
 }
 
 type KinstaEnvironment = {
-
   cdn_cache_id?: string
 
   display_name: string
@@ -32,9 +31,7 @@ type KinstaEnvironment = {
   primaryDomain?: KinstaDomain
 
   ssh_connection: {
-
     ssh_ip: {
-
       external_ip: string
     }
 
@@ -43,7 +40,6 @@ type KinstaEnvironment = {
 }
 
 export type KinstaSite = {
-
   company_id: string
 
   display_name: string
@@ -105,7 +101,6 @@ type KinstaError = {
 }
 
 type KinstaOperationResponse = {
-
   message: string
   operation_id: string
   status: keyof ResponseCodes
@@ -153,7 +148,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   // The response is still in progress, wait until it is finished.
   if ('operation_id' in data) {
     // Wait 5 seconds to ensure the operation can be queried
-    await wait((Math.max(retryAfter, 5)) * 1000)
+    await wait(Math.max(retryAfter, 5) * 1000)
     const operationStatus = await checkOperationStatus(token, data.operation_id)
     return operationStatus as TResponse
   }
@@ -180,7 +175,6 @@ export async function getSiteEnvironments(token: string, siteId: string): Promis
 }
 
 type KinstaCloneEnvironmentArgs = {
-
   display_name: string
 
   is_premium: boolean
@@ -194,13 +188,13 @@ export function envNamesToCloneEnvironmentArgs(
   isPremium: boolean = false,
 ): KinstaCloneEnvironmentArgs[] {
   return displayNames.map<KinstaCloneEnvironmentArgs>(displayName => ({
-      // eslint-disable-next-line camelcase
-      display_name: displayName,
-      // eslint-disable-next-line camelcase
-      is_premium: isPremium,
-      // eslint-disable-next-line camelcase
-      source_env_id: sourceEnvId,
-    }))
+    // eslint-disable-next-line camelcase
+    display_name: displayName,
+    // eslint-disable-next-line camelcase
+    is_premium: isPremium,
+    // eslint-disable-next-line camelcase
+    source_env_id: sourceEnvId,
+  }))
 }
 
 export async function cloneEnvironment(
@@ -353,3 +347,30 @@ export async function pushEnvironment(
   })
   return response
 }
+
+/* eslint-disable camelcase */
+// eslint-disable-next-line max-params
+export async function setWebroot(
+  token: string,
+  env: string,
+  web_root_subfolder: string,
+  clear_all_cache: boolean = true,
+  refresh_plugins_and_themes: boolean = true,
+): Promise<KinstaBasicResponse> {
+  // Trim the web root subfolder and remove trailing slashes.
+  web_root_subfolder = web_root_subfolder.trim().replace(/\/$/, '')
+  const response = await request<KinstaBasicResponse>(token, `sites/environments/${env}/change-webroot-subfolder`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      web_root_subfolder,
+      clear_all_cache,
+      refresh_plugins_and_themes,
+    }),
+  })
+
+  return response
+}
+/* eslint-enable camelcase */

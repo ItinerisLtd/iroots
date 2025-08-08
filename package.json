@@ -97,6 +97,9 @@
       "kinsta:sites:tools": {
         "description": "Tools for Kinsta sites"
       },
+      "kinsta:sites:environments": {
+        "description": "Manage Kinsta site environments"
+      },
       "packagist": {
         "description": "Manage Private Packagist services"
       },
