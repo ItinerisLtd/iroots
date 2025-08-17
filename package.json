@@ -18,7 +18,7 @@
   },
   "bugs": "https://github.com/itinerisltd/iroots/issues",
   "dependencies": {
-    "@inquirer/prompts": "^7.8.2",
+    "@inquirer/prompts": "^7.8.3",
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^5",
