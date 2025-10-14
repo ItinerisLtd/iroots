@@ -1,4 +1,4 @@
-import {OutputFlags} from '@oclif/core/interfaces'
+import { OutputFlags } from '@oclif/core/interfaces'
 
 const apiUrl = 'https://api.statuscake.com/v1'
 
@@ -32,7 +32,6 @@ type StatusCakeUptimeListQueryArgs = {
 }
 
 type StatusCakeUptimeTestBaseType = {
-
   check_rate: number
 
   contact_groups: string[]
@@ -108,7 +107,6 @@ type StatusCakeUptimeGetResponse = {
 
 type StatusCakeUptimeCreateResponse = {
   data: {
-
     new_id: string
   }
   errors?: {
@@ -127,7 +125,6 @@ type StatusCakeUptimeDeleteResponse = {
 }
 
 type StatusCakeUptimeCreateQueryArgs = StatusCakeUptimeTest & {
-
   [key: string]: boolean | number | Record<'new_id', string> | string | string[]
 
   basic_password: string
@@ -196,7 +193,14 @@ export async function createUptimeTest(token: string, args: OutputFlags<any>): P
       continue
     }
 
-    query.set(key, queryArgs[key] as string)
+    const value = queryArgs[key]
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        query.set(`${key}[]`, item as string)
+      }
+    } else {
+      query.set(key, value as string)
+    }
   }
 
   const contactGroups = query.get('contact_groups')
@@ -213,11 +217,11 @@ export async function createUptimeTest(token: string, args: OutputFlags<any>): P
   }
 
   const url = `uptime`
-  const response = await request<StatusCakeUptimeCreateResponse>(token, url, {body: query, method: 'POST'})
+  const response = await request<StatusCakeUptimeCreateResponse>(token, url, { body: query, method: 'POST' })
 
   return response
 }
 
 export async function deleteUptimeTest(token: string, testId: string): Promise<null | StatusCakeUptimeDeleteResponse> {
-  return request<null | StatusCakeUptimeDeleteResponse>(token, `uptime/${testId}`, {method: 'DELETE'})
+  return request<null | StatusCakeUptimeDeleteResponse>(token, `uptime/${testId}`, { method: 'DELETE' })
 }
