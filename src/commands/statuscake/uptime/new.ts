@@ -1,12 +1,12 @@
-import {Flags} from '@oclif/core'
+import { Flags } from '@oclif/core'
 
-import {StatusCakeCommand} from '../../../lib/commands/statuscake-command.js'
-import {createUptimeTest} from '../../../lib/statuscake.js'
+import { StatusCakeCommand } from '../../../lib/commands/statuscake-command.js'
+import { createUptimeTest } from '../../../lib/statuscake.js'
 
 export default class New extends StatusCakeCommand {
   static description = 'Create a new uptime monitor'
-static examples = ['<%= config.bin %> <%= command.id %>']
-static flags = {
+  static examples = ['<%= config.bin %> <%= command.id %>']
+  static flags = {
     // eslint-disable-next-line camelcase
     basic_password: Flags.string({}),
     // eslint-disable-next-line camelcase
@@ -52,7 +52,7 @@ static flags = {
     post_body: Flags.string({}),
     // eslint-disable-next-line camelcase
     post_raw: Flags.string({}),
-    regions: Flags.string({}),
+    regions: Flags.string({ default: 'london' }),
     // eslint-disable-next-line camelcase
     status_codes_csv: Flags.string({}),
     tags: Flags.string({}),
@@ -75,10 +75,10 @@ static flags = {
       required: true,
     }),
   }
-static help: 'see https://developers.statuscake.com/api/#tag/uptime/operation/create-uptime-test for more info'
+  static help: 'see https://developers.statuscake.com/api/#tag/uptime/operation/create-uptime-test for more info'
 
   public async run(): Promise<void> {
-    const {flags} = await this.parse(New)
+    const { flags } = await this.parse(New)
 
     if (!flags.name) {
       const url = new URL(flags.website_url)
