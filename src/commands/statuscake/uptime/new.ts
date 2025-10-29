@@ -53,7 +53,7 @@ export default class New extends StatusCakeCommand {
     // eslint-disable-next-line camelcase
     post_raw: Flags.string({}),
     regions: Flags.string({
-      default: ['london'],
+      default: ['United Kingdom / London'],
       multiple: true,
     }),
     // eslint-disable-next-line camelcase
