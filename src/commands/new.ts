@@ -660,7 +660,7 @@ export default class New extends Command {
       filesToReplace.push(
         `${site}/bedrock/web/app/themes/${site}/style.css`,
         `${site}/bedrock/web/app/themes/${site}/*.config.*`,
-        `${site}/bedrock/web/app/themes/${site}/app/View/Composers/*.php`,
+        `${site}/bedrock/web/app/themes/${site}/**/*.php`,
       )
     }
 
