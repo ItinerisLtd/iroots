@@ -27,7 +27,7 @@
     "replace-in-file": "^8.3.0"
   },
   "devDependencies": {
-    "@eslint/compat": "^1",
+    "@eslint/compat": "^2",
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4",
     "@types/chai": "^5",
