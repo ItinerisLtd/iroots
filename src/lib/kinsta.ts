@@ -81,6 +81,14 @@ type KinstaCreateSiteResponse = KinstaBasicResponse & {
   }
 }
 
+type KinstaSshIpAllowlistResponse = {
+  environment: {
+    active_container: {
+      stfp_ip_allowlist: string[]
+    }
+  }
+}
+
 export type ResponseCodes = {
   200: string // Success/Finished/Complete
   202: string // In progress
@@ -460,3 +468,9 @@ export async function setWebroot(
   return response
 }
 /* eslint-enable camelcase */
+
+export async function getSshIpAllowlist(token: string, envId: string): Promise<string[]> {
+  const response = await request<KinstaSshIpAllowlistResponse>(token, `sites/environments/${envId}/ssh/get-allowed-ips`)
+
+  return response.environment.active_container.stfp_ip_allowlist
+}

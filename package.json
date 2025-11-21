@@ -88,6 +88,12 @@
       "kinsta:env": {
         "description": "Manage Kinsta WordPress environments"
       },
+      "kinsta:env:ssh": {
+        "description": "Manage SSH on Kinsta WordPress environments"
+      },
+      "kinsta:env:ssh:allowlist": {
+        "description": "Manage SSH IP allowlist on Kinsta WordPress environments"
+      },
       "kinsta:sites": {
         "description": "Manage Kinsta WordPress sites"
       },
