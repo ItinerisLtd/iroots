@@ -91,14 +91,14 @@
       "kinsta:sites": {
         "description": "Manage Kinsta WordPress sites"
       },
-      "kinsta:sites:domains": {
-        "description": "Manage Kinsta site environment domains"
-      },
       "kinsta:sites:tools": {
         "description": "Tools for Kinsta sites"
       },
       "kinsta:sites:environments": {
         "description": "Manage Kinsta site environments"
+      },
+      "kinsta:domains": {
+        "description": "Manage Kinsta site environment domains"
       },
       "packagist": {
         "description": "Manage Private Packagist services"
