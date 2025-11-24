@@ -354,6 +354,21 @@ export async function getEnvironmentDomains(token: string, envId: string): Promi
   return response.environment.site_domains
 }
 
+export async function deleteDomainFromEnvironment(
+  token: string,
+  envId: string,
+  args: OutputFlags<any>,
+): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(token, `sites/environments/${envId}/domains`, {
+    body: JSON.stringify(args),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'DELETE',
+  })
+  return response
+}
+
 export async function pushEnvironment(
   token: string,
   siteId: string,
