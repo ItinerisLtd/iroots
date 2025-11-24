@@ -81,7 +81,7 @@ type KinstaCreateSiteResponse = KinstaBasicResponse & {
   }
 }
 
-type KinstaSshIpAllowlistResponse = {
+type KinstaSshGetIpAllowlistResponse = {
   environment: {
     active_container: {
       stfp_ip_allowlist: string[]
@@ -470,7 +470,28 @@ export async function setWebroot(
 /* eslint-enable camelcase */
 
 export async function getSshIpAllowlist(token: string, envId: string): Promise<string[]> {
-  const response = await request<KinstaSshIpAllowlistResponse>(token, `sites/environments/${envId}/ssh/get-allowed-ips`)
+  const response = await request<KinstaSshGetIpAllowlistResponse>(
+    token,
+    `sites/environments/${envId}/ssh/get-allowed-ips`,
+  )
 
   return response.environment.active_container.stfp_ip_allowlist
+}
+
+/* eslint-disable camelcase */
+export async function setSshIpAllowlist(
+  token: string,
+  envId: string,
+  ip_allowlist: string[],
+): Promise<KinstaError | null> {
+  return request<KinstaError | null>(token, `sites/environments/${envId}/ssh/set-allowed-ips`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      ip_allowlist,
+    }),
+  })
+  /* eslint-enable camelcase */
 }
