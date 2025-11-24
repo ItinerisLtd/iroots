@@ -374,7 +374,7 @@ type KinstaVerificationRecord = {
   type: string
   value: string
 }
-type KintsaVerificationRecordsResponse = {
+type KinstaVerificationRecordsResponse = {
   message?: string
   site_domain: {
     pointing_records: KinstaVerificationRecord[]
@@ -386,8 +386,8 @@ type KintsaVerificationRecordsResponse = {
 export async function getVerificationRecordsForDomain(
   token: string,
   domainId: string,
-): Promise<KintsaVerificationRecordsResponse> {
-  const response = await request<KintsaVerificationRecordsResponse>(
+): Promise<KinstaVerificationRecordsResponse> {
+  const response = await request<KinstaVerificationRecordsResponse>(
     token,
     `sites/environments/domains/${domainId}/verification-records`,
     {
@@ -395,6 +395,25 @@ export async function getVerificationRecordsForDomain(
         'Content-Type': 'application/json',
       },
       method: 'GET',
+    },
+  )
+  return response
+}
+
+export async function setPrimaryDomainOnEnv(
+  token: string,
+  envId: string,
+  args: OutputFlags<any>,
+): Promise<KinstaVerificationRecordsResponse> {
+  const response = await request<KinstaVerificationRecordsResponse>(
+    token,
+    `sites/environments/${envId}/change-primary-domain`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(args),
+      method: 'PUT',
     },
   )
   return response
