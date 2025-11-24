@@ -1,7 +1,7 @@
-import {ux} from '@oclif/core'
-import {OutputFlags} from '@oclif/core/interfaces'
+import { ux } from '@oclif/core'
+import { OutputFlags } from '@oclif/core/interfaces'
 
-import {wait} from './misc.js'
+import { wait } from './misc.js'
 
 const apiUrl = 'https://api.kinsta.com/v2'
 
@@ -104,6 +104,17 @@ type KinstaOperationResponse = {
   message: string
   operation_id: string
   status: keyof ResponseCodes
+}
+
+type KinstaSiteDomain = {
+  id: string
+  name: string
+  uses_cloudflare_dns: boolean[]
+}
+type KinstaDomainsResponse = {
+  environment: {
+    site_domains: KinstaSiteDomain[]
+  }
 }
 
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
@@ -331,6 +342,16 @@ export async function addDomainToEnvironment(
     method: 'POST',
   })
   return response
+}
+
+export async function getEnvironmentDomains(token: string, envId: string): Promise<KinstaSiteDomain[]> {
+  const response = await request<KinstaDomainsResponse>(token, `sites/environments/${envId}/domains`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'GET',
+  })
+  return response.environment.site_domains
 }
 
 export async function pushEnvironment(
