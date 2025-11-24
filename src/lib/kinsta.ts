@@ -143,7 +143,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
     return data as TResponse
   }
 
-  if ([401, 404, 500].includes(statusCode)) {
+  if ([400, 401, 404, 500].includes(statusCode)) {
     const kinstaError: KinstaError = data
     if (kinstaError.error) {
       ux.error(kinstaError.error)
@@ -366,6 +366,37 @@ export async function deleteDomainFromEnvironment(
     },
     method: 'DELETE',
   })
+  return response
+}
+
+type KinstaVerificationRecord = {
+  name: string
+  type: string
+  value: string
+}
+type KintsaVerificationRecordsResponse = {
+  message?: string
+  site_domain: {
+    pointing_records: KinstaVerificationRecord[]
+    verification_records: KinstaVerificationRecord[]
+  }
+  status?: number
+}
+
+export async function getVerificationRecordsForDomain(
+  token: string,
+  domainId: string,
+): Promise<KintsaVerificationRecordsResponse> {
+  const response = await request<KintsaVerificationRecordsResponse>(
+    token,
+    `sites/environments/domains/${domainId}/verification-records`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    },
+  )
   return response
 }
 
