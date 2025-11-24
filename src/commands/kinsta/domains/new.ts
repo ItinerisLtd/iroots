@@ -1,11 +1,11 @@
-import {Flags, ux} from '@oclif/core'
+import { Flags, ux } from '@oclif/core'
 
-import {KinstaCommand} from '../../../../lib/commands/kinsta-command.js'
-import {addDomainToEnvironment} from '../../../../lib/kinsta.js'
+import { KinstaCommand } from '../../../lib/commands/kinsta-command.js'
+import { addDomainToEnvironment } from '../../../lib/kinsta.js'
 
 export default class New extends KinstaCommand {
   static description = 'Create a new domain on a site environment'
-static flags = {
+  static flags = {
     company: Flags.string({
       env: 'IROOTS_KINSTA_COMPANY_ID',
       required: true,
@@ -35,7 +35,7 @@ static flags = {
   }
 
   public async run(): Promise<void> {
-    const {flags} = await this.parse(New)
+    const { flags } = await this.parse(New)
 
     ux.action.start('Adding domain')
 

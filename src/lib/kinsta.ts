@@ -1,7 +1,7 @@
-import {ux} from '@oclif/core'
-import {OutputFlags} from '@oclif/core/interfaces'
+import { ux } from '@oclif/core'
+import { OutputFlags } from '@oclif/core/interfaces'
 
-import {wait} from './misc.js'
+import { wait } from './misc.js'
 
 const apiUrl = 'https://api.kinsta.com/v2'
 
@@ -106,6 +106,17 @@ type KinstaOperationResponse = {
   status: keyof ResponseCodes
 }
 
+type KinstaSiteDomain = {
+  id: string
+  name: string
+  uses_cloudflare_dns: boolean[]
+}
+type KinstaDomainsResponse = {
+  environment: {
+    site_domains: KinstaSiteDomain[]
+  }
+}
+
 async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   headers.set('Authorization', `Bearer ${token}`)
@@ -132,7 +143,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
     return data as TResponse
   }
 
-  if ([401, 404, 500].includes(statusCode)) {
+  if ([400, 401, 404, 500].includes(statusCode)) {
     const kinstaError: KinstaError = data
     if (kinstaError.error) {
       ux.error(kinstaError.error)
@@ -330,6 +341,81 @@ export async function addDomainToEnvironment(
     },
     method: 'POST',
   })
+  return response
+}
+
+export async function getEnvironmentDomains(token: string, envId: string): Promise<KinstaSiteDomain[]> {
+  const response = await request<KinstaDomainsResponse>(token, `sites/environments/${envId}/domains`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'GET',
+  })
+  return response.environment.site_domains
+}
+
+export async function deleteDomainFromEnvironment(
+  token: string,
+  envId: string,
+  args: OutputFlags<any>,
+): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(token, `sites/environments/${envId}/domains`, {
+    body: JSON.stringify(args),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'DELETE',
+  })
+  return response
+}
+
+type KinstaVerificationRecord = {
+  name: string
+  type: string
+  value: string
+}
+type KinstaVerificationRecordsResponse = {
+  message?: string
+  site_domain: {
+    pointing_records: KinstaVerificationRecord[]
+    verification_records: KinstaVerificationRecord[]
+  }
+  status?: number
+}
+
+export async function getVerificationRecordsForDomain(
+  token: string,
+  domainId: string,
+): Promise<KinstaVerificationRecordsResponse> {
+  const response = await request<KinstaVerificationRecordsResponse>(
+    token,
+    `sites/environments/domains/${domainId}/verification-records`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
+    },
+  )
+  return response
+}
+
+export async function setPrimaryDomainOnEnv(
+  token: string,
+  envId: string,
+  args: OutputFlags<any>,
+): Promise<KinstaVerificationRecordsResponse> {
+  const response = await request<KinstaVerificationRecordsResponse>(
+    token,
+    `sites/environments/${envId}/change-primary-domain`,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(args),
+      method: 'PUT',
+    },
+  )
   return response
 }
 
