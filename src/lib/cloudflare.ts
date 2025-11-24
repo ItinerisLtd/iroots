@@ -1,20 +1,19 @@
-import {ux} from '@oclif/core'
-import {OutputFlags} from '@oclif/core/parser'
+import { ux } from '@oclif/core'
+import { OutputFlags } from '@oclif/core/parser'
 
 const apiUrl = 'https://api.cloudflare.com/client/v4'
 const turnstileApiUrl = `${apiUrl}/accounts/{account_identifier}/challenges/widgets`
 const zonesApiUrl = `${apiUrl}/zones/{zone_id}`
 
 type CloudflareSite = {
-   
   bot_fight_mode: boolean
-   
+
   clearance_level: string
-   
+
   created_on: string
   domains: string[]
   mode: string
-   
+
   modified_on: string
   name: string
   offlabel: boolean
@@ -34,13 +33,13 @@ type CloudflareSitesRequest = {
   errors: string[]
   messages: string[]
   result: CloudflareSite[]
-   
+
   result_info: {
     count: number
     page: number
-     
+
     per_page: number
-     
+
     total_count: number
   }
   success: boolean
@@ -53,6 +52,42 @@ type CloudflareError = {
       message: string
     },
   ]
+  success: boolean
+}
+
+type CloudflareZone = {
+  account: {
+    id: string
+    name: string
+  }
+  activated_on: string
+  created_on: string
+  development_mode: number
+  id: string
+  meta: {
+    cdn_only: boolean
+    custom_certificate_quota: number
+    dns_only: boolean
+    foundation_dns: boolean
+    page_rule_quota: number
+    phishing_detected: boolean
+    step: number
+  }
+  modified_on: string
+  name: string
+  original_dnshost?: string
+  original_name_servers?: string[]
+  original_registrar?: string
+  paused: boolean
+  status: string
+  type: string
+}
+
+type CloudflareZoneRequest = {
+  errors: string[]
+  messages: string[]
+  result: CloudflareZone
+
   success: boolean
 }
 
@@ -187,4 +222,8 @@ export async function deleteDnsRecord(token: string, zoneId: string, recordId: s
     recordId,
   )
   return response.result as CloudflareSite
+}
+
+export async function getZoneDetails(token: string, zoneId: string): Promise<CloudflareZoneRequest> {
+  return zoneRequest<CloudflareZoneRequest>(token, zoneId)
 }

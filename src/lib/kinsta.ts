@@ -12,14 +12,17 @@ type KinstaSiteLabel = {
 
 type KinstaDomain = {
   id: string
+  is_active: boolean
   name: string
+  site_id: string
+  type: string
 }
 
 type KinstaEnvironment = {
   cdn_cache_id?: string
 
   display_name: string
-  domains?: KinstaDomain[]
+  domains: KinstaDomain[]
   id: string
 
   id_edge_cache?: string

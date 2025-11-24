@@ -5,17 +5,21 @@ import { randomBytes } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { replaceInFile } from 'replace-in-file'
 
-import { createTurnstileWidget as createTurnstileSite } from '../lib/cloudflare.js'
+import { createDnsRecord, createTurnstileWidget as createTurnstileSite, getZoneDetails } from '../lib/cloudflare.js'
 import * as composer from '../lib/composer.js'
 import * as gh from '../lib/gh.js'
 import * as git from '../lib/git.js'
 import {
+  addDomainToEnvironment,
   cloneEnvironment,
   createSite as createKinstaSite,
   envNamesToCloneEnvironmentArgs,
+  getEnvironmentDomains,
   getSite,
   getSiteEnvironments,
+  getVerificationRecordsForDomain,
   setPhpVersion,
+  setPrimaryDomainOnEnv,
   setSshIpAllowlist,
   setWebroot,
 } from '../lib/kinsta.js'
@@ -128,6 +132,11 @@ export default class New extends Command {
       description: 'the additional free environment names you wish to create',
       env: 'IROOTS_NEW_KINSTA_FREE_ENVIRONMENTS',
       multiple: true,
+    }),
+    kinsta_setup_domains: Flags.boolean({
+      dependsOn: ['kinsta', 'cloudflare_account', 'cloudflare_api_key'],
+      description: 'whether to setup Kinsta domains and Cloudflare DNS records or not',
+      default: true,
     }),
     php_version: Flags.string({
       default: '8.2',
@@ -305,18 +314,29 @@ export default class New extends Command {
       allowNo: true,
       default: false,
       description: 'whether or not to create a Clouflare Turnstile instance',
+      dependsOn: ['cloudflare_account', 'cloudflare_api_key'],
     }),
-    turnstile_account: Flags.string({
-      dependsOn: ['turnstile'],
+    cloudflare_account: Flags.string({
       description: 'The account identifier',
       env: 'IROOTS_CLOUDFLARE_ACCOUNT_ID',
       required: true,
     }),
-    turnstile_api_key: Flags.string({
-      dependsOn: ['turnstile'],
+    cloudflare_api_key: Flags.string({
       description: 'The API key',
       env: 'IROOTS_CLOUDFLARE_API_KEY',
       required: true,
+    }),
+    cloudflare_zone_id_live: Flags.string({
+      description: 'The Zone ID for live DNS record creation',
+      env: 'IROOTS_CLOUDFLARE_ZONE_ID_LIVE',
+      required: true,
+      dependsOn: ['kinsta_setup_domains'],
+    }),
+    cloudflare_zone_id_dev: Flags.string({
+      description: 'The Zone ID for dev DNS record creation',
+      env: 'IROOTS_CLOUDFLARE_ZONE_ID_DEV',
+      required: true,
+      dependsOn: ['kinsta_setup_domains'],
     }),
     wp_ssh_aliases: Flags.boolean({
       allowNo: true,
@@ -349,6 +369,7 @@ export default class New extends Command {
       kinsta_api_key,
       kinsta_company,
       kinsta_free_environments,
+      kinsta_setup_domains,
       php_version,
       webroot,
       kinsta_premium_environments,
@@ -379,8 +400,10 @@ export default class New extends Command {
       trellis_template_remote,
       trellis_template_vault_pass,
       turnstile,
-      turnstile_account,
-      turnstile_api_key,
+      cloudflare_account,
+      cloudflare_api_key,
+      cloudflare_zone_id_dev,
+      cloudflare_zone_id_live,
       wp_ssh_aliases,
     } = flags
 
@@ -395,7 +418,14 @@ export default class New extends Command {
     const { owner: trellisRemoteOwner, repo: trellisRemoteRepo } = await git.parseRemote(trellis_remote)
     const trellisRemote = `git@github.com:${trellisRemoteOwner}/${trellisRemoteRepo}`
 
+    const domainProd = `${site}.itineris.live`
+    process.env.IROOTS_NEW_xxxLIVE_DOMAINxxx = domainProd
+    const domainDev = `${site}.test`
+    process.env.IROOTS_NEW_xxxDEV_DOMAINxxx = domainDev
+
     // Create Kinsta site
+    let kinstaProductionEnvId = ''
+    let kinstaSiteId = ''
     if (kinsta) {
       const secondsToWait = 10
       ux.action.start('Creating Kinsta site live environment')
@@ -404,7 +434,8 @@ export default class New extends Command {
         display_name,
         region: 'europe-west2',
       })
-      const { idEnv: kinstaProductionEnvId, idSite: kinstaSiteId } = createSiteResponse.data
+      kinstaProductionEnvId = createSiteResponse.data.idEnv
+      kinstaSiteId = createSiteResponse.data.idSite
       ux.action.stop()
 
       ux.action.start('Setting Kinsta SSH IP allowlist')
@@ -413,6 +444,34 @@ export default class New extends Command {
         : [kinsta_ssh_ip_allowlist]
       await setSshIpAllowlist(kinsta_api_key, kinstaProductionEnvId, kinstaSshIpAllowlist)
       ux.action.stop()
+
+      if (kinsta_setup_domains) {
+        ux.action.start(`Adding domain ${domainProd} to live environment`)
+        await addDomainToEnvironment(kinsta_api_key, kinstaProductionEnvId, {
+          domain_name: domainProd,
+          is_wildcardless: true,
+        })
+        process.env.IROOTS_NEW_xxxLIVE_DOMAINxxx = domainProd
+        ux.action.stop()
+
+        ux.action.start(`Setting domain ${domainProd} as primary`)
+
+        const kinstaProductionDomains = await getEnvironmentDomains(kinsta_api_key, kinstaProductionEnvId)
+        const kinstaProductionDomainId = kinstaProductionDomains.find(({ name }) => name === domainProd)?.id || ''
+        if (kinstaProductionDomainId.length === 0) {
+          this.log(`Could not find the domain ID for ${domainProd}`)
+        } else {
+          await setPrimaryDomainOnEnv(kinsta_api_key, kinstaProductionEnvId, {
+            domain_id: kinstaProductionDomainId,
+            run_search_and_replace: false,
+          })
+        }
+
+        ux.action.stop()
+
+        // First round of DNS records.
+        await addDnsRecords(kinstaProductionDomainId, kinsta_api_key, cloudflare_api_key, cloudflare_zone_id_live)
+      }
 
       ux.action.start(`Setting PHP version to ${php_version}`)
       // Wait a bit to ensure the site is ready to query.
@@ -445,20 +504,43 @@ export default class New extends Command {
           ux.action.stop()
           /* eslint-enable no-await-in-loop */
         }
+      }
 
-        ux.action.start('Gathering environment details')
-        await wait(secondsToWait * 1000)
-        const kinstaSiteEnvironments = await getSiteEnvironments(kinsta_api_key, kinstaSiteId)
-        for (const env of kinstaSiteEnvironments) {
+      if (kinsta_setup_domains) {
+        const newEnvironments = (await getSiteEnvironments(kinsta_api_key, kinstaSiteId)).filter(
+          env => env.id !== kinstaProductionEnvId,
+        )
+        for (const env of newEnvironments) {
           // Kinsta do not provide slugged environment names, so we try to replicate.
-          const envNameUppercase = slugify(env.display_name).toUpperCase()
-          process.env[`IROOTS_NEW_xxx${envNameUppercase}_SSH_PORTxxx`] = env.ssh_connection.ssh_port.toString()
-          // Kinsta use the same IP for all environments.
-          process.env.IROOTS_NEW_SSH_IP = env.ssh_connection.ssh_ip.external_ip
-          process.env.IROOTS_NEW_xxxSSH_IPxxx = process.env.IROOTS_NEW_SSH_IP
-        }
+          const envName = slugify(env.display_name).toLowerCase()
+          const envNameUppercase = envName.toUpperCase()
+          const newDomain = `${site}-${envName}.itineris.dev`
+          ux.action.start(`Adding domain ${newDomain} to ${env.display_name} environment`)
+          // eslint-disable-next-line no-await-in-loop
+          await addDomainToEnvironment(kinsta_api_key, env.id, {
+            domain_name: newDomain,
+            is_wildcardless: true,
+          })
+          process.env[`IROOTS_NEW_xxx${envNameUppercase}_DOMAINxxx`] = newDomain
+          ux.action.stop()
 
-        ux.action.stop()
+          ux.action.start(`Setting domain ${newDomain} as primary`)
+          // eslint-disable-next-line no-await-in-loop
+          const kinstaEnvDomains = await getEnvironmentDomains(kinsta_api_key, env.id)
+          const newDomainId = kinstaEnvDomains.find(({ name }) => name === newDomain)?.id || ''
+
+          // eslint-disable-next-line no-await-in-loop
+          await setPrimaryDomainOnEnv(kinsta_api_key, env.id, {
+            domain_id: newDomainId,
+            run_search_and_replace: false,
+          })
+
+          ux.action.stop()
+
+          // First round of DNS records.
+          // eslint-disable-next-line no-await-in-loop
+          await addDnsRecords(newDomainId, kinsta_api_key, cloudflare_api_key, cloudflare_zone_id_dev)
+        }
       }
     }
 
@@ -526,15 +608,19 @@ export default class New extends Command {
         process.env.IROOTS_NEW_xxxUAT_DOMAINxxx,
         process.env.IROOTS_NEW_xxxLIVE_DOMAINxxx,
       ].filter(Boolean)
-      const createTurnstileSiteResponse = await createTurnstileSite(turnstile_api_key, turnstile_account, {
-        bot_fight_mode: false,
-        clearance_level: 'no_clearance',
-        domains,
-        mode: 'managed',
-        name: display_name,
-        offlabel: false,
-        region: 'world',
-      })
+      const createTurnstileSiteResponse = await createTurnstileSite(
+        cloudflare_api_key as string,
+        cloudflare_account as string,
+        {
+          bot_fight_mode: false,
+          clearance_level: 'no_clearance',
+          domains,
+          mode: 'managed',
+          name: display_name,
+          offlabel: false,
+          region: 'world',
+        },
+      )
       if (createTurnstileSiteResponse) {
         const { secret, sitekey } = createTurnstileSiteResponse
 
@@ -696,7 +782,7 @@ export default class New extends Command {
     ux.action.stop()
 
     ux.action.start('Q&A')
-    let qAndAs: QAndA[] = []
+    const qAndAs: QAndA[] = []
     for (const placeholder of placeholders) {
       let answer = process.env[`IROOTS_NEW_${placeholder}`]
       if (answer === undefined) {
@@ -704,13 +790,10 @@ export default class New extends Command {
         answer = await password({ message: `What is ${placeholder}?` })
       }
 
-      qAndAs = [
-        ...qAndAs,
-        {
-          from: placeholder,
-          to: answer,
-        },
-      ]
+      qAndAs.push({
+        from: placeholder,
+        to: answer,
+      })
     }
 
     ux.action.stop()
@@ -1097,5 +1180,50 @@ export default class New extends Command {
         '$ wp core multisite-install --title="site title" --admin_user="username" --admin_password="password" --admin_email="you@example.com"',
       )
     }
+  }
+}
+
+async function addDnsRecords(
+  domainId: string,
+  kinstaApiKey: string,
+  cloudflareApiKey: string,
+  cloudflareZoneId: string,
+) {
+  const {
+    result: { name: zoneName },
+  } = await getZoneDetails(cloudflareApiKey, cloudflareZoneId)
+  const records = await getVerificationRecordsForDomain(kinstaApiKey, domainId)
+  if (records.site_domain.verification_records.length > 0) {
+    ux.action.start('Adding verification DNS records')
+
+    for (let { type, name, value } of records.site_domain.verification_records) {
+      name = name.replace(`.${zoneName}`, '')
+
+      // eslint-disable-next-line no-await-in-loop
+      await createDnsRecord(cloudflareApiKey, cloudflareZoneId, {
+        type,
+        name,
+        content: value,
+      })
+    }
+
+    ux.action.stop()
+  }
+
+  if (records.site_domain.pointing_records.length > 0) {
+    ux.action.start('Adding pointing DNS records')
+
+    for (let { type, name, value } of records.site_domain.pointing_records) {
+      name = name.replace(`.${zoneName}`, '')
+
+      // eslint-disable-next-line no-await-in-loop
+      await createDnsRecord(cloudflareApiKey, cloudflareZoneId, {
+        type,
+        name,
+        content: value,
+      })
+    }
+
+    ux.action.stop()
   }
 }
