@@ -16,6 +16,7 @@ import {
   getSite,
   getSiteEnvironments,
   setPhpVersion,
+  setSshIpAllowlist,
   setWebroot,
 } from '../lib/kinsta.js'
 import { findLastMatch, slugify, wait } from '../lib/misc.js'
@@ -146,6 +147,11 @@ export default class New extends Command {
       description: 'the additional premium environment names you wish to create',
       env: 'IROOTS_NEW_KINSTA_PREMIUM_ENVIRONMENTS',
       multiple: true,
+    }),
+    kinsta_ssh_ip_allowlist: Flags.string({
+      description: 'A list of IPs to allow for Kinsta SSH access',
+      env: 'IROOTS_KINSTA_SSH_IP_ALLOWLIST',
+      required: true,
     }),
     local: Flags.boolean({
       allowNo: true,
@@ -346,6 +352,7 @@ export default class New extends Command {
       php_version,
       webroot,
       kinsta_premium_environments,
+      kinsta_ssh_ip_allowlist,
       local,
       multisite,
       network_media_library,
@@ -398,6 +405,13 @@ export default class New extends Command {
         region: 'europe-west2',
       })
       const { idEnv: kinstaProductionEnvId, idSite: kinstaSiteId } = createSiteResponse.data
+      ux.action.stop()
+
+      ux.action.start('Setting Kinsta SSH IP allowlist')
+      const kinstaSshIpAllowlist = Array.isArray(kinsta_ssh_ip_allowlist)
+        ? kinsta_ssh_ip_allowlist
+        : [kinsta_ssh_ip_allowlist]
+      await setSshIpAllowlist(kinsta_api_key, kinstaProductionEnvId, kinstaSshIpAllowlist)
       ux.action.stop()
 
       ux.action.start(`Setting PHP version to ${php_version}`)
