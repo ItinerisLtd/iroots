@@ -1,4 +1,4 @@
-import {Command, Flags} from '@oclif/core'
+import { Command, Flags } from '@oclif/core'
 
 export abstract class CloudflareCommand extends Command {
   static baseFlags = {
@@ -13,6 +13,7 @@ export abstract class CloudflareCommand extends Command {
       required: true,
     }),
   }
-static description = 'Cloudflare Turnstile API commands'
-static examples = ['<%= config.bin %> <%= command.id %>']
+  static description = 'Cloudflare Turnstile API commands'
+  public static enableJsonFlag = true
+  static examples = ['<%= config.bin %> <%= command.id %>']
 }
