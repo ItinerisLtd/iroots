@@ -82,6 +82,12 @@
       "cloudflare:turnstile": {
         "description": "Manage Cloudflare Turnstile instances"
       },
+      "cloudflare:zero-trust": {
+        "description": "Manage Cloudflare Zero Trust"
+      },
+      "cloudflare:zero-trust:access": {
+        "description": "Manage Cloudflare Zero Trust Access"
+      },
       "kinsta": {
         "description": "Manage Kinsta services"
       },

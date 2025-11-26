@@ -172,6 +172,8 @@ async function zoneRequest<TResponse>(
     requestUrl.pathname = `${requestUrl.pathname}/${url}`
   }
 
+  console.log(requestUrl.toString())
+
   return request<TResponse>(token, requestUrl, options)
 }
 
@@ -226,4 +228,31 @@ export async function deleteDnsRecord(token: string, zoneId: string, recordId: s
 
 export async function getZoneDetails(token: string, zoneId: string): Promise<CloudflareZoneRequest> {
   return zoneRequest<CloudflareZoneRequest>(token, zoneId)
+}
+
+async function zeroTrustAccessRequest<TResponse>(
+  token: string,
+  zoneId: string,
+  endpoint: string = '',
+  options: RequestInit = {},
+): Promise<TResponse> {
+  let url = 'access'
+  if (endpoint.length > 0) {
+    url = `${url}/${endpoint}`
+  }
+
+  console.log(url)
+
+  return zoneRequest<TResponse>(token, zoneId, url, options)
+}
+
+export async function getListOfZeroTrustAccessApplications(
+  token: string,
+  zoneId: string,
+): Promise<CloudflareSiteRequest> {
+  const response = await zeroTrustAccessRequest<CloudflareSiteRequest>(token, zoneId, 'apps')
+
+  console.log(response)
+
+  return response
 }
