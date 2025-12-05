@@ -24,7 +24,7 @@
     "@oclif/plugin-plugins": "^5",
     "execa": "^9.6.1",
     "globby": "^16.0.0",
-    "replace-in-file": "^8.3.0"
+    "replace-in-file": "^8.4.0"
   },
   "devDependencies": {
     "@eslint/compat": "^2",
