@@ -196,7 +196,7 @@ export async function createUptimeTest(token: string, args: OutputFlags<any>): P
     const value = queryArgs[key]
     if (Array.isArray(value)) {
       for (const item of value) {
-        query.set(`${key}[]`, item as string)
+        query.append(`${key}[]`, item as string)
       }
     } else {
       query.set(key, value as string)
@@ -216,7 +216,7 @@ export async function createUptimeTest(token: string, args: OutputFlags<any>): P
     query.set('website_url', websiteUrlFixed.toString().replace('?statuscake=', '?statuscake'))
   }
 
-  const url = `uptime`
+  const url = 'uptime'
   const response = await request<StatusCakeUptimeCreateResponse>(token, url, { body: query, method: 'POST' })
 
   return response
