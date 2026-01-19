@@ -91,6 +91,72 @@ type CloudflareZoneRequest = {
   success: boolean
 }
 
+export type CloudflareZeroTrustSelfHostedApplication = {
+  allowed_idps: string[]
+  app_launcher_visible: boolean
+  aud: string
+  auto_redirect_to_identity: boolean
+  created_at: string
+  destinations: {
+    type: string
+    uri: string
+  }[]
+  domain: string
+  enable_binding_cookie: boolean
+  http_only_cookie_attribute: boolean
+  id: string
+  name: string
+  options_preflight_bypass: boolean
+  policies: {
+    created_at: string
+    decision: string
+    exclude: []
+    id: string
+    include: {
+      email_domain: {
+        domain: string
+      }
+    }[]
+    name: string
+    precedence: number
+    require: []
+    reusable: boolean
+    session_duration: string
+    uid: string
+    updated_at: string
+  }[]
+  self_hosted_domains: string[]
+  session_duration: string
+  tags: string[]
+  type: string
+  uid: string
+  updated_at: string
+}
+
+export type CloudflareZeroTrustAccessApplicationsRequest = {
+  errors: {
+    code: number
+    documentation_url: string
+    message: string
+    source: { pointer: string }
+  }
+  messages: {
+    code: number
+    documentation_url: string
+    message: string
+    source: { pointer: string }
+  }
+  result: CloudflareZeroTrustSelfHostedApplication[]
+  result_info: {
+    count: number
+    page: number
+    per_page: number
+    total_count: number
+    total_pages: number
+  }
+  success: boolean
+}
+
 async function request<TResponse>(
   token: string,
   url: string | URL = '',
@@ -104,8 +170,9 @@ async function request<TResponse>(
 
   const response = await fetch(url, options)
   const data = await response.json()
+  const success = (data?.success as boolean) || false
   const statusCode = data.status || response.status
-  if (statusCode !== 200) {
+  if (!success || statusCode >= 400) {
     const error = data as CloudflareError
     const errors = error.errors.map(err => `code: ${err.code} - message: ${err.message}`)
     ux.error(errors.join('\n'))
@@ -226,4 +293,62 @@ export async function deleteDnsRecord(token: string, zoneId: string, recordId: s
 
 export async function getZoneDetails(token: string, zoneId: string): Promise<CloudflareZoneRequest> {
   return zoneRequest<CloudflareZoneRequest>(token, zoneId)
+}
+
+async function zeroTrustAccessRequest<TResponse>(
+  token: string,
+  zoneId: string,
+  endpoint: string = '',
+  options: RequestInit = {},
+): Promise<TResponse> {
+  let url = 'access'
+  if (endpoint.length > 0) {
+    url = `${url}/${endpoint}`
+  }
+
+  return zoneRequest<TResponse>(token, zoneId, url, options)
+}
+
+export async function getListOfZeroTrustAccessApplications(
+  token: string,
+  zoneId: string,
+): Promise<CloudflareZeroTrustSelfHostedApplication[]> {
+  const response = await zeroTrustAccessRequest<CloudflareZeroTrustAccessApplicationsRequest>(token, zoneId, 'apps')
+  return response.result as CloudflareZeroTrustSelfHostedApplication[]
+}
+
+export async function createZeroTrustAccessApplication(
+  token: string,
+  zoneId: string,
+  args: OutputFlags<any>,
+): Promise<CloudflareZeroTrustSelfHostedApplication> {
+  const response = await zeroTrustAccessRequest<{ result: CloudflareZeroTrustSelfHostedApplication }>(
+    token,
+    zoneId,
+    'apps',
+    {
+      body: JSON.stringify(args),
+      method: 'POST',
+    },
+  )
+  return response.result as CloudflareZeroTrustSelfHostedApplication
+}
+
+export async function deleteZeroTrustAccessApplication(
+  token: string,
+  zoneId: string,
+  appId: string,
+): Promise<void> {
+  await zeroTrustAccessRequest(token, zoneId, `apps/${appId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function getZeroTrustAccessApplication(
+  token: string,
+  zoneId: string,
+  appId: string,
+): Promise<CloudflareZeroTrustSelfHostedApplication> {
+  const response = await zeroTrustAccessRequest<{ result: CloudflareZeroTrustSelfHostedApplication }>(token, zoneId, `apps/${appId}`)
+  return response.result as CloudflareZeroTrustSelfHostedApplication
 }
