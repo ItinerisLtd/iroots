@@ -333,3 +333,13 @@ export async function createZeroTrustAccessApplication(
   )
   return response.result as CloudflareZeroTrustSelfHostedApplication
 }
+
+export async function deleteZeroTrustAccessApplication(
+  token: string,
+  zoneId: string,
+  appId: string,
+): Promise<void> {
+  await zeroTrustAccessRequest(token, zoneId, `apps/${appId}`, {
+    method: 'DELETE',
+  })
+}
