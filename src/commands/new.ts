@@ -5,7 +5,12 @@ import { randomBytes } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { replaceInFile } from 'replace-in-file'
 
-import { createDnsRecord, createTurnstileWidget as createTurnstileSite, getZoneDetails } from '../lib/cloudflare.js'
+import {
+  createDnsRecord,
+  createTurnstileWidget as createTurnstileSite,
+  createZeroTrustAccessApplication,
+  getZoneDetails,
+} from '../lib/cloudflare.js'
 import * as composer from '../lib/composer.js'
 import * as gh from '../lib/gh.js'
 import * as git from '../lib/git.js'
@@ -338,6 +343,13 @@ export default class New extends Command {
       required: true,
       dependsOn: ['kinsta_setup_domains'],
     }),
+    cloudflare_zero_trust_access: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'Whether to create a Cloudflare Zero Trust Access application',
+      dependsOn: ['cloudflare_api_key', 'cloudflare_zone_id_live', 'cloudflare_zone_id_dev'],
+      env: 'IROOTS_CLOUDFLARE_ZERO_TRUST_ACCESS',
+    }),
     wp_ssh_aliases: Flags.boolean({
       allowNo: true,
       default: true,
@@ -404,6 +416,7 @@ export default class New extends Command {
       cloudflare_api_key,
       cloudflare_zone_id_dev,
       cloudflare_zone_id_live,
+      cloudflare_zero_trust_access,
       wp_ssh_aliases,
     } = flags
 
@@ -627,8 +640,39 @@ export default class New extends Command {
         ux.stdout(`Cloudflare Turnstile siteKey: ${sitekey}`)
         ux.stdout(`Cloudflare Turnstile secret: ${secret}`)
 
-        process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SITE_KEY = sitekey
-        process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SECRET = secret
+        process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SITE_KEYxxx = sitekey
+        process.env.IROOTS_NEW_xxxCLOUDFLARE_TURNSTILE_SECRETxxx = secret
+      }
+
+      ux.action.stop()
+    }
+
+    if (cloudflare_zero_trust_access) {
+      ux.action.start('Creating Cloudflare Zero Trust Access applications')
+      const envs = [
+        {
+          name: 'Live',
+          zoneId: cloudflare_zone_id_live,
+          domain: process.env.IROOTS_NEW_xxxLIVE_DOMAINxxx,
+        },
+        {
+          name: 'Staging',
+          zoneId: cloudflare_zone_id_dev,
+          domain: process.env.IROOTS_NEW_xxxSTAGING_DOMAINxxx,
+        },
+        {
+          name: 'UAT',
+          zoneId: cloudflare_zone_id_dev,
+          domain: process.env.IROOTS_NEW_xxxUAT_DOMAINxxx,
+        },
+      ].filter(Boolean)
+      for (const env of envs) {
+        // eslint-disable-next-line no-await-in-loop
+        await createZeroTrustAccessApplication(cloudflare_api_key as string, env.zoneId as string, {
+          name: `${display_name} ${env.name}`,
+          domain: env.domain,
+          type: 'self_hosted',
+        })
       }
 
       ux.action.stop()
