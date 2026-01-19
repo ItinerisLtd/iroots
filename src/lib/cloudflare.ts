@@ -309,12 +309,39 @@ async function zeroTrustAccessRequest<TResponse>(
   return zoneRequest<TResponse>(token, zoneId, url, options)
 }
 
+export async function getListOfZeroTrustAccessPolicies(
+  token: string,
+  zoneId: string,
+  appId: string,
+): Promise<any[]> {
+  const response = await zeroTrustAccessRequest<{ result: any[] }>(token, zoneId, `apps/${appId}/policies`)
+  return response.result as any[]
+}
+
 export async function getListOfZeroTrustAccessApplications(
   token: string,
   zoneId: string,
 ): Promise<CloudflareZeroTrustSelfHostedApplication[]> {
   const response = await zeroTrustAccessRequest<CloudflareZeroTrustAccessApplicationsRequest>(token, zoneId, 'apps')
   return response.result as CloudflareZeroTrustSelfHostedApplication[]
+}
+
+export async function createZeroTrustAccessPolicy(
+  token: string,
+  zoneId: string,
+  appId: string,
+  args: OutputFlags<any>,
+): Promise<any> {
+  const response = await zeroTrustAccessRequest<{ result: any }>(
+    token,
+    zoneId,
+    `apps/${appId}/policies`,
+    {
+      body: JSON.stringify(args),
+      method: 'POST',
+    },
+  )
+  return response.result as any
 }
 
 export async function createZeroTrustAccessApplication(
@@ -334,6 +361,17 @@ export async function createZeroTrustAccessApplication(
   return response.result as CloudflareZeroTrustSelfHostedApplication
 }
 
+export async function deleteZeroTrustAccessPolicy(
+  token: string,
+  zoneId: string,
+  appId: string,
+  policyId: string,
+): Promise<void> {
+  await zeroTrustAccessRequest(token, zoneId, `apps/${appId}/policies/${policyId}`, {
+    method: 'DELETE',
+  })
+}
+
 export async function deleteZeroTrustAccessApplication(
   token: string,
   zoneId: string,
@@ -342,6 +380,16 @@ export async function deleteZeroTrustAccessApplication(
   await zeroTrustAccessRequest(token, zoneId, `apps/${appId}`, {
     method: 'DELETE',
   })
+}
+
+export async function getZeroTrustAccessPolicy(
+  token: string,
+  zoneId: string,
+  appId: string,
+  policyId: string,
+): Promise<any> {
+  const response = await zeroTrustAccessRequest<{ result: any }>(token, zoneId, `apps/${appId}/policies/${policyId}`)
+  return response.result as any
 }
 
 export async function getZeroTrustAccessApplication(
