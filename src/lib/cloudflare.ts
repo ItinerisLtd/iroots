@@ -170,8 +170,9 @@ async function request<TResponse>(
 
   const response = await fetch(url, options)
   const data = await response.json()
+  const success = (data?.success as boolean) || false
   const statusCode = data.status || response.status
-  if (statusCode !== 200) {
+  if (!success || statusCode >= 400) {
     const error = data as CloudflareError
     const errors = error.errors.map(err => `code: ${err.code} - message: ${err.message}`)
     ux.error(errors.join('\n'))
@@ -313,6 +314,22 @@ export async function getListOfZeroTrustAccessApplications(
   zoneId: string,
 ): Promise<CloudflareZeroTrustSelfHostedApplication[]> {
   const response = await zeroTrustAccessRequest<CloudflareZeroTrustAccessApplicationsRequest>(token, zoneId, 'apps')
-
   return response.result as CloudflareZeroTrustSelfHostedApplication[]
+}
+
+export async function createZeroTrustAccessApplication(
+  token: string,
+  zoneId: string,
+  args: OutputFlags<any>,
+): Promise<CloudflareZeroTrustSelfHostedApplication> {
+  const response = await zeroTrustAccessRequest<{ result: CloudflareZeroTrustSelfHostedApplication }>(
+    token,
+    zoneId,
+    'apps',
+    {
+      body: JSON.stringify(args),
+      method: 'POST',
+    },
+  )
+  return response.result as CloudflareZeroTrustSelfHostedApplication
 }
