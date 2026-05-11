@@ -5,8 +5,8 @@ import {getAllSites} from '../../../lib/kinsta.js'
 
 export default class List extends KinstaCommand {
   static description = 'List sites in Kinsta account'
-static examples = ['<%= config.bin %> <%= command.id %>']
-static flags = {
+  static examples = ['<%= config.bin %> <%= command.id %>']
+  static flags = {
     company: Flags.string({
       env: 'IROOTS_KINSTA_COMPANY_ID',
       required: true,
@@ -16,13 +16,18 @@ static flags = {
       options: ['json', 'table'],
       required: false,
     }),
+    // eslint-disable-next-line camelcase
+    include_environments: Flags.boolean({
+      default: false,
+    }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    const {apiKey, company, format} = flags
+    // eslint-disable-next-line camelcase
+    const {apiKey, company, format, include_environments} = flags
 
-    const sites = await getAllSites(apiKey, company)
+    const sites = await getAllSites(apiKey, company, include_environments)
     if (format === 'json') {
       console.log(JSON.stringify(sites))
     } else {
