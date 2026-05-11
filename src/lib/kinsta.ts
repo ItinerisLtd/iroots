@@ -178,8 +178,17 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   return data as TResponse
 }
 
-export async function getAllSites(token: string, company: string): Promise<KinstaSite[]> {
-  const response = await request<KinstaSitesRequest>(token, `sites/?company=${company}`)
+export async function getAllSites(
+  token: string,
+  company: string,
+  // eslint-disable-next-line camelcase
+  include_environments: boolean,
+): Promise<KinstaSite[]> {
+  const response = await request<KinstaSitesRequest>(
+    token,
+    // eslint-disable-next-line camelcase
+    `sites/?company=${company}&include_environments=${include_environments}`,
+  )
 
   return response.company.sites as KinstaSite[]
 }
