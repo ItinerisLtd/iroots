@@ -144,7 +144,7 @@ export default class New extends Command {
       default: true,
     }),
     php_version: Flags.string({
-      default: '8.2',
+      default: '8.4',
       dependsOn: ['kinsta'],
       description: 'the PHP version to set on site environments',
       env: 'IROOTS_PHP_VERSION',
