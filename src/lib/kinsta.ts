@@ -18,16 +18,25 @@ type KinstaDomain = {
   type: string
 }
 
+type KinstaContainerInfo = {
+  id: string
+  php_engine_version: string
+}
+
 type KinstaEnvironment = {
-  cdn_cache_id?: string
+  cdn_cache_id?: null | string
+  container_info: KinstaContainerInfo
 
   display_name: string
   domains: KinstaDomain[]
   id: string
 
-  id_edge_cache?: string
+  id_edge_cache?: null | string
+  image_optimization_type?: null | string
+  is_additional_sftp_accounts_enabled: boolean
 
   is_blocked: boolean
+  is_opt_out_from_automatic_php_update?: boolean | null
 
   is_premium: boolean
   name: string
@@ -40,6 +49,9 @@ type KinstaEnvironment = {
 
     ssh_port: number
   }
+
+  web_root?: string
+  wordpress_version?: null | string
 }
 
 export type KinstaSite = {
