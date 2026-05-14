@@ -114,7 +114,7 @@ export type ResponseCodes = {
 }
 
 type KinstaError = {
-  data: {
+  data?: {
     message: string
     status: keyof ResponseCodes
   }
@@ -172,11 +172,15 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
       ux.error(kinstaError.error)
     }
 
-    if (data && data.status === 500) {
+    if (data?.status === 500 && kinstaError.data?.message) {
       ux.error(kinstaError.data.message)
     }
 
-    ux.error(kinstaError.message)
+    if (kinstaError.message) {
+      ux.error(kinstaError.message)
+    }
+
+    ux.error(`Kinsta API error (${statusCode}): ${JSON.stringify(data)}`)
   }
 
   // The response is still in progress, wait until it is finished.
