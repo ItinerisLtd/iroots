@@ -209,34 +209,8 @@ export async function getSite(token: string, siteId: string): Promise<KinstaSite
 }
 
 export async function getSiteEnvironments(token: string, siteId: string): Promise<KinstaEnvironment[]> {
-  try {
-    const response = await request<KinstaEnvironmentsRequest>(token, `sites/${siteId}/environments`)
-    return response.site.environments
-  } catch {
-    // Environments endpoint may fail with 500 when site is blocked (busy)
-    // Fall back to polling the site endpoint until unblocked
-    const maxAttempts = 12 // 12 * 10s = 2 minutes
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      // eslint-disable-next-line no-await-in-loop
-      const siteResponse = await request<KinstaSiteRequest>(token, `sites/${siteId}`)
-      const environments: KinstaEnvironment[] = siteResponse.site.environments ?? []
-      const anyBlocked = environments.some((env: KinstaEnvironment) => env.is_blocked)
-
-      if (!anyBlocked) {
-        return environments
-      }
-
-      // Site is blocked (busy), wait and retry
-      ux.warn(`Site is busy (attempt ${attempt}/${maxAttempts}), waiting 10s...`)
-      // eslint-disable-next-line no-await-in-loop
-      await wait(10_000)
-    }
-
-    // Timeout — return whatever we have (environments exist but site is blocked)
-    const finalResponse = await request<KinstaSiteRequest>(token, `sites/${siteId}`)
-    return finalResponse.site.environments ?? []
-  }
+  const response = await request<KinstaEnvironmentsRequest>(token, `sites/${siteId}/environments`)
+  return response.site.environments
 }
 
 type KinstaCloneEnvironmentArgs = {
