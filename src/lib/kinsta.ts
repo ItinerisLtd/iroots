@@ -114,7 +114,7 @@ export type ResponseCodes = {
 }
 
 type KinstaError = {
-  data: {
+  data?: {
     message: string
     status: keyof ResponseCodes
   }
@@ -168,15 +168,12 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
 
   if ([400, 401, 404, 500].includes(statusCode)) {
     const kinstaError: KinstaError = data
-    if (kinstaError.error) {
-      ux.error(kinstaError.error)
-    }
+    const errorMessage = kinstaError.error
+      || kinstaError.data?.message
+      || kinstaError.message
+      || JSON.stringify(data)
 
-    if (data && data.status === 500) {
-      ux.error(kinstaError.data.message)
-    }
-
-    ux.error(kinstaError.message)
+    ux.error(`Kinsta API error (${statusCode}) on ${url}: ${errorMessage}`)
   }
 
   // The response is still in progress, wait until it is finished.
@@ -213,7 +210,6 @@ export async function getSite(token: string, siteId: string): Promise<KinstaSite
 
 export async function getSiteEnvironments(token: string, siteId: string): Promise<KinstaEnvironment[]> {
   const response = await request<KinstaEnvironmentsRequest>(token, `sites/${siteId}/environments`)
-
   return response.site.environments
 }
 
