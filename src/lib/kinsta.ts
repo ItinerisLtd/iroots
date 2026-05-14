@@ -168,19 +168,12 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
 
   if ([400, 401, 404, 500].includes(statusCode)) {
     const kinstaError: KinstaError = data
-    if (kinstaError.error) {
-      ux.error(kinstaError.error)
-    }
+    const errorMessage = kinstaError.error
+      || kinstaError.data?.message
+      || kinstaError.message
+      || JSON.stringify(data)
 
-    if (data?.status === 500 && kinstaError.data?.message) {
-      ux.error(kinstaError.data.message)
-    }
-
-    if (kinstaError.message) {
-      ux.error(kinstaError.message)
-    }
-
-    ux.error(`Kinsta API error (${statusCode}): ${JSON.stringify(data)}`)
+    ux.error(`Kinsta API error (${statusCode}) on ${url}: ${errorMessage}`)
   }
 
   // The response is still in progress, wait until it is finished.
