@@ -123,10 +123,38 @@ type KinstaError = {
   status: keyof ResponseCodes
 }
 
-type KinstaOperationResponse = {
+export type KinstaOperationResponse = {
   message: string
   operation_id: string
   status: keyof ResponseCodes
+}
+
+export type KinstaBackup = {
+  created_at: number
+  id: number
+  name: string
+  note: null | string
+  type: string
+}
+
+type KinstaBackupsResponse = {
+  environment: {
+    backups: KinstaBackup[]
+    display_name: string
+  }
+}
+
+type KinstaCompanyUser = {
+  email: string
+  full_name: string
+  id: string
+  image: string
+}
+
+type KinstaCompanyUsersResponse = {
+  company: {
+    users: Array<{user: KinstaCompanyUser}>
+  }
 }
 
 type KinstaSiteDomain = {
@@ -514,4 +542,58 @@ export async function setSshIpAllowlist(
     }),
   })
   /* eslint-enable camelcase */
+}
+
+export async function getBackups(token: string, envId: string): Promise<KinstaBackup[]> {
+  const response = await request<KinstaBackupsResponse>(token, `sites/environments/${envId}/backups`)
+  return response.environment.backups
+}
+
+export async function createManualBackup(
+  token: string,
+  envId: string,
+  tag?: string,
+): Promise<KinstaOperationResponse> {
+  const response = await request<KinstaOperationResponse>(token, `sites/environments/${envId}/manual-backups`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(tag === undefined ? {} : {tag}),
+  })
+  return response
+}
+
+/* eslint-disable camelcase */
+export async function restoreBackup(
+  token: string,
+  targetEnvId: string,
+  backup_id: number,
+  notified_user_id: string,
+): Promise<KinstaOperationResponse> {
+  const response = await request<KinstaOperationResponse>(
+    token,
+    `sites/environments/${targetEnvId}/backups/restore`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({backup_id, notified_user_id}),
+    },
+  )
+  return response
+}
+/* eslint-enable camelcase */
+
+export async function deleteBackup(token: string, backupId: number): Promise<KinstaOperationResponse> {
+  const response = await request<KinstaOperationResponse>(token, `sites/environments/backups/${backupId}`, {
+    method: 'DELETE',
+  })
+  return response
+}
+
+export async function getCompanyUsers(token: string, companyId: string): Promise<KinstaCompanyUser[]> {
+  const response = await request<KinstaCompanyUsersResponse>(token, `company/${companyId}/users`)
+  return response.company.users.map(({user}) => user)
 }
