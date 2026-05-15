@@ -100,6 +100,9 @@
       "kinsta:env:ssh:allowlist": {
         "description": "Manage SSH IP allowlist on Kinsta WordPress environments"
       },
+      "kinsta:backups": {
+        "description": "Manage Kinsta WordPress site environment backups"
+      },
       "kinsta:sites": {
         "description": "Manage Kinsta WordPress sites"
       },
