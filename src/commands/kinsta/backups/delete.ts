@@ -24,7 +24,7 @@ export default class Delete extends KinstaCommand {
     // eslint-disable-next-line camelcase
     const {apiKey, backup_id} = flags
 
-    if (!flags.IConfirmBackupWillBeDeletedPermanently) {
+    if (flags.IConfirmBackupWillBeDeletedPermanently !== true) {
       const confirmed = await confirm({
         // eslint-disable-next-line camelcase
         message: `Permanently delete backup ${backup_id}? This cannot be undone.`,

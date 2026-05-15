@@ -559,7 +559,7 @@ export async function createManualBackup(
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(tag ? {tag} : {}),
+    body: JSON.stringify(tag === undefined ? {} : {tag}),
   })
   return response
 }

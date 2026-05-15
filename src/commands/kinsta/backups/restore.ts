@@ -43,8 +43,8 @@ export default class Restore extends KinstaCommand {
     // eslint-disable-next-line camelcase
     let resolvedUserId = notified_user_id
 
-    if (!resolvedUserId) {
-      if (!company) {
+    if (resolvedUserId === undefined) {
+      if (company === undefined) {
         this.error('--company is required when --notified_user_id is not provided')
       }
 
@@ -62,7 +62,7 @@ export default class Restore extends KinstaCommand {
       })
     }
 
-    if (!flags.IConfirmBackupWillOverwriteEnvironment) {
+    if (flags.IConfirmBackupWillOverwriteEnvironment !== true) {
       const confirmed = await confirm({
         // eslint-disable-next-line camelcase
         message: `Restoring backup ${backup_id} will overwrite environment ${environment_id}. Continue?`,
