@@ -345,8 +345,10 @@ export async function getOperationStatus(token: string, operationId: string): Pr
     }
 
     // Transient error (500 or 404) — return non-200 status so the polling loop retries
+    const statusMatch = message.match(/\b(500|404)\b/)
+    const transientStatus = statusMatch ? Number(statusMatch[1]) : 500
     // eslint-disable-next-line camelcase
-    return { status: 500, operation_id: operationId, message: 'Operation status temporarily unavailable' }
+    return { status: transientStatus, operation_id: operationId, message: 'Operation status temporarily unavailable' }
   }
 }
 
@@ -354,7 +356,7 @@ export async function checkOperationStatus<TResponse>(
   apiKey: string,
   operationId: string,
   secondsToWait: number = 2,
-): Promise<Error | TResponse> {
+): Promise<TResponse> {
   let operationStatus = null
   let operationStatusCode = 404
   const timeoutSeconds = 300
@@ -364,7 +366,7 @@ export async function checkOperationStatus<TResponse>(
   do {
     attempt++
     if (attempt > maxAttempts) {
-      return new Error(`Operation ${operationId} timed out after ${timeoutSeconds} seconds`)
+      ux.error(`Operation ${operationId} timed out after ${timeoutSeconds} seconds`)
     }
 
     // eslint-disable-next-line no-await-in-loop
@@ -376,7 +378,7 @@ export async function checkOperationStatus<TResponse>(
   } while (operationStatusCode !== 200)
 
   if (operationStatus === null) {
-    return new Error('Failed to complete operation. Try again with MyKinsta UI')
+    ux.error('Failed to complete operation. Try again with MyKinsta UI')
   }
 
   return operationStatus as TResponse
