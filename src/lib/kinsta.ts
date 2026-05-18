@@ -333,22 +333,31 @@ export async function createSite(token: string, args: OutputFlags<any>): Promise
 }
 
 export async function getOperationStatus(token: string, operationId: string): Promise<KinstaOperationResponse> {
-  const response = await request<KinstaOperationResponse>(token, `operations/${operationId}`)
-
-  return response
+  try {
+    const response = await request<KinstaOperationResponse>(token, `operations/${operationId}`)
+    return response
+  } catch {
+    // Transient error (500 or 404) — return non-200 status so the polling loop retries
+    return { status: 500, message: 'Operation status temporarily unavailable' } as unknown as KinstaOperationResponse
+  }
 }
 
 export async function checkOperationStatus<TResponse>(
   apiKey: string,
   operationId: string,
-  secondsToWait: number = 5,
+  secondsToWait: number = 2,
 ): Promise<Error | TResponse> {
   let operationStatus = null
   let operationStatusCode = 404
+  const maxAttempts = 150 // 150 * 2s = 5 minutes max
 
+  let attempt = 0
   do {
-    // This is to make sure that Kinsta have created the operation for us to query.
-    // If we send the request too soon, it will not be ready to view.
+    attempt++
+    if (attempt > maxAttempts) {
+      return new Error(`Operation ${operationId} timed out after ${maxAttempts * secondsToWait} seconds`)
+    }
+
     // eslint-disable-next-line no-await-in-loop
     await wait(secondsToWait * 1000)
 
@@ -358,7 +367,7 @@ export async function checkOperationStatus<TResponse>(
   } while (operationStatusCode !== 200)
 
   if (operationStatus === null) {
-    return new Error('Failed to create site. Try again with MyKinsta UI')
+    return new Error('Failed to complete operation. Try again with MyKinsta UI')
   }
 
   return operationStatus as TResponse
