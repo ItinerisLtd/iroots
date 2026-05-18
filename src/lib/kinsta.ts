@@ -168,7 +168,7 @@ type KinstaDomainsResponse = {
   }
 }
 
-async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
+async function request<TResponse>(token: string, url: string, options: RequestInit = {}, timeoutSeconds?: number): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   headers.set('Authorization', `Bearer ${token}`)
   options.headers = headers
@@ -208,7 +208,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   if ('operation_id' in data) {
     // Wait 5 seconds to ensure the operation can be queried
     await wait(Math.max(retryAfter, 5) * 1000)
-    const operationStatus = await checkOperationStatus(token, data.operation_id)
+    const operationStatus = await checkOperationStatus(token, data.operation_id, 2, timeoutSeconds)
     return operationStatus as TResponse
   }
 
@@ -337,39 +337,51 @@ export async function getOperationStatus(token: string, operationId: string): Pr
   return response
 }
 
+const warnedOperations = new Set<string>()
+
 async function pollOperationStatus(token: string, operationId: string): Promise<KinstaOperationResponse> {
   try {
     return await getOperationStatus(token, operationId)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
-    // Match the known ux.error format: "Kinsta API error (STATUS) on ..."
     const statusMatch = message.match(/Kinsta API error \((\d+)\)/)
     const statusCode = statusMatch ? Number(statusMatch[1]) : 0
-    const isTransient = statusCode === 500 || statusCode === 404
 
-    if (!isTransient) {
-      throw error
+    // 404 means the operation completed and was cleaned up
+    if (statusCode === 404) {
+      return { status: 200, message: 'Operation completed' } as unknown as KinstaOperationResponse
     }
 
-    // Transient error (500 or 404) — return non-200 status so the polling loop retries
-    // eslint-disable-next-line camelcase
-    return { status: statusCode, operation_id: operationId, message: 'Operation status temporarily unavailable' }
+    // 500 is transient — operation still running but status temporarily unavailable
+    if (statusCode === 500) {
+      if (!warnedOperations.has(operationId)) {
+        warnedOperations.add(operationId)
+        ux.warn(`Operation status temporarily unavailable for ${operationId}, retrying until complete...`)
+      }
+      /* eslint-disable camelcase */
+
+      return { status: statusCode, operation_id: operationId, message: 'Operation status temporarily unavailable' }
+      /* eslint-enable camelcase */
+    }
+
+    // Any other error — rethrow
+    throw error
   }
 }
 
 export async function checkOperationStatus<TResponse>(
-  apiKey: string,
+  token: string,
   operationId: string,
   secondsToWait: number = 2,
+  timeoutSeconds?: number,
 ): Promise<TResponse> {
   const clampedWait = Math.max(1, Math.min(secondsToWait, 60))
-  const timeoutMs = 300 * 1000
+  const timeoutMs = (timeoutSeconds ?? 300) * 1000
   const startTime = Date.now()
   let operationStatus: KinstaOperationResponse | null = null
 
   do {
-    const elapsedMs = Date.now() - startTime
-    const remainingMs = timeoutMs - elapsedMs
+    const remainingMs = timeoutMs - (Date.now() - startTime)
 
     if (remainingMs <= 0) {
       ux.error(`Operation ${operationId} timed out after ${timeoutMs / 1000} seconds`)
@@ -378,8 +390,12 @@ export async function checkOperationStatus<TResponse>(
     // eslint-disable-next-line no-await-in-loop
     await wait(Math.min(clampedWait * 1000, remainingMs))
 
+    if (Date.now() - startTime >= timeoutMs) {
+      ux.error(`Operation ${operationId} timed out after ${timeoutMs / 1000} seconds`)
+    }
+
     // eslint-disable-next-line no-await-in-loop
-    operationStatus = await pollOperationStatus(apiKey, operationId)
+    operationStatus = await pollOperationStatus(token, operationId)
   } while (operationStatus.status !== 200)
 
   return operationStatus as TResponse
@@ -507,7 +523,7 @@ export async function pushEnvironment(
       'Content-Type': 'application/json',
     },
     method: 'PUT',
-  })
+  }, 900)
   return response
 }
 
