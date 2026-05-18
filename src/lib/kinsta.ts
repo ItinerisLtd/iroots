@@ -333,9 +333,13 @@ export async function createSite(token: string, args: OutputFlags<any>): Promise
 }
 
 export async function getOperationStatus(token: string, operationId: string): Promise<KinstaOperationResponse> {
+  const response = await request<KinstaOperationResponse>(token, `operations/${operationId}`)
+  return response
+}
+
+async function pollOperationStatus(token: string, operationId: string): Promise<KinstaOperationResponse> {
   try {
-    const response = await request<KinstaOperationResponse>(token, `operations/${operationId}`)
-    return response
+    return await getOperationStatus(token, operationId)
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error)
     // Match the known ux.error format: "Kinsta API error (STATUS) on ..."
@@ -375,7 +379,7 @@ export async function checkOperationStatus<TResponse>(
     await wait(clampedWait * 1000)
 
     // eslint-disable-next-line no-await-in-loop
-    operationStatus = await getOperationStatus(apiKey, operationId)
+    operationStatus = await pollOperationStatus(apiKey, operationId)
     operationStatusCode = operationStatus.status
   } while (operationStatusCode !== 200)
 
