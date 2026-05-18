@@ -209,10 +209,6 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
     // Wait 5 seconds to ensure the operation can be queried
     await wait(Math.max(retryAfter, 5) * 1000)
     const operationStatus = await checkOperationStatus(token, data.operation_id)
-    if (operationStatus instanceof Error) {
-      ux.error(operationStatus.message)
-    }
-
     return operationStatus as TResponse
   }
 
@@ -372,12 +368,15 @@ export async function checkOperationStatus<TResponse>(
   let operationStatus: KinstaOperationResponse | null = null
 
   do {
-    if (Date.now() - startTime > timeoutMs) {
+    const elapsedMs = Date.now() - startTime
+    const remainingMs = timeoutMs - elapsedMs
+
+    if (remainingMs <= 0) {
       ux.error(`Operation ${operationId} timed out after ${timeoutMs / 1000} seconds`)
     }
 
     // eslint-disable-next-line no-await-in-loop
-    await wait(clampedWait * 1000)
+    await wait(Math.min(clampedWait * 1000, remainingMs))
 
     // eslint-disable-next-line no-await-in-loop
     operationStatus = await pollOperationStatus(apiKey, operationId)
