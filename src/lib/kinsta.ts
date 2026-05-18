@@ -209,6 +209,10 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
     // Wait 5 seconds to ensure the operation can be queried
     await wait(Math.max(retryAfter, 5) * 1000)
     const operationStatus = await checkOperationStatus(token, data.operation_id)
+    if (operationStatus instanceof Error) {
+      ux.error(operationStatus.message)
+    }
+
     return operationStatus as TResponse
   }
 
@@ -363,16 +367,13 @@ export async function checkOperationStatus<TResponse>(
   secondsToWait: number = 2,
 ): Promise<TResponse> {
   const clampedWait = Math.max(1, Math.min(secondsToWait, 60))
-  let operationStatus = null
-  let operationStatusCode = 404
-  const timeoutSeconds = 300
-  const maxAttempts = Math.ceil(timeoutSeconds / clampedWait)
+  const timeoutMs = 300 * 1000
+  const startTime = Date.now()
+  let operationStatus: KinstaOperationResponse | null = null
 
-  let attempt = 0
   do {
-    attempt++
-    if (attempt > maxAttempts) {
-      ux.error(`Operation ${operationId} timed out after ${timeoutSeconds} seconds`)
+    if (Date.now() - startTime > timeoutMs) {
+      ux.error(`Operation ${operationId} timed out after ${timeoutMs / 1000} seconds`)
     }
 
     // eslint-disable-next-line no-await-in-loop
@@ -380,12 +381,7 @@ export async function checkOperationStatus<TResponse>(
 
     // eslint-disable-next-line no-await-in-loop
     operationStatus = await pollOperationStatus(apiKey, operationId)
-    operationStatusCode = operationStatus.status
-  } while (operationStatusCode !== 200)
-
-  if (operationStatus === null) {
-    ux.error('Failed to complete operation. Try again with MyKinsta UI')
-  }
+  } while (operationStatus.status !== 200)
 
   return operationStatus as TResponse
 }
