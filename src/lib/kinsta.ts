@@ -336,9 +336,17 @@ export async function getOperationStatus(token: string, operationId: string): Pr
   try {
     const response = await request<KinstaOperationResponse>(token, `operations/${operationId}`)
     return response
-  } catch {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    const isTransient = /\b(500|404)\b/.test(message)
+
+    if (!isTransient) {
+      throw error
+    }
+
     // Transient error (500 or 404) — return non-200 status so the polling loop retries
-    return { status: 500, message: 'Operation status temporarily unavailable' } as unknown as KinstaOperationResponse
+    // eslint-disable-next-line camelcase
+    return { status: 500, operation_id: operationId, message: 'Operation status temporarily unavailable' }
   }
 }
 
@@ -349,13 +357,14 @@ export async function checkOperationStatus<TResponse>(
 ): Promise<Error | TResponse> {
   let operationStatus = null
   let operationStatusCode = 404
-  const maxAttempts = 150 // 150 * 2s = 5 minutes max
+  const timeoutSeconds = 300
+  const maxAttempts = Math.ceil(timeoutSeconds / secondsToWait)
 
   let attempt = 0
   do {
     attempt++
     if (attempt > maxAttempts) {
-      return new Error(`Operation ${operationId} timed out after ${maxAttempts * secondsToWait} seconds`)
+      return new Error(`Operation ${operationId} timed out after ${timeoutSeconds} seconds`)
     }
 
     // eslint-disable-next-line no-await-in-loop
