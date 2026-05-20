@@ -168,7 +168,7 @@ type KinstaDomainsResponse = {
   }
 }
 
-async function request<TResponse>(token: string, url: string, options: RequestInit = {}): Promise<TResponse> {
+async function request<TResponse>(token: string, url: string, options: RequestInit = {}, timeoutSeconds?: number): Promise<TResponse> {
   const headers = new Headers(options?.headers)
   headers.set('Authorization', `Bearer ${token}`)
   options.headers = headers
@@ -208,7 +208,7 @@ async function request<TResponse>(token: string, url: string, options: RequestIn
   if ('operation_id' in data) {
     // Wait 5 seconds to ensure the operation can be queried
     await wait(Math.max(retryAfter, 5) * 1000)
-    const operationStatus = await checkOperationStatus(token, data.operation_id)
+    const operationStatus = await checkOperationStatus(token, data.operation_id, 2, timeoutSeconds)
     return operationStatus as TResponse
   }
 
@@ -334,32 +334,69 @@ export async function createSite(token: string, args: OutputFlags<any>): Promise
 
 export async function getOperationStatus(token: string, operationId: string): Promise<KinstaOperationResponse> {
   const response = await request<KinstaOperationResponse>(token, `operations/${operationId}`)
-
   return response
 }
 
+const warnedOperations = new Set<string>()
+
+async function pollOperationStatus(token: string, operationId: string): Promise<KinstaOperationResponse> {
+  try {
+    return await getOperationStatus(token, operationId)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    const statusMatch = message.match(/Kinsta API error \((\d+)\)/)
+    const statusCode = statusMatch ? Number(statusMatch[1]) : 0
+
+    // 404 means the operation completed and was cleaned up
+    if (statusCode === 404) {
+      return { status: 200, message: 'Operation completed' } as unknown as KinstaOperationResponse
+    }
+
+    // 500 is transient — operation still running but status temporarily unavailable
+    if (statusCode === 500) {
+      if (!warnedOperations.has(operationId)) {
+        warnedOperations.add(operationId)
+        ux.warn(`Operation status temporarily unavailable for ${operationId}, retrying until complete...`)
+      }
+      /* eslint-disable camelcase */
+
+      return { status: statusCode, operation_id: operationId, message: 'Operation status temporarily unavailable' }
+      /* eslint-enable camelcase */
+    }
+
+    // Any other error — rethrow
+    throw error
+  }
+}
+
 export async function checkOperationStatus<TResponse>(
-  apiKey: string,
+  token: string,
   operationId: string,
-  secondsToWait: number = 5,
-): Promise<Error | TResponse> {
-  let operationStatus = null
-  let operationStatusCode = 404
+  secondsToWait: number = 2,
+  timeoutSeconds?: number,
+): Promise<TResponse> {
+  const clampedWait = Math.max(1, Math.min(secondsToWait, 60))
+  const timeoutMs = (timeoutSeconds ?? 300) * 1000
+  const startTime = Date.now()
+  let operationStatus: KinstaOperationResponse | null = null
 
   do {
-    // This is to make sure that Kinsta have created the operation for us to query.
-    // If we send the request too soon, it will not be ready to view.
-    // eslint-disable-next-line no-await-in-loop
-    await wait(secondsToWait * 1000)
+    const remainingMs = timeoutMs - (Date.now() - startTime)
+
+    if (remainingMs <= 0) {
+      ux.error(`Operation ${operationId} timed out after ${timeoutMs / 1000} seconds`)
+    }
 
     // eslint-disable-next-line no-await-in-loop
-    operationStatus = await getOperationStatus(apiKey, operationId)
-    operationStatusCode = operationStatus.status
-  } while (operationStatusCode !== 200)
+    await wait(Math.min(clampedWait * 1000, remainingMs))
 
-  if (operationStatus === null) {
-    return new Error('Failed to create site. Try again with MyKinsta UI')
-  }
+    if (Date.now() - startTime >= timeoutMs) {
+      ux.error(`Operation ${operationId} timed out after ${timeoutMs / 1000} seconds`)
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    operationStatus = await pollOperationStatus(token, operationId)
+  } while (operationStatus.status !== 200)
 
   return operationStatus as TResponse
 }
@@ -486,7 +523,7 @@ export async function pushEnvironment(
       'Content-Type': 'application/json',
     },
     method: 'PUT',
-  })
+  }, 900)
   return response
 }
 
