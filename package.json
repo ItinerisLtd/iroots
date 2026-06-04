@@ -103,6 +103,9 @@
       "kinsta:backups": {
         "description": "Manage Kinsta WordPress site environment backups"
       },
+      "kinsta:env:logs": {
+        "description": "Fetch Kinsta site environment logs"
+      },
       "kinsta:sites": {
         "description": "Manage Kinsta WordPress sites"
       },
