@@ -648,14 +648,15 @@ type KinstaLogsResponse = {
 export async function getLogs(
   token: string,
   envId: string,
-  // eslint-disable-next-line camelcase
-  file_name: KinstaLogFileName,
+  fileName: KinstaLogFileName,
   lines: number,
 ): Promise<string> {
+  const params = new URLSearchParams()
+  params.append('file_name', fileName)
+  params.append('lines', String(lines))
   const response = await request<KinstaLogsResponse>(
     token,
-    // eslint-disable-next-line camelcase
-    `sites/environments/${envId}/logs?file_name=${file_name}&lines=${lines}`,
+    `sites/environments/${envId}/logs?${params.toString()}`,
   )
   return response.environment.container_info.logs
 }
