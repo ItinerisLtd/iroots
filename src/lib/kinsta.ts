@@ -634,3 +634,28 @@ export async function getCompanyUsers(token: string, companyId: string): Promise
   const response = await request<KinstaCompanyUsersResponse>(token, `company/${companyId}/users`)
   return response.company.users.map(({user}) => user)
 }
+
+export type KinstaLogFileName = 'access' | 'error' | 'kinsta-cache-perf'
+
+type KinstaLogsResponse = {
+  environment: {
+    container_info: {
+      logs: string
+    }
+  }
+}
+
+export async function getLogs(
+  token: string,
+  envId: string,
+  // eslint-disable-next-line camelcase
+  file_name: KinstaLogFileName,
+  lines: number,
+): Promise<string> {
+  const response = await request<KinstaLogsResponse>(
+    token,
+    // eslint-disable-next-line camelcase
+    `sites/environments/${envId}/logs?file_name=${file_name}&lines=${lines}`,
+  )
+  return response.environment.container_info.logs
+}
