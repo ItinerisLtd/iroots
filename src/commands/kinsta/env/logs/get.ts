@@ -1,7 +1,7 @@
 import {Flags} from '@oclif/core'
 
 import {KinstaCommand} from '../../../../lib/commands/kinsta-command.js'
-import {getLogs, KinstaLogFileName} from '../../../../lib/kinsta.js'
+import {getLogs, KINSTA_LOG_FILE_NAMES, KinstaLogFileName} from '../../../../lib/kinsta.js'
 
 export default class Get extends KinstaCommand {
   static description = 'Fetch logs for a Kinsta environment'
@@ -15,7 +15,7 @@ export default class Get extends KinstaCommand {
     // eslint-disable-next-line camelcase
     file_name: Flags.string({
       default: 'error',
-      options: ['access', 'error', 'kinsta-cache-perf'],
+      options: [...KINSTA_LOG_FILE_NAMES],
       required: true,
     }),
     format: Flags.string({

@@ -635,7 +635,8 @@ export async function getCompanyUsers(token: string, companyId: string): Promise
   return response.company.users.map(({user}) => user)
 }
 
-export type KinstaLogFileName = 'access' | 'error' | 'kinsta-cache-perf'
+export const KINSTA_LOG_FILE_NAMES = ['access', 'error', 'kinsta-cache-perf'] as const
+export type KinstaLogFileName = (typeof KINSTA_LOG_FILE_NAMES)[number]
 
 type KinstaLogsResponse = {
   environment: {
