@@ -1,7 +1,7 @@
 import {Flags} from '@oclif/core'
 
-import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
-import {getLogs, KinstaLogFileName} from '../../../lib/kinsta.js'
+import {KinstaCommand} from '../../../../lib/commands/kinsta-command.js'
+import {getLogs, KinstaLogFileName} from '../../../../lib/kinsta.js'
 
 export default class Get extends KinstaCommand {
   static description = 'Fetch logs for a Kinsta environment'
