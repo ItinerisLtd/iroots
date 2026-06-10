@@ -29,9 +29,11 @@ export async function inferKinstaFromTrellis(cwd: string = process.cwd()): Promi
     }
 
     const content = readFileSync(file, 'utf8')
-    collectRegexMatches(content, [/^\s+db_name:\s*["']?([^"'#\s]+)/gim], siteNames)
-    collectRegexMatches(content, [/^\s+db_user:\s*["']?([^"'#\s]+)/gim], siteNames)
-    collectRegexMatches(content, [/^\s+web_user:\s*["']?([^"'#\s]+)/gim], siteNames)
+    collectRegexMatches(content, [
+      /^\s+db_name:\s*["']?([^"'#\s]+)/gim,
+      /^\s+db_user:\s*["']?([^"'#\s]+)/gim,
+      /^\s+web_user:\s*["']?([^"'#\s]+)/gim,
+    ], siteNames)
   }
 
   const groupVarDirs = await globby([`${trellisRoot}/group_vars/*`], {

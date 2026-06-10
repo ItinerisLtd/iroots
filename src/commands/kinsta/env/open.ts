@@ -40,7 +40,10 @@ export default class Open extends KinstaCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Open)
-    const {apiKey, company, site, environment} = flags
+    const {apiKey} = flags
+    const company = normalizeOptionalFlag(flags.company)
+    const site = normalizeOptionalFlag(flags.site)
+    const environment = normalizeOptionalFlag(flags.environment)
     const siteIdFlag = normalizeOptionalFlag(flags.site_id)
     const environmentIdFlag = normalizeOptionalFlag(flags.environment_id)
 
@@ -57,7 +60,7 @@ export default class Open extends KinstaCommand {
       this.error('Could not resolve IDs directly. Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
     }
 
-    const inference = await inferKinstaFromTrellis(process.cwd())
+    const inference = site === undefined ? await inferKinstaFromTrellis(process.cwd()) : null
 
     ux.action.start('Fetching Kinsta sites')
     const sites = await getAllSites(apiKey, company, true)
