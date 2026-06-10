@@ -23,12 +23,15 @@ export async function inferKinstaFromTrellis(cwd: string = process.cwd()): Promi
   const environmentNames = new Set<string>()
 
   for (const file of files) {
-    const content = readFileSync(file, 'utf8')
-    if (file.endsWith('/wordpress_sites.yml') || file.endsWith('/wordpress_sites.yaml')) {
-      collectRegexMatches(content, [/^\s+db_name:\s*["']?([^"'#\s]+)/gim], siteNames)
-      collectRegexMatches(content, [/^\s+db_user:\s*["']?([^"'#\s]+)/gim], siteNames)
-      collectRegexMatches(content, [/^\s+web_user:\s*["']?([^"'#\s]+)/gim], siteNames)
+    const fileName = basename(file)
+    if (fileName !== 'wordpress_sites.yml' && fileName !== 'wordpress_sites.yaml') {
+      continue
     }
+
+    const content = readFileSync(file, 'utf8')
+    collectRegexMatches(content, [/^\s+db_name:\s*["']?([^"'#\s]+)/gim], siteNames)
+    collectRegexMatches(content, [/^\s+db_user:\s*["']?([^"'#\s]+)/gim], siteNames)
+    collectRegexMatches(content, [/^\s+web_user:\s*["']?([^"'#\s]+)/gim], siteNames)
   }
 
   const groupVarDirs = await globby([`${trellisRoot}/group_vars/*`], {

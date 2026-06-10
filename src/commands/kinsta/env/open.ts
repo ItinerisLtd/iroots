@@ -53,11 +53,11 @@ export default class Open extends KinstaCommand {
       return
     }
 
-    const inference = await inferKinstaFromTrellis(process.cwd())
-
     if (company === undefined) {
       this.error('Could not resolve IDs directly. Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
     }
+
+    const inference = await inferKinstaFromTrellis(process.cwd())
 
     ux.action.start('Fetching Kinsta sites')
     const sites = await getAllSites(apiKey, company, true)
@@ -73,9 +73,12 @@ export default class Open extends KinstaCommand {
     ])
     const selectedSite = await resolveSite(sites, siteCandidates, site)
 
-    ux.action.start(`Fetching environments for site "${selectedSite.display_name}"`)
-    const environments = await getSiteEnvironments(apiKey, selectedSite.id)
-    ux.action.stop()
+    const environments = selectedSite.environments ?? []
+    if (environments.length === 0) {
+      ux.action.start(`Fetching environments for site "${selectedSite.display_name}"`)
+      environments.push(...await getSiteEnvironments(apiKey, selectedSite.id))
+      ux.action.stop()
+    }
 
     if (environments.length === 0) {
       this.error(`No environments found for site "${selectedSite.display_name}"`)
@@ -182,7 +185,7 @@ function findMatchingEnvironments(environments: KinstaEnvironment[], candidate: 
 }
 
 function normalize(value: string): string {
-  return value.trim().toLocaleLowerCase()
+  return value.trim().toLowerCase()
 }
 
 function compact(values: Array<string | undefined>): string[] {
