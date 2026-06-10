@@ -41,8 +41,8 @@ export default class Open extends KinstaCommand {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Open)
     const {apiKey, company, site, environment} = flags
-    const siteIdFlag = flags.site_id?.trim()
-    const environmentIdFlag = flags.environment_id?.trim()
+    const siteIdFlag = normalizeOptionalFlag(flags.site_id)
+    const environmentIdFlag = normalizeOptionalFlag(flags.environment_id)
 
     if ((siteIdFlag === undefined) !== (environmentIdFlag === undefined)) {
       this.error('Provide both --site_id and --environment_id together, or provide neither.')
@@ -190,6 +190,11 @@ function normalize(value: string): string {
 
 function compact(values: Array<string | undefined>): string[] {
   return values.filter((value): value is string => value !== undefined && value.trim().length > 0)
+}
+
+function normalizeOptionalFlag(value: string | undefined): string | undefined {
+  const normalized = value?.trim()
+  return normalized !== undefined && normalized.length > 0 ? normalized : undefined
 }
 
 async function promptForSite(sites: KinstaSite[], message: string): Promise<KinstaSite> {
