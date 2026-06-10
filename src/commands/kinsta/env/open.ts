@@ -123,11 +123,21 @@ async function resolveSite(sites: KinstaSite[], candidates: string[], explicitSi
     return promptForSite(explicitMatches, `Multiple sites matched --site "${explicitSite}". Select one:`)
   }
 
+  const inferredMatches = new Map<string, KinstaSite>()
   for (const candidate of candidates) {
     const matches = findMatchingSites(sites, candidate)
-    if (matches.length === 1) {
-      return matches[0]
+    for (const match of matches) {
+      inferredMatches.set(match.id, match)
     }
+  }
+
+  const uniqueInferredMatches = [...inferredMatches.values()]
+  if (uniqueInferredMatches.length === 1) {
+    return uniqueInferredMatches[0]
+  }
+
+  if (uniqueInferredMatches.length > 1) {
+    return promptForSite(uniqueInferredMatches, 'Multiple inferred sites matched. Select a Kinsta site:')
   }
 
   return promptForSite(sites, 'Select a Kinsta site:')

@@ -48,8 +48,8 @@ export async function inferKinstaFromTrellis(cwd: string = process.cwd()): Promi
   }
 
   return {
-    environmentNames: [...environmentNames],
-    siteNames: [...siteNames],
+    environmentNames: [...environmentNames].sort((a, b) => a.localeCompare(b)),
+    siteNames: [...siteNames].sort((a, b) => a.localeCompare(b)),
     trellisRoot,
   }
 }

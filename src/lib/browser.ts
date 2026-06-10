@@ -33,8 +33,8 @@ function getOpenCommand(url: string): OpenCommand {
 
   if (process.platform === 'win32') {
     return {
-      binary: 'cmd',
-      args: ['/c', 'start', '', url],
+      binary: 'explorer.exe',
+      args: [url],
     }
   }
 
