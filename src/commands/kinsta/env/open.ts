@@ -74,7 +74,13 @@ export default class Open extends KinstaCommand {
       site,
       ...(inference?.siteNames ?? []),
     ])
-    const selectedSite = await resolveSite(sites, siteCandidates, site)
+    let selectedSite: KinstaSite
+    try {
+      selectedSite = await resolveSite(sites, siteCandidates, site)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.error(message)
+    }
 
     const environments = selectedSite.environments ?? []
     if (environments.length === 0) {
@@ -88,13 +94,19 @@ export default class Open extends KinstaCommand {
     }
 
     const environmentCandidates = compact([environment])
-    const selectedEnvironment = await resolveEnvironment(environments, environmentCandidates, environment)
+    let selectedEnvironment: KinstaEnvironment
+    try {
+      selectedEnvironment = await resolveEnvironment(environments, environmentCandidates, environment)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.error(message)
+    }
 
     await this.openEnvironment(selectedSite.id, selectedEnvironment.id)
   }
 
   private async openEnvironment(siteId: string, environmentId: string): Promise<void> {
-    const url = `https://my.kinsta.com/sites/details/${encodeURIComponent(siteId)}/${encodeURIComponent(environmentId)}?`
+    const url = `https://my.kinsta.com/sites/details/${encodeURIComponent(siteId)}/${encodeURIComponent(environmentId)}`
     this.log(`URL: ${url}`)
 
     ux.action.start('Opening environment in browser')
