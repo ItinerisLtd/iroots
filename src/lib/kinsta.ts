@@ -23,7 +23,7 @@ type KinstaContainerInfo = {
   php_engine_version: string
 }
 
-type KinstaEnvironment = {
+export type KinstaEnvironment = {
   cdn_cache_id?: null | string
   container_info: KinstaContainerInfo
 
