@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import {expect} from 'chai'
 
-import {resolvePushTargetIds} from '../../../../src/commands/kinsta/env/push.js'
+import {resolvePushTargetIds} from '../../../../src/commands/kinsta/env/push'
 
 describe('env push resolution', () => {
   it('uses explicit IDs when all are provided', async () => {
