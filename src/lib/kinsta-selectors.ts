@@ -61,6 +61,7 @@ export async function resolveSite(sites: KinstaSite[], candidates: string[], exp
     const matches = findMatchingSites(sites, explicit)
     if (matches.length === 1) return matches[0]
     if (matches.length > 1) return promptForSite(matches, `Multiple sites matched --site "${explicitSite}". Select one:`)
+    throw new Error(`No Kinsta site matched --site "${explicitSite}"`)
   }
 
   const inferredMatches = new Map<string, KinstaSite>()
@@ -83,6 +84,7 @@ export async function resolveEnvironment(environments: KinstaEnvironment[], cand
     const matches = findMatchingEnvironments(environments, explicit)
     if (matches.length === 1) return matches[0]
     if (matches.length > 1) return promptForEnvironment(matches, `Multiple environments matched --environment "${explicitEnvironment}". Select one:`)
+    throw new Error(`No environment matched --environment "${explicitEnvironment}"`)
   }
 
   for (const c of candidates) {

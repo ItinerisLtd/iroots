@@ -1,6 +1,6 @@
 /* eslint-disable camelcase, perfectionist/sort-imports */
 import {expect} from 'chai'
-import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag} from '../../src/lib/kinsta-selectors.js'
+import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../src/lib/kinsta-selectors.js'
 
 describe('kinsta-selectors', () => {
   it('normalises optional flags', () => {
@@ -50,5 +50,29 @@ describe('kinsta-selectors', () => {
 
     expect(findMatchingEnvironments(envs as any, 'env-2').map(e => e.id)).to.deep.equal(['env-2'])
     expect(findMatchingEnvironments(envs as any, 'staging').map(e => e.id)).to.deep.equal(['env-2'])
+  })
+
+  it('throws when explicit site name does not match', async () => {
+    const sites = [{id: '1', name: 'alpha', display_name: 'Alpha', company_id: 'c1'}]
+    let message = ''
+    try {
+      await resolveSite(sites as any, [], 'nonexistent')
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('No Kinsta site matched --site "nonexistent"')
+  })
+
+  it('throws when explicit environment name does not match', async () => {
+    const envs = [{id: 'env-1', name: 'live', display_name: 'Live'}]
+    let message = ''
+    try {
+      await resolveEnvironment(envs as any, [], 'nowhere')
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('No environment matched --environment "nowhere"')
   })
 })
