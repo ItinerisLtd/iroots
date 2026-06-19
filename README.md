@@ -19,7 +19,7 @@ $ npm install -g iroots
 $ iroots COMMAND
 running command...
 $ iroots (--version|-h)
-iroots/0.0.0 linux-x64 node-v22.23.0
+iroots/0.0.0 linux-x64 node-v18.19.0
 $ iroots --help [COMMAND]
 USAGE
   $ iroots COMMAND
