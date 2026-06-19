@@ -24,6 +24,24 @@ describe('kinsta-selectors', () => {
     expect(resolved.map(site => site.id)).to.deep.equal(['1'])
   })
 
+  it('returns multiple matches when ambiguous for sites', () => {
+    const sites = [
+      {id: '1', name: 'project', display_name: 'Project', company_id: 'c1'},
+      {id: '2', name: 'project', display_name: 'Project Copy', company_id: 'c1'},
+    ]
+
+    expect(findMatchingSites(sites as any, 'project').map(s => s.id)).to.deep.equal(['1', '2'])
+  })
+
+  it('returns multiple matches for environments when display_name duplicated', () => {
+    const envs = [
+      {id: 'env-1', name: 'staging', display_name: 'Staging'},
+      {id: 'env-2', name: 'staging', display_name: 'Staging'},
+    ]
+
+    expect(findMatchingEnvironments(envs as any, 'staging').map(e => e.id)).to.deep.equal(['env-1', 'env-2'])
+  })
+
   it('prefers environment id, then display_name, then name', () => {
     const envs = [
       {id: 'env-1', name: 'live', display_name: 'Live'},
