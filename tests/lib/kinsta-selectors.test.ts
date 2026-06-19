@@ -18,6 +18,12 @@ describe('kinsta-selectors', () => {
     expect(findMatchingSites(sites as any, 'beta site').map(s => s.id)).to.deep.equal(['2'])
   })
 
+  it('keeps exact-match + prompt fallback contract used by env open', async () => {
+    const sites = [{id: '1', name: 'project', display_name: 'Project', company_id: 'c1'}]
+    const resolved = findMatchingSites(sites as any, 'project')
+    expect(resolved.map(site => site.id)).to.deep.equal(['1'])
+  })
+
   it('prefers environment id, then display_name, then name', () => {
     const envs = [
       {id: 'env-1', name: 'live', display_name: 'Live'},
