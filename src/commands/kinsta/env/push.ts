@@ -1,26 +1,94 @@
 import {Flags, ux} from '@oclif/core'
 
 import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
-import {getSiteEnvironments, pushEnvironment} from '../../../lib/kinsta.js'
+import {normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
+import {getAllSites, getSiteEnvironments, pushEnvironment} from '../../../lib/kinsta.js'
+
+type ResolvePushTargetIdsInput = {
+  apiKey: string
+  company: string
+  getAllSites: typeof getAllSites
+  getSiteEnvironments: typeof getSiteEnvironments
+  site: string | undefined
+  siteId: string | undefined
+  sourceEnv: string | undefined
+  sourceEnvId: string | undefined
+  targetEnv: string | undefined
+  targetEnvId: string | undefined
+}
+
+type ResolvePushTargetIdsOutput = {
+  siteId: string
+  sourceEnvId: string
+  targetEnvId: string
+}
+
+const compact = (values: Array<string | undefined>): string[] => values.filter((value): value is string => value !== undefined && value.length > 0)
+
+export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Promise<ResolvePushTargetIdsOutput> {
+  const siteId = normalizeOptionalFlag(input.siteId)
+  const sourceEnvId = normalizeOptionalFlag(input.sourceEnvId)
+  const targetEnvId = normalizeOptionalFlag(input.targetEnvId)
+  const site = normalizeOptionalFlag(input.site)
+  const sourceEnv = normalizeOptionalFlag(input.sourceEnv)
+  const targetEnv = normalizeOptionalFlag(input.targetEnv)
+
+  const hasAllIds = siteId !== undefined && sourceEnvId !== undefined && targetEnvId !== undefined
+  if (hasAllIds) {
+    if (sourceEnvId === targetEnvId) {
+      throw new Error('Source and target environments must be different.')
+    }
+
+    return {siteId, sourceEnvId, targetEnvId}
+  }
+
+  const normalizedCompany = input.company.trim()
+  if (normalizedCompany.length === 0) {
+    throw new Error('Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
+  }
+
+  const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
+  const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
+  const environments = selectedSite.environments ?? await input.getSiteEnvironments(input.apiKey, selectedSite.id)
+  const source = await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv)
+  const target = await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv)
+
+  if (source.id === target.id) {
+    throw new Error('Source and target environments must be different.')
+  }
+
+  return {siteId: selectedSite.id, sourceEnvId: source.id, targetEnvId: target.id}
+}
 
 export default class Push extends KinstaCommand {
   static description = 'Push an existing environment'
   static flags = {
     company: Flags.string({
       env: 'IROOTS_KINSTA_COMPANY_ID',
-      required: true,
+      required: false,
+    }),
+    site: Flags.string({
+      required: false,
     }),
     // eslint-disable-next-line camelcase
     site_id: Flags.string({
-      required: true,
+      required: false,
+    }),
+    // eslint-disable-next-line camelcase
+    source_env: Flags.string({
+      required: false,
     }),
     // eslint-disable-next-line camelcase
     source_env_id: Flags.string({
-      required: true,
+      required: false,
+    }),
+    // eslint-disable-next-line camelcase
+    target_env: Flags.string({
+      required: false,
     }),
     // eslint-disable-next-line camelcase
     target_env_id: Flags.string({
-      required: true,
+      required: false,
     }),
     // eslint-disable-next-line camelcase
     push_db: Flags.boolean({
@@ -62,13 +130,47 @@ export default class Push extends KinstaCommand {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    const environments = await getSiteEnvironments(flags.apiKey, flags.site_id)
-    const sourceEnvName = environments.find((env) => env.id === flags.source_env_id)?.display_name
-    const targetEnvName = environments.find((env) => env.id === flags.target_env_id)?.display_name
+    const siteIdFlag = normalizeOptionalFlag(flags.site_id)
+    const sourceEnvIdFlag = normalizeOptionalFlag(flags.source_env_id)
+    const targetEnvIdFlag = normalizeOptionalFlag(flags.target_env_id)
+
+    let resolvedIds: ResolvePushTargetIdsOutput
+
+    try {
+      resolvedIds = await resolvePushTargetIds({
+        apiKey: flags.apiKey,
+        company: normalizeOptionalFlag(flags.company) ?? '',
+        getAllSites,
+        getSiteEnvironments,
+        site: flags.site,
+        siteId: siteIdFlag,
+        sourceEnv: flags.source_env,
+        sourceEnvId: sourceEnvIdFlag,
+        targetEnv: flags.target_env,
+        targetEnvId: targetEnvIdFlag,
+      })
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      this.error(message)
+    }
+
+    const environments = await getSiteEnvironments(flags.apiKey, resolvedIds.siteId)
+    const sourceEnvName = environments.find((environment) => environment.id === resolvedIds.sourceEnvId)?.display_name ?? resolvedIds.sourceEnvId
+    const targetEnvName = environments.find((environment) => environment.id === resolvedIds.targetEnvId)?.display_name ?? resolvedIds.targetEnvId
 
     ux.action.start(`Pushing environment "${sourceEnvName}" to "${targetEnvName}"`)
 
-    const response = await pushEnvironment(flags.apiKey, flags.site_id, flags)
+    /* eslint-disable camelcase */
+    const response = await pushEnvironment(flags.apiKey, resolvedIds.siteId, {
+      file_list: flags.file_list,
+      push_db: flags.push_db,
+      push_files: flags.push_files,
+      push_files_option: flags.push_files_option,
+      search_and_replace: flags.search_and_replace,
+      source_env_id: resolvedIds.sourceEnvId,
+      target_env_id: resolvedIds.targetEnvId,
+    })
+    /* eslint-enable camelcase */
 
     ux.action.stop(response.message)
   }
