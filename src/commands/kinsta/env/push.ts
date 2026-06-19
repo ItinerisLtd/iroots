@@ -24,6 +24,7 @@ type ResolvePushTargetIdsOutput = {
 }
 
 const compact = (values: Array<string | undefined>): string[] => values.filter((value): value is string => value !== undefined && value.length > 0)
+const hasMatchingId = (id: string, candidates: Array<{id: string}>): boolean => candidates.some((candidate) => candidate.id.trim().toLowerCase() === id.toLowerCase())
 
 export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Promise<ResolvePushTargetIdsOutput> {
   const siteId = normalizeOptionalFlag(input.siteId)
@@ -48,8 +49,20 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
   }
 
   const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
+  if (siteId !== undefined && !hasMatchingId(siteId, sites)) {
+    throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
+  }
+
   const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
   const environments = selectedSite.environments ?? await input.getSiteEnvironments(input.apiKey, selectedSite.id)
+  if (sourceEnvId !== undefined && !hasMatchingId(sourceEnvId, environments)) {
+    throw new Error(`No environment matched --source_env_id "${sourceEnvId}".`)
+  }
+
+  if (targetEnvId !== undefined && !hasMatchingId(targetEnvId, environments)) {
+    throw new Error(`No environment matched --target_env_id "${targetEnvId}".`)
+  }
+
   const source = await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv)
   const target = await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv)
 

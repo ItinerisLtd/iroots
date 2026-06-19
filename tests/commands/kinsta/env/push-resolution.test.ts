@@ -88,4 +88,109 @@ describe('env push resolution', () => {
       targetEnvId: 'env-2',
     })
   })
+
+  it('fails when explicit --site_id does not match in partial-ID mode', async () => {
+    let message = ''
+
+    try {
+      await resolvePushTargetIds({
+        apiKey: 'api',
+        company: 'co',
+        async getAllSites() {
+          return [{
+            company_id: 'co',
+            display_name: 'Project A',
+            id: 'site-1',
+            name: 'project-a',
+          }] as any
+        },
+        async getSiteEnvironments() {
+          return [
+            {display_name: 'Staging', id: 'env-1', name: 'staging'},
+            {display_name: 'Live', id: 'env-2', name: 'live'},
+          ] as any
+        },
+        site: 'Project A',
+        siteId: 'site-missing',
+        sourceEnv: 'Staging',
+        sourceEnvId: undefined,
+        targetEnv: 'Live',
+        targetEnvId: undefined,
+      })
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('No Kinsta site matched --site_id "site-missing".')
+  })
+
+  it('fails when explicit --source_env_id does not match in partial-ID mode', async () => {
+    let message = ''
+
+    try {
+      await resolvePushTargetIds({
+        apiKey: 'api',
+        company: 'co',
+        async getAllSites() {
+          return [{
+            company_id: 'co',
+            display_name: 'Project A',
+            id: 'site-1',
+            name: 'project-a',
+          }] as any
+        },
+        async getSiteEnvironments() {
+          return [
+            {display_name: 'Staging', id: 'env-1', name: 'staging'},
+            {display_name: 'Live', id: 'env-2', name: 'live'},
+          ] as any
+        },
+        site: 'Project A',
+        siteId: undefined,
+        sourceEnv: 'Staging',
+        sourceEnvId: 'env-missing',
+        targetEnv: 'Live',
+        targetEnvId: undefined,
+      })
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('No environment matched --source_env_id "env-missing".')
+  })
+
+  it('fails when explicit --target_env_id does not match in partial-ID mode', async () => {
+    let message = ''
+
+    try {
+      await resolvePushTargetIds({
+        apiKey: 'api',
+        company: 'co',
+        async getAllSites() {
+          return [{
+            company_id: 'co',
+            display_name: 'Project A',
+            id: 'site-1',
+            name: 'project-a',
+          }] as any
+        },
+        async getSiteEnvironments() {
+          return [
+            {display_name: 'Staging', id: 'env-1', name: 'staging'},
+            {display_name: 'Live', id: 'env-2', name: 'live'},
+          ] as any
+        },
+        site: 'Project A',
+        siteId: undefined,
+        sourceEnv: 'Staging',
+        sourceEnvId: undefined,
+        targetEnv: 'Live',
+        targetEnvId: 'env-missing',
+      })
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('No environment matched --target_env_id "env-missing".')
+  })
 })
