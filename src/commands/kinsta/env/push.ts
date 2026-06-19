@@ -1,7 +1,7 @@
 import {Flags, ux} from '@oclif/core'
 
 import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
-import {normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
+import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
 import {getAllSites, getSiteEnvironments, pushEnvironment} from '../../../lib/kinsta.js'
 
 type ResolvePushTargetIdsInput = {
@@ -24,7 +24,9 @@ type ResolvePushTargetIdsOutput = {
 }
 
 const compact = (values: Array<string | undefined>): string[] => values.filter((value): value is string => value !== undefined && value.length > 0)
-const hasMatchingId = (id: string, candidates: Array<{id: string}>): boolean => candidates.some((candidate) => candidate.id.trim().toLowerCase() === id.toLowerCase())
+const toLower = (value: string): string => value.trim().toLowerCase()
+const hasMatchingId = (id: string, candidates: Array<{id: string}>): boolean => candidates.some((candidate) => toLower(candidate.id) === toLower(id))
+const findById = <T extends {id: string}>(id: string, candidates: T[]): T | undefined => candidates.find((candidate) => toLower(candidate.id) === toLower(id))
 
 export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Promise<ResolvePushTargetIdsOutput> {
   const siteId = normalizeOptionalFlag(input.siteId)
@@ -53,7 +55,17 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
     throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
   }
 
-  const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
+  const selectedSite = siteId === undefined
+    ? await resolveSite(sites, compact([siteId, site]), site)
+    : findById(siteId, sites) ?? await resolveSite(sites, compact([siteId, site]), site)
+
+  if (siteId !== undefined && site !== undefined) {
+    const matchingSites = findMatchingSites(sites, site)
+    if (!matchingSites.some((matchingSite) => toLower(matchingSite.id) === toLower(selectedSite.id))) {
+      throw new Error(`--site_id "${siteId}" does not match --site "${site}".`)
+    }
+  }
+
   const environments = selectedSite.environments ?? await input.getSiteEnvironments(input.apiKey, selectedSite.id)
   if (sourceEnvId !== undefined && !hasMatchingId(sourceEnvId, environments)) {
     throw new Error(`No environment matched --source_env_id "${sourceEnvId}".`)
@@ -63,8 +75,26 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
     throw new Error(`No environment matched --target_env_id "${targetEnvId}".`)
   }
 
-  const source = await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv)
-  const target = await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv)
+  const source = sourceEnvId === undefined
+    ? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv)
+    : findById(sourceEnvId, environments) ?? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv)
+  const target = targetEnvId === undefined
+    ? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv)
+    : findById(targetEnvId, environments) ?? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv)
+
+  if (sourceEnvId !== undefined && sourceEnv !== undefined) {
+    const matchingEnvironments = findMatchingEnvironments(environments, sourceEnv)
+    if (!matchingEnvironments.some((environment) => toLower(environment.id) === toLower(source.id))) {
+      throw new Error(`--source_env_id "${sourceEnvId}" does not match --source_env "${sourceEnv}".`)
+    }
+  }
+
+  if (targetEnvId !== undefined && targetEnv !== undefined) {
+    const matchingEnvironments = findMatchingEnvironments(environments, targetEnv)
+    if (!matchingEnvironments.some((environment) => toLower(environment.id) === toLower(target.id))) {
+      throw new Error(`--target_env_id "${targetEnvId}" does not match --target_env "${targetEnv}".`)
+    }
+  }
 
   if (source.id === target.id) {
     throw new Error('Source and target environments must be different.')
