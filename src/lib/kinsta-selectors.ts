@@ -1,3 +1,5 @@
+import {select} from '@inquirer/prompts'
+
 import {KinstaEnvironment, KinstaSite} from './kinsta.js'
 
 const normalize = (value: string): string => value.trim().toLowerCase()
@@ -25,24 +27,53 @@ export function findMatchingEnvironments(environments: KinstaEnvironment[], cand
   return environments.filter(environment => normalize(environment.name) === normalizedCandidate)
 }
 
+async function promptForSite(sites: KinstaSite[], message: string): Promise<KinstaSite> {
+  const sortedSites = [...sites].sort((a, b) => a.display_name.localeCompare(b.display_name))
+
+  const siteId = await select({
+    message,
+    choices: sortedSites.map(site => ({
+      name: `${site.display_name} (${site.name}) [${site.id}] ${site.environments ? `envs: ${site.environments.map(e => e.display_name || e.name).join(', ')}` : 'envs: unknown'}`,
+      value: site.id,
+    })),
+  })
+
+  return sortedSites.find(site => site.id === siteId) ?? sortedSites[0]
+}
+
+async function promptForEnvironment(environments: KinstaEnvironment[], message: string): Promise<KinstaEnvironment> {
+  const sortedEnvironments = [...environments].sort((a, b) => a.display_name.localeCompare(b.display_name))
+
+  const environmentId = await select({
+    message,
+    choices: sortedEnvironments.map(environment => ({
+      name: `${environment.display_name} (${environment.name}) [${environment.id}]`,
+      value: environment.id,
+    })),
+  })
+
+  return sortedEnvironments.find(environment => environment.id === environmentId) ?? sortedEnvironments[0]
+}
+
 export async function resolveSite(sites: KinstaSite[], candidates: string[], explicitSite?: string): Promise<KinstaSite> {
-  // Reuse the matching behaviour: prefer explicitSite when provided
   const explicit = normalizeOptionalFlag(explicitSite)
   if (explicit) {
     const matches = findMatchingSites(sites, explicit)
     if (matches.length === 1) return matches[0]
-    if (matches.length > 1) return matches[0]
+    if (matches.length > 1) return promptForSite(matches, `Multiple sites matched --site "${explicitSite}". Select one:`)
   }
 
-  // Try candidate list in order
+  const inferredMatches = new Map<string, KinstaSite>()
   for (const c of candidates) {
     const matches = findMatchingSites(sites, c)
-    if (matches.length === 1) return matches[0]
-    if (matches.length > 1) return matches[0]
+    for (const m of matches) inferredMatches.set(m.id, m)
   }
 
-  // Fallback to first site
-  if (sites.length > 0) return sites[0]
+  const uniqueInferredMatches = [...inferredMatches.values()]
+  if (uniqueInferredMatches.length === 1) return uniqueInferredMatches[0]
+  if (uniqueInferredMatches.length > 1) return promptForSite(uniqueInferredMatches, 'Multiple inferred sites matched. Select a Kinsta site:')
+
+  if (sites.length > 0) return promptForSite(sites, 'Select a Kinsta site:')
   throw new Error('No sites available')
 }
 
@@ -51,15 +82,14 @@ export async function resolveEnvironment(environments: KinstaEnvironment[], cand
   if (explicit) {
     const matches = findMatchingEnvironments(environments, explicit)
     if (matches.length === 1) return matches[0]
-    if (matches.length > 1) return matches[0]
+    if (matches.length > 1) return promptForEnvironment(matches, `Multiple environments matched --environment "${explicitEnvironment}". Select one:`)
   }
 
   for (const c of candidates) {
     const matches = findMatchingEnvironments(environments, c)
     if (matches.length === 1) return matches[0]
-    if (matches.length > 1) return matches[0]
   }
 
-  if (environments.length > 0) return environments[0]
+  if (environments.length > 0) return promptForEnvironment(environments, 'Select an environment:')
   throw new Error('No environments available')
 }
