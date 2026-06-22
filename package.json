@@ -163,7 +163,7 @@
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "npm run lint",
     "prepack": "oclif manifest && oclif readme",
-    "test": "echo NO TESTS",
+    "test": "TS_NODE_TRANSPILE_ONLY=1 node --loader ./node_modules/ts-node/esm.mjs node_modules/mocha/bin/mocha \"tests/**/*.test.ts\"",
     "version": "oclif readme && git add README.md"
   },
   "types": "dist/index.d.ts"

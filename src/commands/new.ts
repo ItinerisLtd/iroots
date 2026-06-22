@@ -253,7 +253,7 @@ export default class New extends Command {
     }),
     sentry_project_slug: Flags.string({
       dependsOn: ['sentry'],
-      description: 'Uniquely identifies a project. If ommitted, we will use the project display name.',
+      description: 'Uniquely identifies a project. If omitted, we will use the project display name.',
       required: false,
     }),
     sentry_team_slug: Flags.string({
@@ -318,7 +318,7 @@ export default class New extends Command {
     turnstile: Flags.boolean({
       allowNo: true,
       default: false,
-      description: 'whether or not to create a Clouflare Turnstile instance',
+      description: 'whether or not to create a Cloudflare Turnstile instance',
       dependsOn: ['cloudflare_account', 'cloudflare_api_key'],
     }),
     cloudflare_account: Flags.string({
