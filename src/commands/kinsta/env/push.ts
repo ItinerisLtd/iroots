@@ -78,20 +78,20 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
   const source = sourceEnvId === undefined
     ? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv, {
       flagName: '--source_env',
-      selectionPrompt: 'Select a source environment:',
+      selectionPrompt: 'Select the source environment to push FROM:',
     })
     : findById(sourceEnvId, environments) ?? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv, {
       flagName: '--source_env',
-      selectionPrompt: 'Select a source environment:',
+      selectionPrompt: 'Select the source environment to push FROM:',
     })
   const target = targetEnvId === undefined
     ? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv, {
       flagName: '--target_env',
-      selectionPrompt: 'Select a target environment:',
+      selectionPrompt: 'Select the target environment to push TO:',
     })
     : findById(targetEnvId, environments) ?? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv, {
       flagName: '--target_env',
-      selectionPrompt: 'Select a target environment:',
+      selectionPrompt: 'Select the target environment to push TO:',
     })
 
   if (sourceEnvId !== undefined && sourceEnv !== undefined) {
