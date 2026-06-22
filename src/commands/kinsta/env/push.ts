@@ -65,8 +65,12 @@ const requireCompanyId = (company: string): string => {
 
 const validateSiteIdAndNameMatch = async (input: ResolvePushTargetIdsInput, siteId: string, site: string | undefined): Promise<void> => {
   const normalizedCompany = input.company.trim()
-  if (site === undefined || normalizedCompany.length === 0) {
+  if (site === undefined) {
     return
+  }
+
+  if (normalizedCompany.length === 0) {
+    throw new Error('Provide --company when using --site together with --site_id so the values can be validated.')
   }
 
   const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)

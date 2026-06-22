@@ -171,6 +171,36 @@ describe('env push resolution', () => {
     })
   })
 
+  it('fails when --site and --site_id are provided without --company', async () => {
+    let message = ''
+
+    try {
+      await resolvePushTargetIds({
+        apiKey: 'api',
+        company: '',
+        async getAllSites() {
+          throw new Error('should not fetch sites when --company is missing for --site + --site_id validation')
+        },
+        async getSiteEnvironments() {
+          return [
+            {display_name: 'Staging', id: 'env-1', name: 'staging'},
+            {display_name: 'Live', id: 'env-2', name: 'live'},
+          ] as any
+        },
+        site: 'Project A',
+        siteId: 'site-1',
+        sourceEnv: 'Staging',
+        sourceEnvId: undefined,
+        targetEnv: 'Live',
+        targetEnvId: undefined,
+      })
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('Provide --company when using --site together with --site_id so the values can be validated.')
+  })
+
   it('fails when explicit --site_id does not match in partial-ID mode', async () => {
     let message = ''
 
