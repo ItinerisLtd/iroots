@@ -19,7 +19,7 @@ $ npm install -g iroots
 $ iroots COMMAND
 running command...
 $ iroots (--version|-h)
-iroots/0.0.0 linux-x64 node-v18.19.0
+iroots/0.0.0 linux-x64 node-v22.23.0
 $ iroots --help [COMMAND]
 USAGE
   $ iroots COMMAND
@@ -1046,7 +1046,7 @@ FLAGS
                                                 IROOTS_NEW_TRELLIS_TEMPLATE_REMOTE] trellis template remote
       --trellis_template_vault_pass=<value>     (required) [env: IROOTS_NEW_TRELLIS_TEMPLATE_VAULT_PASS] trellis
                                                 template vault password
-      --[no-]turnstile                          whether or not to create a Clouflare Turnstile instance
+      --[no-]turnstile                          whether or not to create a Cloudflare Turnstile instance
       --webroot=<value>                         (required) [default: /current/web]
       --[no-]wp_ssh_aliases                     [env: IROOTS_NEW_WP_CLI_SSH_ALIASES] whether to generate SSH aliases for
                                                 WP CLI or not
@@ -1878,8 +1878,7 @@ FLAGS
   --follow_redirects=<value>
   --host=<value>
   --include_header=<value>
-  --name=<value>              Name of the check. If omitted, we will extract the domain from --website_url and use
-                              this.
+  --name=<value>              Name of the check. If omitted, we will extract the domain from --website_url and use this.
   --paused=<value>
   --port=<value>
   --post_body=<value>

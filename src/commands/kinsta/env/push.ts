@@ -88,6 +88,10 @@ const resolveSiteAndEnvironments = async (
   if (siteId === undefined) {
     const company = requireCompanyId(input.company)
     const sites = await input.getAllSites(input.apiKey, company, true)
+    if (sites.length === 0) {
+      throw new Error(`No Kinsta sites found for company "${company}"`)
+    }
+
     const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
     const selectedSiteId = selectedSite.id
     const preloadedEnvironments = selectedSite.environments ?? []

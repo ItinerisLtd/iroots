@@ -318,7 +318,7 @@ export default class New extends Command {
     turnstile: Flags.boolean({
       allowNo: true,
       default: false,
-      description: 'whether or not to create a Clouflare Turnstile instance',
+      description: 'whether or not to create a Cloudflare Turnstile instance',
       dependsOn: ['cloudflare_account', 'cloudflare_api_key'],
     }),
     cloudflare_account: Flags.string({

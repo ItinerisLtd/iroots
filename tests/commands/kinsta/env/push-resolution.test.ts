@@ -116,6 +116,33 @@ describe('env push resolution', () => {
     })
   })
 
+  it('fails with a company-specific error when no sites exist for the company', async () => {
+    let message = ''
+
+    try {
+      await resolvePushTargetIds({
+        apiKey: 'api',
+        company: 'company-1',
+        async getAllSites() {
+          return []
+        },
+        async getSiteEnvironments() {
+          return []
+        },
+        site: undefined,
+        siteId: undefined,
+        sourceEnv: undefined,
+        sourceEnvId: undefined,
+        targetEnv: undefined,
+        targetEnvId: undefined,
+      })
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('No Kinsta sites found for company "company-1"')
+  })
+
   it('resolves environments with --site_id without requiring --company', async () => {
     const resolved = await resolvePushTargetIds({
       apiKey: 'api',
