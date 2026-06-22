@@ -89,6 +89,34 @@ describe('env push resolution', () => {
     })
   })
 
+  it('resolves environments with --site_id without requiring --company', async () => {
+    const resolved = await resolvePushTargetIds({
+      apiKey: 'api',
+      company: '',
+      async getAllSites() {
+        throw new Error('should not fetch sites when --site_id is provided')
+      },
+      async getSiteEnvironments() {
+        return [
+          {display_name: 'Staging', id: 'env-1', name: 'staging'},
+          {display_name: 'Live', id: 'env-2', name: 'live'},
+        ] as any
+      },
+      site: undefined,
+      siteId: 'site-1',
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(resolved).to.deep.equal({
+      siteId: 'site-1',
+      sourceEnvId: 'env-1',
+      targetEnvId: 'env-2',
+    })
+  })
+
   it('fails when explicit --site_id does not match in partial-ID mode', async () => {
     let message = ''
 

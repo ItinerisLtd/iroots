@@ -45,31 +45,41 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
     return {siteId, sourceEnvId, targetEnvId}
   }
 
-  const normalizedCompany = input.company.trim()
-  if (normalizedCompany.length === 0) {
-    throw new Error('Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
-  }
+  let selectedSiteId: string
+  let environments: Awaited<ReturnType<typeof getSiteEnvironments>>
 
-  const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
-  if (siteId !== undefined && !hasMatchingId(siteId, sites)) {
-    throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
-  }
-
-  const selectedSite = siteId === undefined
-    ? await resolveSite(sites, compact([siteId, site]), site)
-    : findById(siteId, sites) ?? await resolveSite(sites, compact([siteId, site]), site)
-
-  if (siteId !== undefined && site !== undefined) {
-    const matchingSites = findMatchingSites(sites, site)
-    if (!matchingSites.some((matchingSite) => toLower(matchingSite.id) === toLower(selectedSite.id))) {
-      throw new Error(`--site_id "${siteId}" does not match --site "${site}".`)
+  if (siteId === undefined) {
+    const normalizedCompany = input.company.trim()
+    if (normalizedCompany.length === 0) {
+      throw new Error('Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
     }
+
+    const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
+    const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
+
+    selectedSiteId = selectedSite.id
+    const preloadedEnvironments = selectedSite.environments ?? []
+    environments = preloadedEnvironments.length > 0
+      ? preloadedEnvironments
+      : await input.getSiteEnvironments(input.apiKey, selectedSiteId)
+  } else {
+    selectedSiteId = siteId
+    const normalizedCompany = input.company.trim()
+    if (site !== undefined && normalizedCompany.length > 0) {
+      const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
+      if (!hasMatchingId(siteId, sites)) {
+        throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
+      }
+
+      const matchingSites = findMatchingSites(sites, site)
+      if (!matchingSites.some((matchingSite) => toLower(matchingSite.id) === toLower(siteId))) {
+        throw new Error(`--site_id "${siteId}" does not match --site "${site}".`)
+      }
+    }
+
+    environments = await input.getSiteEnvironments(input.apiKey, selectedSiteId)
   }
 
-  const preloadedEnvironments = selectedSite.environments ?? []
-  const environments = preloadedEnvironments.length > 0
-    ? preloadedEnvironments
-    : await input.getSiteEnvironments(input.apiKey, selectedSite.id)
   if (sourceEnvId !== undefined && !hasMatchingId(sourceEnvId, environments)) {
     throw new Error(`No environment matched --source_env_id "${sourceEnvId}".`)
   }
@@ -115,7 +125,7 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
     throw new Error('Source and target environments must be different.')
   }
 
-  return {siteId: selectedSite.id, sourceEnvId: source.id, targetEnvId: target.id}
+  return {siteId: selectedSiteId, sourceEnvId: source.id, targetEnvId: target.id}
 }
 
 export default class Push extends KinstaCommand {
