@@ -56,6 +56,33 @@ describe('env push resolution', () => {
     expect(message).to.equal('Source and target environments must be different.')
   })
 
+  it('rejects source and target IDs that differ only by case', async () => {
+    let message = ''
+
+    try {
+      await resolvePushTargetIds({
+        apiKey: 'api',
+        company: 'co',
+        async getAllSites() {
+          return []
+        },
+        async getSiteEnvironments() {
+          return []
+        },
+        site: undefined,
+        siteId: 'site-1',
+        sourceEnv: undefined,
+        sourceEnvId: 'env-a',
+        targetEnv: undefined,
+        targetEnvId: 'ENV-A',
+      })
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('Source and target environments must be different.')
+  })
+
   it('resolves site and env names through selectors when IDs are missing', async () => {
     const resolved = await resolvePushTargetIds({
       apiKey: 'api',

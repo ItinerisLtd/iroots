@@ -30,105 +30,135 @@ const compact = (values: Array<string | undefined>): string[] => values.filter((
 const toLower = (value: string): string => value.trim().toLowerCase()
 const hasMatchingId = (id: string, candidates: Array<{id: string}>): boolean => candidates.some((candidate) => toLower(candidate.id) === toLower(id))
 const findById = <T extends {id: string}>(id: string, candidates: T[]): T | undefined => candidates.find((candidate) => toLower(candidate.id) === toLower(id))
+const sourceEnvironmentOptions: {flagName: '--source_env'; selectionPrompt: string} = {
+  flagName: '--source_env',
+  selectionPrompt: 'Select the source environment to push FROM:',
+}
+const targetEnvironmentOptions: {flagName: '--target_env'; selectionPrompt: string} = {
+  flagName: '--target_env',
+  selectionPrompt: 'Select the target environment to push TO:',
+}
 
-export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Promise<ResolvePushTargetIdsOutput> {
-  const siteId = normalizeOptionalFlag(input.siteId)
-  const sourceEnvId = normalizeOptionalFlag(input.sourceEnvId)
-  const targetEnvId = normalizeOptionalFlag(input.targetEnvId)
-  const site = normalizeOptionalFlag(input.site)
-  const sourceEnv = normalizeOptionalFlag(input.sourceEnv)
-  const targetEnv = normalizeOptionalFlag(input.targetEnv)
+type KinstaEnvironment = Awaited<ReturnType<typeof getSiteEnvironments>>[number]
+type KinstaEnvironments = Awaited<ReturnType<typeof getSiteEnvironments>>
 
-  const hasAllIds = siteId !== undefined && sourceEnvId !== undefined && targetEnvId !== undefined
-  if (hasAllIds) {
-    if (sourceEnvId === targetEnvId) {
-      throw new Error('Source and target environments must be different.')
-    }
-
-    return {siteId, sourceEnvId, targetEnvId}
+const resolveAllIdsPath = (siteId: string | undefined, sourceEnvId: string | undefined, targetEnvId: string | undefined): ResolvePushTargetIdsOutput | undefined => {
+  if (siteId === undefined || sourceEnvId === undefined || targetEnvId === undefined) {
+    return undefined
   }
 
-  let selectedSiteId: string
-  let environments: Awaited<ReturnType<typeof getSiteEnvironments>>
-
-  if (siteId === undefined) {
-    const normalizedCompany = input.company.trim()
-    if (normalizedCompany.length === 0) {
-      throw new Error('Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
-    }
-
-    const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
-    const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
-
-    selectedSiteId = selectedSite.id
-    const preloadedEnvironments = selectedSite.environments ?? []
-    environments = preloadedEnvironments.length > 0
-      ? preloadedEnvironments
-      : await input.getSiteEnvironments(input.apiKey, selectedSiteId)
-  } else {
-    selectedSiteId = siteId
-    const normalizedCompany = input.company.trim()
-    if (site !== undefined && normalizedCompany.length > 0) {
-      const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
-      if (!hasMatchingId(siteId, sites)) {
-        throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
-      }
-
-      const matchingSites = findMatchingSites(sites, site)
-      if (!matchingSites.some((matchingSite) => toLower(matchingSite.id) === toLower(siteId))) {
-        throw new Error(`--site_id "${siteId}" does not match --site "${site}".`)
-      }
-    }
-
-    environments = await input.getSiteEnvironments(input.apiKey, selectedSiteId)
-  }
-
-  if (sourceEnvId !== undefined && !hasMatchingId(sourceEnvId, environments)) {
-    throw new Error(`No environment matched --source_env_id "${sourceEnvId}".`)
-  }
-
-  if (targetEnvId !== undefined && !hasMatchingId(targetEnvId, environments)) {
-    throw new Error(`No environment matched --target_env_id "${targetEnvId}".`)
-  }
-
-  const source = sourceEnvId === undefined
-    ? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv, {
-      flagName: '--source_env',
-      selectionPrompt: 'Select the source environment to push FROM:',
-    })
-    : findById(sourceEnvId, environments) ?? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv, {
-      flagName: '--source_env',
-      selectionPrompt: 'Select the source environment to push FROM:',
-    })
-  const target = targetEnvId === undefined
-    ? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv, {
-      flagName: '--target_env',
-      selectionPrompt: 'Select the target environment to push TO:',
-    })
-    : findById(targetEnvId, environments) ?? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv, {
-      flagName: '--target_env',
-      selectionPrompt: 'Select the target environment to push TO:',
-    })
-
-  if (sourceEnvId !== undefined && sourceEnv !== undefined) {
-    const matchingEnvironments = findMatchingEnvironments(environments, sourceEnv)
-    if (!matchingEnvironments.some((environment) => toLower(environment.id) === toLower(source.id))) {
-      throw new Error(`--source_env_id "${sourceEnvId}" does not match --source_env "${sourceEnv}".`)
-    }
-  }
-
-  if (targetEnvId !== undefined && targetEnv !== undefined) {
-    const matchingEnvironments = findMatchingEnvironments(environments, targetEnv)
-    if (!matchingEnvironments.some((environment) => toLower(environment.id) === toLower(target.id))) {
-      throw new Error(`--target_env_id "${targetEnvId}" does not match --target_env "${targetEnv}".`)
-    }
-  }
-
-  if (source.id === target.id) {
+  if (toLower(sourceEnvId) === toLower(targetEnvId)) {
     throw new Error('Source and target environments must be different.')
   }
 
-  if (input.includeEnvironmentNames === true) {
+  return {siteId, sourceEnvId, targetEnvId}
+}
+
+const requireCompanyId = (company: string): string => {
+  const normalizedCompany = company.trim()
+  if (normalizedCompany.length === 0) {
+    throw new Error('Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
+  }
+
+  return normalizedCompany
+}
+
+const validateSiteIdAndNameMatch = async (input: ResolvePushTargetIdsInput, siteId: string, site: string | undefined): Promise<void> => {
+  const normalizedCompany = input.company.trim()
+  if (site === undefined || normalizedCompany.length === 0) {
+    return
+  }
+
+  const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
+  if (!hasMatchingId(siteId, sites)) {
+    throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
+  }
+
+  const matchingSites = findMatchingSites(sites, site)
+  if (!matchingSites.some((matchingSite) => toLower(matchingSite.id) === toLower(siteId))) {
+    throw new Error(`--site_id "${siteId}" does not match --site "${site}".`)
+  }
+}
+
+const resolveSiteAndEnvironments = async (
+  input: ResolvePushTargetIdsInput,
+  siteId: string | undefined,
+  site: string | undefined,
+): Promise<{environments: KinstaEnvironments; selectedSiteId: string}> => {
+  if (siteId === undefined) {
+    const company = requireCompanyId(input.company)
+    const sites = await input.getAllSites(input.apiKey, company, true)
+    const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
+    const selectedSiteId = selectedSite.id
+    const preloadedEnvironments = selectedSite.environments ?? []
+
+    return {
+      selectedSiteId,
+      environments: preloadedEnvironments.length > 0
+        ? preloadedEnvironments
+        : await input.getSiteEnvironments(input.apiKey, selectedSiteId),
+    }
+  }
+
+  await validateSiteIdAndNameMatch(input, siteId, site)
+
+  return {
+    selectedSiteId: siteId,
+    environments: await input.getSiteEnvironments(input.apiKey, siteId),
+  }
+}
+
+const validateEnvironmentIdExists = (environments: KinstaEnvironments, environmentId: string | undefined, flagName: '--source_env_id' | '--target_env_id'): void => {
+  if (environmentId !== undefined && !hasMatchingId(environmentId, environments)) {
+    throw new Error(`No environment matched ${flagName} "${environmentId}".`)
+  }
+}
+
+const resolveSelectedEnvironment = async (
+  environments: KinstaEnvironments,
+  environmentId: string | undefined,
+  environmentName: string | undefined,
+  options: {flagName: '--source_env' | '--target_env'; selectionPrompt: string},
+): Promise<KinstaEnvironment> => {
+  if (environmentId === undefined) {
+    return resolveEnvironment(environments, compact([environmentId, environmentName]), environmentName, options)
+  }
+
+  return findById(environmentId, environments)
+    ?? resolveEnvironment(environments, compact([environmentId, environmentName]), environmentName, options)
+}
+
+type EnvironmentIdNameMatchValidationInput = {
+  environmentId: string | undefined
+  environmentName: string | undefined
+  environments: KinstaEnvironments
+  idFlagName: '--source_env_id' | '--target_env_id'
+  nameFlagName: '--source_env' | '--target_env'
+  resolvedEnvironmentId: string
+}
+
+const validateEnvironmentIdAndNameMatch = (
+  input: EnvironmentIdNameMatchValidationInput,
+): void => {
+  const {environments, environmentId, environmentName, idFlagName, nameFlagName, resolvedEnvironmentId} = input
+
+  if (environmentId === undefined || environmentName === undefined) {
+    return
+  }
+
+  const matchingEnvironments = findMatchingEnvironments(environments, environmentName)
+  if (!matchingEnvironments.some((environment) => toLower(environment.id) === toLower(resolvedEnvironmentId))) {
+    throw new Error(`${idFlagName} "${environmentId}" does not match ${nameFlagName} "${environmentName}".`)
+  }
+}
+
+const buildResolveOutput = (
+  includeEnvironmentNames: boolean | undefined,
+  selectedSiteId: string,
+  source: KinstaEnvironment,
+  target: KinstaEnvironment,
+): ResolvePushTargetIdsOutput => {
+  if (includeEnvironmentNames === true) {
     return {
       siteId: selectedSiteId,
       sourceEnvId: source.id,
@@ -143,6 +173,51 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
     sourceEnvId: source.id,
     targetEnvId: target.id,
   }
+}
+
+export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Promise<ResolvePushTargetIdsOutput> {
+  const siteId = normalizeOptionalFlag(input.siteId)
+  const sourceEnvId = normalizeOptionalFlag(input.sourceEnvId)
+  const targetEnvId = normalizeOptionalFlag(input.targetEnvId)
+  const site = normalizeOptionalFlag(input.site)
+  const sourceEnv = normalizeOptionalFlag(input.sourceEnv)
+  const targetEnv = normalizeOptionalFlag(input.targetEnv)
+
+  const allIdsResult = resolveAllIdsPath(siteId, sourceEnvId, targetEnvId)
+  if (allIdsResult !== undefined) {
+    return allIdsResult
+  }
+
+  const {selectedSiteId, environments} = await resolveSiteAndEnvironments(input, siteId, site)
+
+  validateEnvironmentIdExists(environments, sourceEnvId, '--source_env_id')
+  validateEnvironmentIdExists(environments, targetEnvId, '--target_env_id')
+
+  const source = await resolveSelectedEnvironment(environments, sourceEnvId, sourceEnv, sourceEnvironmentOptions)
+  const target = await resolveSelectedEnvironment(environments, targetEnvId, targetEnv, targetEnvironmentOptions)
+
+  validateEnvironmentIdAndNameMatch({
+    environments,
+    environmentId: sourceEnvId,
+    environmentName: sourceEnv,
+    idFlagName: '--source_env_id',
+    nameFlagName: '--source_env',
+    resolvedEnvironmentId: source.id,
+  })
+  validateEnvironmentIdAndNameMatch({
+    environments,
+    environmentId: targetEnvId,
+    environmentName: targetEnv,
+    idFlagName: '--target_env_id',
+    nameFlagName: '--target_env',
+    resolvedEnvironmentId: target.id,
+  })
+
+  if (source.id === target.id) {
+    throw new Error('Source and target environments must be different.')
+  }
+
+  return buildResolveOutput(input.includeEnvironmentNames, selectedSiteId, source, target)
 }
 
 export default class Push extends KinstaCommand {
