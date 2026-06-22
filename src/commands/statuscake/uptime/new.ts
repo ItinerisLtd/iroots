@@ -43,7 +43,7 @@ export default class New extends StatusCakeCommand {
     // eslint-disable-next-line camelcase
     include_header: Flags.string({}),
     name: Flags.string({
-      description: 'Name of the check. If ommitted, we will extract the domain from --website_url and use this.',
+      description: 'Name of the check. If omitted, we will extract the domain from --website_url and use this.',
       required: false,
     }),
     paused: Flags.string({}),

@@ -1029,7 +1029,7 @@ FLAGS
                                                 issue. Setting this to false will turn this off and the user must create
                                                 their own alerts to be notified of new issues.
       --sentry_project_platform=<value>         (required) [default: php] The platform for the project.
-      --sentry_project_slug=<value>             Uniquely identifies a project. If ommitted, we will use the project
+      --sentry_project_slug=<value>             Uniquely identifies a project. If omitted, we will use the project
                                                 display name.
       --sentry_team_slug=<value>                (required) [env: IROOTS_SENTRY_TEAM_SLUG] The slug of the organization
                                                 the resource belongs to.
@@ -1878,7 +1878,7 @@ FLAGS
   --follow_redirects=<value>
   --host=<value>
   --include_header=<value>
-  --name=<value>              Name of the check. If ommitted, we will extract the domain from --website_url and use
+  --name=<value>              Name of the check. If omitted, we will extract the domain from --website_url and use
                               this.
   --paused=<value>
   --port=<value>

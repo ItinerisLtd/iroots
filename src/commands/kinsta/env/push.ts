@@ -66,7 +66,10 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
     }
   }
 
-  const environments = selectedSite.environments ?? await input.getSiteEnvironments(input.apiKey, selectedSite.id)
+  const preloadedEnvironments = selectedSite.environments ?? []
+  const environments = preloadedEnvironments.length > 0
+    ? preloadedEnvironments
+    : await input.getSiteEnvironments(input.apiKey, selectedSite.id)
   if (sourceEnvId !== undefined && !hasMatchingId(sourceEnvId, environments)) {
     throw new Error(`No environment matched --source_env_id "${sourceEnvId}".`)
   }
