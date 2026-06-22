@@ -1,6 +1,13 @@
 /* eslint-disable camelcase, perfectionist/sort-imports */
 import {expect} from 'chai'
-import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../src/lib/kinsta-selectors.js'
+import {
+  findMatchingEnvironments,
+  findMatchingSites,
+  formatSiteChoice,
+  normalizeOptionalFlag,
+  resolveEnvironment,
+  resolveSite
+} from '../../src/lib/kinsta-selectors.js'
 
 describe('kinsta-selectors', () => {
   it('normalises optional flags', () => {
@@ -74,5 +81,37 @@ describe('kinsta-selectors', () => {
     }
 
     expect(message).to.equal('No environment matched --environment "nowhere"')
+  })
+
+  it('uses unknown environment summary for site choice when environments are missing', () => {
+    const site = {id: '1', name: 'alpha', display_name: 'Alpha', company_id: 'c1', environments: []}
+    expect(formatSiteChoice(site as any)).to.equal('Alpha (alpha) [1] envs: unknown')
+  })
+
+  it('sorts environment names in site choice summary', () => {
+    const site = {
+      id: '1',
+      name: 'alpha',
+      display_name: 'Alpha',
+      company_id: 'c1',
+      environments: [
+        {id: 'env-2', name: 'staging', display_name: 'Staging'},
+        {id: 'env-1', name: 'live', display_name: 'Live'},
+      ],
+    }
+
+    expect(formatSiteChoice(site as any)).to.equal('Alpha (alpha) [1] envs: Live, Staging')
+  })
+
+  it('uses configured environment flag name in explicit no-match errors', async () => {
+    const envs = [{id: 'env-1', name: 'live', display_name: 'Live'}]
+    let message = ''
+    try {
+      await resolveEnvironment(envs as any, [], 'missing', {flagName: '--source_env'})
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error)
+    }
+
+    expect(message).to.equal('No environment matched --source_env "missing"')
   })
 })

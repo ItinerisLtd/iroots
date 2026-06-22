@@ -76,11 +76,23 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
   }
 
   const source = sourceEnvId === undefined
-    ? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv)
-    : findById(sourceEnvId, environments) ?? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv)
+    ? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv, {
+      flagName: '--source_env',
+      selectionPrompt: 'Select a source environment:',
+    })
+    : findById(sourceEnvId, environments) ?? await resolveEnvironment(environments, compact([sourceEnvId, sourceEnv]), sourceEnv, {
+      flagName: '--source_env',
+      selectionPrompt: 'Select a source environment:',
+    })
   const target = targetEnvId === undefined
-    ? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv)
-    : findById(targetEnvId, environments) ?? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv)
+    ? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv, {
+      flagName: '--target_env',
+      selectionPrompt: 'Select a target environment:',
+    })
+    : findById(targetEnvId, environments) ?? await resolveEnvironment(environments, compact([targetEnvId, targetEnv]), targetEnv, {
+      flagName: '--target_env',
+      selectionPrompt: 'Select a target environment:',
+    })
 
   if (sourceEnvId !== undefined && sourceEnv !== undefined) {
     const matchingEnvironments = findMatchingEnvironments(environments, sourceEnv)

@@ -27,13 +27,25 @@ export function findMatchingEnvironments(environments: KinstaEnvironment[], cand
   return environments.filter(environment => normalize(environment.name) === normalizedCandidate)
 }
 
+export function formatSiteChoice(site: KinstaSite): string {
+  const environmentNames = site.environments
+    ?.map((environment) => environment.display_name || environment.name)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b)) ?? []
+  const environmentSummary = environmentNames.length > 0
+    ? `envs: ${environmentNames.join(', ')}`
+    : 'envs: unknown'
+
+  return `${site.display_name} (${site.name}) [${site.id}] ${environmentSummary}`
+}
+
 async function promptForSite(sites: KinstaSite[], message: string): Promise<KinstaSite> {
   const sortedSites = [...sites].sort((a, b) => a.display_name.localeCompare(b.display_name))
 
   const siteId = await select({
     message,
     choices: sortedSites.map(site => ({
-      name: `${site.display_name} (${site.name}) [${site.id}] ${site.environments ? `envs: ${site.environments.map(e => e.display_name || e.name).join(', ')}` : 'envs: unknown'}`,
+      name: formatSiteChoice(site),
       value: site.id,
     })),
   })
@@ -57,7 +69,7 @@ async function promptForEnvironment(environments: KinstaEnvironment[], message: 
 
 export async function resolveSite(sites: KinstaSite[], candidates: string[], explicitSite?: string): Promise<KinstaSite> {
   const explicit = normalizeOptionalFlag(explicitSite)
-  if (explicit) {
+  if (explicit !== undefined) {
     const matches = findMatchingSites(sites, explicit)
     if (matches.length === 1) return matches[0]
     if (matches.length > 1) return promptForSite(matches, `Multiple sites matched --site "${explicitSite}". Select one:`)
@@ -78,13 +90,26 @@ export async function resolveSite(sites: KinstaSite[], candidates: string[], exp
   throw new Error('No sites available')
 }
 
-export async function resolveEnvironment(environments: KinstaEnvironment[], candidates: string[], explicitEnvironment?: string): Promise<KinstaEnvironment> {
+type ResolveEnvironmentOptions = {
+  flagName?: string
+  selectionPrompt?: string
+}
+
+export async function resolveEnvironment(
+  environments: KinstaEnvironment[],
+  candidates: string[],
+  explicitEnvironment?: string,
+  options: ResolveEnvironmentOptions = {},
+): Promise<KinstaEnvironment> {
   const explicit = normalizeOptionalFlag(explicitEnvironment)
-  if (explicit) {
+  const flagName = options.flagName ?? '--environment'
+  const selectionPrompt = options.selectionPrompt ?? 'Select an environment:'
+
+  if (explicit !== undefined) {
     const matches = findMatchingEnvironments(environments, explicit)
     if (matches.length === 1) return matches[0]
-    if (matches.length > 1) return promptForEnvironment(matches, `Multiple environments matched --environment "${explicitEnvironment}". Select one:`)
-    throw new Error(`No environment matched --environment "${explicitEnvironment}"`)
+    if (matches.length > 1) return promptForEnvironment(matches, `Multiple environments matched ${flagName} "${explicitEnvironment}". Select one:`)
+    throw new Error(`No environment matched ${flagName} "${explicitEnvironment}"`)
   }
 
   for (const c of candidates) {
@@ -92,6 +117,6 @@ export async function resolveEnvironment(environments: KinstaEnvironment[], cand
     if (matches.length === 1) return matches[0]
   }
 
-  if (environments.length > 0) return promptForEnvironment(environments, 'Select an environment:')
+  if (environments.length > 0) return promptForEnvironment(environments, selectionPrompt)
   throw new Error('No environments available')
 }
