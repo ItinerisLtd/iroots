@@ -9,6 +9,7 @@ type ResolvePushTargetIdsInput = {
   company: string
   getAllSites: typeof getAllSites
   getSiteEnvironments: typeof getSiteEnvironments
+  includeEnvironmentNames?: boolean
   site: string | undefined
   siteId: string | undefined
   sourceEnv: string | undefined
@@ -20,7 +21,9 @@ type ResolvePushTargetIdsInput = {
 type ResolvePushTargetIdsOutput = {
   siteId: string
   sourceEnvId: string
+  sourceEnvName?: string
   targetEnvId: string
+  targetEnvName?: string
 }
 
 const compact = (values: Array<string | undefined>): string[] => values.filter((value): value is string => value !== undefined && value.length > 0)
@@ -125,7 +128,21 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
     throw new Error('Source and target environments must be different.')
   }
 
-  return {siteId: selectedSiteId, sourceEnvId: source.id, targetEnvId: target.id}
+  if (input.includeEnvironmentNames === true) {
+    return {
+      siteId: selectedSiteId,
+      sourceEnvId: source.id,
+      sourceEnvName: source.display_name || source.name,
+      targetEnvId: target.id,
+      targetEnvName: target.display_name || target.name,
+    }
+  }
+
+  return {
+    siteId: selectedSiteId,
+    sourceEnvId: source.id,
+    targetEnvId: target.id,
+  }
 }
 
 export default class Push extends KinstaCommand {
@@ -210,6 +227,7 @@ export default class Push extends KinstaCommand {
         company: normalizeOptionalFlag(flags.company) ?? '',
         getAllSites,
         getSiteEnvironments,
+        includeEnvironmentNames: true,
         site: flags.site,
         siteId: siteIdFlag,
         sourceEnv: flags.source_env,
@@ -222,9 +240,14 @@ export default class Push extends KinstaCommand {
       this.error(message)
     }
 
-    const environments = await getSiteEnvironments(flags.apiKey, resolvedIds.siteId)
-    const sourceEnvName = environments.find((environment) => environment.id === resolvedIds.sourceEnvId)?.display_name ?? resolvedIds.sourceEnvId
-    const targetEnvName = environments.find((environment) => environment.id === resolvedIds.targetEnvId)?.display_name ?? resolvedIds.targetEnvId
+    let sourceEnvName = resolvedIds.sourceEnvName ?? resolvedIds.sourceEnvId
+    let targetEnvName = resolvedIds.targetEnvName ?? resolvedIds.targetEnvId
+
+    if (resolvedIds.sourceEnvName === undefined || resolvedIds.targetEnvName === undefined) {
+      const environments = await getSiteEnvironments(flags.apiKey, resolvedIds.siteId)
+      sourceEnvName = environments.find((environment) => environment.id === resolvedIds.sourceEnvId)?.display_name ?? sourceEnvName
+      targetEnvName = environments.find((environment) => environment.id === resolvedIds.targetEnvId)?.display_name ?? targetEnvName
+    }
 
     ux.action.start(`Pushing environment "${sourceEnvName}" to "${targetEnvName}"`)
 
