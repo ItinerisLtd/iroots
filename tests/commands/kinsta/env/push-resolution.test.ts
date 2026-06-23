@@ -203,11 +203,13 @@ describe('env push resolution', () => {
 
   it('emits validation progress when --site and --site_id are provided together', async () => {
     const events: string[] = []
+    let includeEnvironments: boolean | undefined
 
     const resolved = await resolvePushTargetIds({
       apiKey: 'api',
       company: 'co',
-      async getAllSites() {
+      async getAllSites(_apiKey, _company, includeEnv) {
+        includeEnvironments = includeEnv
         return [{
           company_id: 'co',
           display_name: 'Project A',
@@ -242,6 +244,7 @@ describe('env push resolution', () => {
       sourceEnvId: 'env-1',
       targetEnvId: 'env-2',
     })
+    expect(includeEnvironments).to.equal(false)
     expect(events).to.deep.equal([
       'start:Validating site selection...',
       'stop',

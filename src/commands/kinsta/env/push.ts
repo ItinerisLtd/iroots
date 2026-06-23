@@ -99,7 +99,7 @@ const validateSiteIdAndNameMatch = async (input: ResolvePushTargetIdsInput, site
   const sites = await withProgress(
     input.progress,
     'Validating site selection...',
-    async () => input.getAllSites(input.apiKey, normalizedCompany, true),
+    async () => input.getAllSites(input.apiKey, normalizedCompany, false),
   )
   if (!hasMatchingId(siteId, sites)) {
     throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
