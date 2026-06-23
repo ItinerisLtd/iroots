@@ -504,6 +504,94 @@ describe('env push resolution', () => {
     ])
   })
 
+  it('emits progress without site-fetching stage for --site_id partial-ID mode', async () => {
+    const events: string[] = []
+
+    await resolvePushTargetIds({
+      apiKey: 'api',
+      company: '',
+      async getAllSites() {
+        throw new Error('should not fetch sites when --site_id is provided')
+      },
+      async getSiteEnvironments() {
+        return [
+          {display_name: 'Staging', id: 'env-1', name: 'staging'},
+          {display_name: 'Live', id: 'env-2', name: 'live'},
+        ] as any
+      },
+      progress: {
+        start(label: string) {
+          events.push(`start:${label}`)
+        },
+        stop() {
+          events.push('stop')
+        },
+      },
+      site: undefined,
+      siteId: 'site-1',
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(events).to.deep.equal([
+      'start:Fetching environments for selected site...',
+      'stop',
+      'start:Resolving source environment...',
+      'stop',
+      'start:Resolving target environment...',
+      'stop',
+    ])
+  })
+
+  it('skips fetching-environments stage when environments are preloaded', async () => {
+    const events: string[] = []
+
+    await resolvePushTargetIds({
+      apiKey: 'api',
+      company: 'co',
+      async getAllSites() {
+        return [{
+          company_id: 'co',
+          display_name: 'Project A',
+          id: 'site-1',
+          name: 'project-a',
+          environments: [
+            {display_name: 'Staging', id: 'env-1', name: 'staging'},
+            {display_name: 'Live', id: 'env-2', name: 'live'},
+          ],
+        }] as any
+      },
+      async getSiteEnvironments() {
+        throw new Error('should not fetch envs when preloaded')
+      },
+      progress: {
+        start(label: string) {
+          events.push(`start:${label}`)
+        },
+        stop() {
+          events.push('stop')
+        },
+      },
+      site: 'Project A',
+      siteId: undefined,
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(events).to.deep.equal([
+      'start:Fetching sites for company...',
+      'stop',
+      'start:Resolving source environment...',
+      'stop',
+      'start:Resolving target environment...',
+      'stop',
+    ])
+  })
+
   it('does not emit resolution stages when all IDs are provided', async () => {
     const events: string[] = []
 

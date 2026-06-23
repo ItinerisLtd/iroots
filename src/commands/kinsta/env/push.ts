@@ -4,6 +4,11 @@ import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
 import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
 import {getAllSites, getSiteEnvironments, pushEnvironment} from '../../../lib/kinsta.js'
 
+type ResolveProgress = {
+  start: (label: string) => void
+  stop: () => void
+}
+
 type ResolvePushTargetIdsInput = {
   apiKey: string
   company: string
@@ -17,11 +22,6 @@ type ResolvePushTargetIdsInput = {
   sourceEnvId: string | undefined
   targetEnv: string | undefined
   targetEnvId: string | undefined
-}
-
-type ResolveProgress = {
-  start: (label: string) => void
-  stop: () => void
 }
 
 type ResolvePushTargetIdsOutput = {
@@ -171,6 +171,43 @@ const resolveSelectedEnvironment = async (
     ?? resolveEnvironment(environments, compact([environmentId, environmentName]), environmentName, options)
 }
 
+const isPromptLikelyForEnvironmentResolution = (
+  environments: KinstaEnvironments,
+  environmentId: string | undefined,
+  environmentName: string | undefined,
+): boolean => {
+  if (environmentId !== undefined) {
+    return false
+  }
+
+  if (environmentName !== undefined) {
+    return findMatchingEnvironments(environments, environmentName).length > 1
+  }
+
+  return environments.length > 0
+}
+
+type ResolveEnvironmentWithProgressInput = {
+  environmentId: string | undefined
+  environmentName: string | undefined
+  environments: KinstaEnvironments
+  label: string
+  options: {flagName: '--source_env' | '--target_env'; selectionPrompt: string}
+  progress: ResolveProgress | undefined
+}
+
+const resolveSelectedEnvironmentWithProgress = async (
+  input: ResolveEnvironmentWithProgressInput,
+): Promise<KinstaEnvironment> => {
+  const {environments, environmentId, environmentName, label, options, progress} = input
+  const action = async () => resolveSelectedEnvironment(environments, environmentId, environmentName, options)
+  if (isPromptLikelyForEnvironmentResolution(environments, environmentId, environmentName)) {
+    return action()
+  }
+
+  return withProgress(progress, label, action)
+}
+
 type EnvironmentIdNameMatchValidationInput = {
   environmentId: string | undefined
   environmentName: string | undefined
@@ -236,16 +273,22 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
   validateEnvironmentIdExists(environments, sourceEnvId, '--source_env_id')
   validateEnvironmentIdExists(environments, targetEnvId, '--target_env_id')
 
-  const source = await withProgress(
-    input.progress,
-    'Resolving source environment...',
-    async () => resolveSelectedEnvironment(environments, sourceEnvId, sourceEnv, sourceEnvironmentOptions),
-  )
-  const target = await withProgress(
-    input.progress,
-    'Resolving target environment...',
-    async () => resolveSelectedEnvironment(environments, targetEnvId, targetEnv, targetEnvironmentOptions),
-  )
+  const source = await resolveSelectedEnvironmentWithProgress({
+    progress: input.progress,
+    label: 'Resolving source environment...',
+    environments,
+    environmentId: sourceEnvId,
+    environmentName: sourceEnv,
+    options: sourceEnvironmentOptions,
+  })
+  const target = await resolveSelectedEnvironmentWithProgress({
+    progress: input.progress,
+    label: 'Resolving target environment...',
+    environments,
+    environmentId: targetEnvId,
+    environmentName: targetEnv,
+    options: targetEnvironmentOptions,
+  })
 
   validateEnvironmentIdAndNameMatch({
     environments,
