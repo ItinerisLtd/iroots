@@ -6,7 +6,7 @@ import {getAllSites, getSiteEnvironments, pushEnvironment} from '../../../lib/ki
 
 type ResolveProgress = {
   start: (label: string) => void
-  stop: () => void
+  stop: (status?: string) => void
 }
 
 type ResolvePushTargetIdsInput = {
@@ -56,9 +56,12 @@ const withProgress = async <T>(
 
   progress.start(label)
   try {
-    return await action()
-  } finally {
+    const result = await action()
     progress.stop()
+    return result
+  } catch (error: unknown) {
+    progress.stop('failed')
+    throw error
   }
 }
 
@@ -175,7 +178,7 @@ const resolveSelectedEnvironment = async (
     ?? resolveEnvironment(environments, compact([environmentId, environmentName]), environmentName, options)
 }
 
-const isPromptLikelyForEnvironmentResolution = (
+export const isPromptLikelyForEnvironmentResolution = (
   environments: KinstaEnvironments,
   environmentId: string | undefined,
   environmentName: string | undefined,

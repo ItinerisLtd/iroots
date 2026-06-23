@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import {expect} from 'chai'
 
-import {resolvePushTargetIds} from '../../../../src/commands/kinsta/env/push.js'
+import {isPromptLikelyForEnvironmentResolution, resolvePushTargetIds} from '../../../../src/commands/kinsta/env/push.js'
 
 describe('env push resolution', () => {
   it('uses explicit IDs when all are provided', async () => {
@@ -677,5 +677,25 @@ describe('env push resolution', () => {
     })
 
     expect(events).to.deep.equal([])
+  })
+
+  describe('isPromptLikelyForEnvironmentResolution', () => {
+    const environments = [
+      {display_name: 'Staging', id: 'env-1', name: 'staging'},
+      {display_name: 'Staging', id: 'env-2', name: 'stage'},
+      {display_name: 'Live', id: 'env-3', name: 'live'},
+    ] as any
+
+    it('returns false when environment ID is provided', () => {
+      expect(isPromptLikelyForEnvironmentResolution(environments, 'env-1', 'Staging')).to.equal(false)
+    })
+
+    it('returns true when explicit environment name is ambiguous', () => {
+      expect(isPromptLikelyForEnvironmentResolution(environments, undefined, 'Staging')).to.equal(true)
+    })
+
+    it('returns false when explicit environment name resolves uniquely', () => {
+      expect(isPromptLikelyForEnvironmentResolution(environments, undefined, 'Live')).to.equal(false)
+    })
   })
 })
