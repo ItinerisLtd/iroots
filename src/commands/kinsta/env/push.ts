@@ -10,12 +10,18 @@ type ResolvePushTargetIdsInput = {
   getAllSites: typeof getAllSites
   getSiteEnvironments: typeof getSiteEnvironments
   includeEnvironmentNames?: boolean
+  progress?: ResolveProgress
   site: string | undefined
   siteId: string | undefined
   sourceEnv: string | undefined
   sourceEnvId: string | undefined
   targetEnv: string | undefined
   targetEnvId: string | undefined
+}
+
+type ResolveProgress = {
+  start: (label: string) => void
+  stop: () => void
 }
 
 type ResolvePushTargetIdsOutput = {
@@ -37,6 +43,23 @@ const sourceEnvironmentOptions: {flagName: '--source_env'; selectionPrompt: stri
 const targetEnvironmentOptions: {flagName: '--target_env'; selectionPrompt: string} = {
   flagName: '--target_env',
   selectionPrompt: 'Select the target environment to push TO:',
+}
+
+const withProgress = async <T>(
+  progress: ResolveProgress | undefined,
+  label: string,
+  action: () => Promise<T>,
+): Promise<T> => {
+  if (progress === undefined) {
+    return action()
+  }
+
+  progress.start(label)
+  try {
+    return await action()
+  } finally {
+    progress.stop()
+  }
 }
 
 type KinstaEnvironment = Awaited<ReturnType<typeof getSiteEnvironments>>[number]
@@ -91,7 +114,11 @@ const resolveSiteAndEnvironments = async (
 ): Promise<{environments: KinstaEnvironments; selectedSiteId: string}> => {
   if (siteId === undefined) {
     const company = requireCompanyId(input.company)
-    const sites = await input.getAllSites(input.apiKey, company, true)
+    const sites = await withProgress(
+      input.progress,
+      'Fetching sites for company...',
+      async () => input.getAllSites(input.apiKey, company, true),
+    )
     if (sites.length === 0) {
       throw new Error(`No Kinsta sites found for company "${company}"`)
     }
@@ -104,7 +131,11 @@ const resolveSiteAndEnvironments = async (
       selectedSiteId,
       environments: preloadedEnvironments.length > 0
         ? preloadedEnvironments
-        : await input.getSiteEnvironments(input.apiKey, selectedSiteId),
+        : await withProgress(
+          input.progress,
+          'Fetching environments for selected site...',
+          async () => input.getSiteEnvironments(input.apiKey, selectedSiteId),
+        ),
     }
   }
 
@@ -112,7 +143,11 @@ const resolveSiteAndEnvironments = async (
 
   return {
     selectedSiteId: siteId,
-    environments: await input.getSiteEnvironments(input.apiKey, siteId),
+    environments: await withProgress(
+      input.progress,
+      'Fetching environments for selected site...',
+      async () => input.getSiteEnvironments(input.apiKey, siteId),
+    ),
   }
 }
 
@@ -201,8 +236,16 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
   validateEnvironmentIdExists(environments, sourceEnvId, '--source_env_id')
   validateEnvironmentIdExists(environments, targetEnvId, '--target_env_id')
 
-  const source = await resolveSelectedEnvironment(environments, sourceEnvId, sourceEnv, sourceEnvironmentOptions)
-  const target = await resolveSelectedEnvironment(environments, targetEnvId, targetEnv, targetEnvironmentOptions)
+  const source = await withProgress(
+    input.progress,
+    'Resolving source environment...',
+    async () => resolveSelectedEnvironment(environments, sourceEnvId, sourceEnv, sourceEnvironmentOptions),
+  )
+  const target = await withProgress(
+    input.progress,
+    'Resolving target environment...',
+    async () => resolveSelectedEnvironment(environments, targetEnvId, targetEnv, targetEnvironmentOptions),
+  )
 
   validateEnvironmentIdAndNameMatch({
     environments,
@@ -317,6 +360,14 @@ export default class Push extends KinstaCommand {
         sourceEnvId: sourceEnvIdFlag,
         targetEnv: flags.target_env,
         targetEnvId: targetEnvIdFlag,
+        progress: {
+          start(label: string) {
+            ux.action.start(label)
+          },
+          stop() {
+            ux.action.stop()
+          },
+        },
       })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error)
