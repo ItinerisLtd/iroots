@@ -419,6 +419,43 @@ describe('env push resolution', () => {
     expect(message).to.equal('--target_env_id "env-2" does not match --target_env "Staging".')
   })
 
+  it('includes environment display names when includeEnvironmentNames is true', async () => {
+    const resolved = await resolvePushTargetIds({
+      apiKey: 'api',
+      company: 'co',
+      async getAllSites() {
+        return [{
+          company_id: 'co',
+          display_name: 'Project A',
+          id: 'site-1',
+          name: 'project-a',
+          environments: [
+            {display_name: 'Staging', id: 'env-1', name: 'staging'},
+            {display_name: 'Live', id: 'env-2', name: 'live'},
+          ],
+        }] as any
+      },
+      async getSiteEnvironments() {
+        throw new Error('should not be called when environments preloaded')
+      },
+      includeEnvironmentNames: true,
+      site: 'Project A',
+      siteId: undefined,
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(resolved).to.deep.equal({
+      siteId: 'site-1',
+      sourceEnvId: 'env-1',
+      sourceEnvName: 'Staging',
+      targetEnvId: 'env-2',
+      targetEnvName: 'Live',
+    })
+  })
+
   it('emits detailed progress stages when resolving site and environments', async () => {
     const events: string[] = []
 
