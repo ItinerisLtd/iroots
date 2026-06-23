@@ -414,8 +414,8 @@ export default class Push extends KinstaCommand {
           start(label: string) {
             ux.action.start(label)
           },
-          stop() {
-            ux.action.stop()
+          stop(status?: string) {
+            ux.action.stop(status)
           },
         },
       })
