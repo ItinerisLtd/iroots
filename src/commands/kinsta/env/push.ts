@@ -4,12 +4,18 @@ import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
 import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
 import {getAllSites, getSiteEnvironments, pushEnvironment} from '../../../lib/kinsta.js'
 
+type ResolveProgress = {
+  start: (label: string) => void
+  stop: (status?: string) => void
+}
+
 type ResolvePushTargetIdsInput = {
   apiKey: string
   company: string
   getAllSites: typeof getAllSites
   getSiteEnvironments: typeof getSiteEnvironments
   includeEnvironmentNames?: boolean
+  progress?: ResolveProgress
   site: string | undefined
   siteId: string | undefined
   sourceEnv: string | undefined
@@ -37,6 +43,26 @@ const sourceEnvironmentOptions: {flagName: '--source_env'; selectionPrompt: stri
 const targetEnvironmentOptions: {flagName: '--target_env'; selectionPrompt: string} = {
   flagName: '--target_env',
   selectionPrompt: 'Select the target environment to push TO:',
+}
+
+const withProgress = async <T>(
+  progress: ResolveProgress | undefined,
+  label: string,
+  action: () => Promise<T>,
+): Promise<T> => {
+  if (progress === undefined) {
+    return action()
+  }
+
+  progress.start(label)
+  try {
+    const result = await action()
+    progress.stop()
+    return result
+  } catch (error: unknown) {
+    progress.stop('failed')
+    throw error
+  }
 }
 
 type KinstaEnvironment = Awaited<ReturnType<typeof getSiteEnvironments>>[number]
@@ -73,7 +99,11 @@ const validateSiteIdAndNameMatch = async (input: ResolvePushTargetIdsInput, site
     throw new Error('Provide --company when using --site together with --site_id so the values can be validated.')
   }
 
-  const sites = await input.getAllSites(input.apiKey, normalizedCompany, true)
+  const sites = await withProgress(
+    input.progress,
+    'Validating site selection...',
+    async () => input.getAllSites(input.apiKey, normalizedCompany, false),
+  )
   if (!hasMatchingId(siteId, sites)) {
     throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
   }
@@ -91,7 +121,11 @@ const resolveSiteAndEnvironments = async (
 ): Promise<{environments: KinstaEnvironments; selectedSiteId: string}> => {
   if (siteId === undefined) {
     const company = requireCompanyId(input.company)
-    const sites = await input.getAllSites(input.apiKey, company, true)
+    const sites = await withProgress(
+      input.progress,
+      'Fetching sites for company...',
+      async () => input.getAllSites(input.apiKey, company, true),
+    )
     if (sites.length === 0) {
       throw new Error(`No Kinsta sites found for company "${company}"`)
     }
@@ -104,7 +138,11 @@ const resolveSiteAndEnvironments = async (
       selectedSiteId,
       environments: preloadedEnvironments.length > 0
         ? preloadedEnvironments
-        : await input.getSiteEnvironments(input.apiKey, selectedSiteId),
+        : await withProgress(
+          input.progress,
+          'Fetching environments for selected site...',
+          async () => input.getSiteEnvironments(input.apiKey, selectedSiteId),
+        ),
     }
   }
 
@@ -112,7 +150,11 @@ const resolveSiteAndEnvironments = async (
 
   return {
     selectedSiteId: siteId,
-    environments: await input.getSiteEnvironments(input.apiKey, siteId),
+    environments: await withProgress(
+      input.progress,
+      'Fetching environments for selected site...',
+      async () => input.getSiteEnvironments(input.apiKey, siteId),
+    ),
   }
 }
 
@@ -134,6 +176,43 @@ const resolveSelectedEnvironment = async (
 
   return findById(environmentId, environments)
     ?? resolveEnvironment(environments, compact([environmentId, environmentName]), environmentName, options)
+}
+
+export const isPromptLikelyForEnvironmentResolution = (
+  environments: KinstaEnvironments,
+  environmentId: string | undefined,
+  environmentName: string | undefined,
+): boolean => {
+  if (environmentId !== undefined) {
+    return false
+  }
+
+  if (environmentName !== undefined) {
+    return findMatchingEnvironments(environments, environmentName).length > 1
+  }
+
+  return environments.length > 0
+}
+
+type ResolveEnvironmentWithProgressInput = {
+  environmentId: string | undefined
+  environmentName: string | undefined
+  environments: KinstaEnvironments
+  label: string
+  options: {flagName: '--source_env' | '--target_env'; selectionPrompt: string}
+  progress: ResolveProgress | undefined
+}
+
+const resolveSelectedEnvironmentWithProgress = async (
+  input: ResolveEnvironmentWithProgressInput,
+): Promise<KinstaEnvironment> => {
+  const {environments, environmentId, environmentName, label, options, progress} = input
+  const action = async () => resolveSelectedEnvironment(environments, environmentId, environmentName, options)
+  if (isPromptLikelyForEnvironmentResolution(environments, environmentId, environmentName)) {
+    return action()
+  }
+
+  return withProgress(progress, label, action)
 }
 
 type EnvironmentIdNameMatchValidationInput = {
@@ -201,8 +280,22 @@ export async function resolvePushTargetIds(input: ResolvePushTargetIdsInput): Pr
   validateEnvironmentIdExists(environments, sourceEnvId, '--source_env_id')
   validateEnvironmentIdExists(environments, targetEnvId, '--target_env_id')
 
-  const source = await resolveSelectedEnvironment(environments, sourceEnvId, sourceEnv, sourceEnvironmentOptions)
-  const target = await resolveSelectedEnvironment(environments, targetEnvId, targetEnv, targetEnvironmentOptions)
+  const source = await resolveSelectedEnvironmentWithProgress({
+    progress: input.progress,
+    label: 'Resolving source environment...',
+    environments,
+    environmentId: sourceEnvId,
+    environmentName: sourceEnv,
+    options: sourceEnvironmentOptions,
+  })
+  const target = await resolveSelectedEnvironmentWithProgress({
+    progress: input.progress,
+    label: 'Resolving target environment...',
+    environments,
+    environmentId: targetEnvId,
+    environmentName: targetEnv,
+    options: targetEnvironmentOptions,
+  })
 
   validateEnvironmentIdAndNameMatch({
     environments,
@@ -317,6 +410,14 @@ export default class Push extends KinstaCommand {
         sourceEnvId: sourceEnvIdFlag,
         targetEnv: flags.target_env,
         targetEnvId: targetEnvIdFlag,
+        progress: {
+          start(label: string) {
+            ux.action.start(label)
+          },
+          stop(status?: string) {
+            ux.action.stop(status)
+          },
+        },
       })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error)
