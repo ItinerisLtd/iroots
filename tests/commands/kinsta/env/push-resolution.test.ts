@@ -201,6 +201,59 @@ describe('env push resolution', () => {
     expect(message).to.equal('Provide --company when using --site together with --site_id so the values can be validated.')
   })
 
+  it('emits validation progress when --site and --site_id are provided together', async () => {
+    const events: string[] = []
+
+    const resolved = await resolvePushTargetIds({
+      apiKey: 'api',
+      company: 'co',
+      async getAllSites() {
+        return [{
+          company_id: 'co',
+          display_name: 'Project A',
+          id: 'site-1',
+          name: 'project-a',
+        }] as any
+      },
+      async getSiteEnvironments() {
+        return [
+          {display_name: 'Staging', id: 'env-1', name: 'staging'},
+          {display_name: 'Live', id: 'env-2', name: 'live'},
+        ] as any
+      },
+      progress: {
+        start(label: string) {
+          events.push(`start:${label}`)
+        },
+        stop() {
+          events.push('stop')
+        },
+      },
+      site: 'Project A',
+      siteId: 'site-1',
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(resolved).to.deep.equal({
+      siteId: 'site-1',
+      sourceEnvId: 'env-1',
+      targetEnvId: 'env-2',
+    })
+    expect(events).to.deep.equal([
+      'start:Validating site selection...',
+      'stop',
+      'start:Fetching environments for selected site...',
+      'stop',
+      'start:Resolving source environment...',
+      'stop',
+      'start:Resolving target environment...',
+      'stop',
+    ])
+  })
+
   it('fails when explicit --site_id does not match in partial-ID mode', async () => {
     let message = ''
 
