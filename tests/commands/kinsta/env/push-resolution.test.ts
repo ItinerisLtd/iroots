@@ -418,4 +418,83 @@ describe('env push resolution', () => {
 
     expect(message).to.equal('--target_env_id "env-2" does not match --target_env "Staging".')
   })
+
+  it('emits detailed progress stages when resolving site and environments', async () => {
+    const events: string[] = []
+
+    await resolvePushTargetIds({
+      apiKey: 'api',
+      company: 'co',
+      async getAllSites() {
+        return [{
+          company_id: 'co',
+          display_name: 'Project A',
+          id: 'site-1',
+          name: 'project-a',
+        }] as any
+      },
+      async getSiteEnvironments() {
+        return [
+          {display_name: 'Staging', id: 'env-1', name: 'staging'},
+          {display_name: 'Live', id: 'env-2', name: 'live'},
+        ] as any
+      },
+      progress: {
+        start(label: string) {
+          events.push(`start:${label}`)
+        },
+        stop() {
+          events.push('stop')
+        },
+      },
+      site: 'Project A',
+      siteId: undefined,
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(events).to.deep.equal([
+      'start:Fetching sites for company...',
+      'stop',
+      'start:Fetching environments for selected site...',
+      'stop',
+      'start:Resolving source environment...',
+      'stop',
+      'start:Resolving target environment...',
+      'stop',
+    ])
+  })
+
+  it('does not emit resolution stages when all IDs are provided', async () => {
+    const events: string[] = []
+
+    await resolvePushTargetIds({
+      apiKey: 'api',
+      company: '',
+      async getAllSites() {
+        throw new Error('should not fetch sites in full ID mode')
+      },
+      async getSiteEnvironments() {
+        throw new Error('should not fetch envs in full ID mode')
+      },
+      progress: {
+        start(label: string) {
+          events.push(`start:${label}`)
+        },
+        stop() {
+          events.push('stop')
+        },
+      },
+      site: undefined,
+      siteId: 'site-1',
+      sourceEnv: undefined,
+      sourceEnvId: 'env-a',
+      targetEnv: undefined,
+      targetEnvId: 'env-b',
+    })
+
+    expect(events).to.deep.equal([])
+  })
 })
