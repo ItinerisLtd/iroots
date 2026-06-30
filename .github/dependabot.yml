@@ -1,5 +1,4 @@
 version: 2
-
 updates:
   - package-ecosystem: npm
     directory: "/"
@@ -7,3 +6,10 @@ updates:
       interval: daily
       time: "00:00"
       timezone: Europe/London
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 21
