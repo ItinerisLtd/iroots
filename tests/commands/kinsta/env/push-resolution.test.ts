@@ -116,6 +116,90 @@ describe('env push resolution', () => {
     })
   })
 
+  it('auto-selects a site inferred from the current directory when unambiguous', async () => {
+    const resolved = await resolvePushTargetIds({
+      apiKey: 'api',
+      company: 'co',
+      async getAllSites() {
+        return [
+          {
+            company_id: 'co',
+            display_name: 'Affinia',
+            id: 'site-1',
+            name: 'affinia',
+          },
+          {
+            company_id: 'co',
+            display_name: 'Other Site',
+            id: 'site-2',
+            name: 'other-site',
+          }
+        ] as any
+      },
+      async getSiteEnvironments() {
+        return [
+          {display_name: 'Staging', id: 'env-1', name: 'staging'},
+          {display_name: 'Live', id: 'env-2', name: 'live'},
+        ] as any
+      },
+      site: undefined,
+      siteId: undefined,
+      siteNameCandidates: ['affinia'],
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(resolved).to.deep.equal({
+      siteId: 'site-1',
+      sourceEnvId: 'env-1',
+      targetEnvId: 'env-2',
+    })
+  })
+
+  it('prefers an explicit --site over inferred directory candidates when they conflict', async () => {
+    const resolved = await resolvePushTargetIds({
+      apiKey: 'api',
+      company: 'co',
+      async getAllSites() {
+        return [
+          {
+            company_id: 'co',
+            display_name: 'Affinia',
+            id: 'site-1',
+            name: 'affinia',
+          },
+          {
+            company_id: 'co',
+            display_name: 'Other Site',
+            id: 'site-2',
+            name: 'other-site',
+          }
+        ] as any
+      },
+      async getSiteEnvironments() {
+        return [
+          {display_name: 'Staging', id: 'env-1', name: 'staging'},
+          {display_name: 'Live', id: 'env-2', name: 'live'},
+        ] as any
+      },
+      site: 'Other Site',
+      siteId: undefined,
+      siteNameCandidates: ['affinia'],
+      sourceEnv: 'Staging',
+      sourceEnvId: undefined,
+      targetEnv: 'Live',
+      targetEnvId: undefined,
+    })
+
+    expect(resolved).to.deep.equal({
+      siteId: 'site-2',
+      sourceEnvId: 'env-1',
+      targetEnvId: 'env-2',
+    })
+  })
+
   it('fails with a company-specific error when no sites exist for the company', async () => {
     let message = ''
 
