@@ -3,6 +3,7 @@ import {Flags, ux} from '@oclif/core'
 import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
 import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
 import {getAllSites, getSiteEnvironments, pushEnvironment} from '../../../lib/kinsta.js'
+import {inferKinstaFromTrellis} from '../../../lib/trellis-kinsta.js'
 
 type ResolveProgress = {
   start: (label: string) => void
@@ -18,6 +19,7 @@ type ResolvePushTargetIdsInput = {
   progress?: ResolveProgress
   site: string | undefined
   siteId: string | undefined
+  siteNameCandidates?: string[]
   sourceEnv: string | undefined
   sourceEnvId: string | undefined
   targetEnv: string | undefined
@@ -130,7 +132,7 @@ const resolveSiteAndEnvironments = async (
       throw new Error(`No Kinsta sites found for company "${company}"`)
     }
 
-    const selectedSite = await resolveSite(sites, compact([siteId, site]), site)
+    const selectedSite = await resolveSite(sites, compact([siteId, site, ...(input.siteNameCandidates ?? [])]), site)
     const selectedSiteId = selectedSite.id
     const preloadedEnvironments = selectedSite.environments ?? []
 
@@ -352,6 +354,12 @@ export default class Push extends KinstaCommand {
       required: false,
     }),
     // eslint-disable-next-line camelcase
+    infer_site: Flags.boolean({
+      allowNo: true,
+      default: true,
+      description: 'Infer the site from the current directory (Trellis/Bedrock). Use --no-infer_site to always pick from the full site list.',
+    }),
+    // eslint-disable-next-line camelcase
     push_db: Flags.boolean({
       allowNo: true,
       default: true,
@@ -391,9 +399,14 @@ export default class Push extends KinstaCommand {
   public async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
+    const siteFlag = normalizeOptionalFlag(flags.site)
     const siteIdFlag = normalizeOptionalFlag(flags.site_id)
     const sourceEnvIdFlag = normalizeOptionalFlag(flags.source_env_id)
     const targetEnvIdFlag = normalizeOptionalFlag(flags.target_env_id)
+
+    const inference = flags.infer_site && siteIdFlag === undefined && siteFlag === undefined
+      ? await inferKinstaFromTrellis(process.cwd())
+      : null
 
     let resolvedIds: ResolvePushTargetIdsOutput
 
@@ -406,6 +419,7 @@ export default class Push extends KinstaCommand {
         includeEnvironmentNames: true,
         site: flags.site,
         siteId: siteIdFlag,
+        siteNameCandidates: inference?.siteNames,
         sourceEnv: flags.source_env,
         sourceEnvId: sourceEnvIdFlag,
         targetEnv: flags.target_env,
