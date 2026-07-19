@@ -22,7 +22,7 @@
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^5",
-    "execa": "^9.6.1",
+    "execa": "^10.0.0",
     "globby": "^16.2.2",
     "replace-in-file": "^8.4.0"
   },
