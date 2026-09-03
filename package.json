@@ -20,7 +20,7 @@
   "dependencies": {
     "@inquirer/prompts": "^8.7.0",
     "@oclif/core": "^4",
-    "@oclif/plugin-help": "^6",
+    "@oclif/plugin-help": "^7",
     "@oclif/plugin-plugins": "^5",
     "execa": "^10.0.1",
     "globby": "^16.2.4",
