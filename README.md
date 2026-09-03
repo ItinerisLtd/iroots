@@ -640,17 +640,25 @@ Fetch logs for a Kinsta environment
 
 ```
 USAGE
-  $ iroots kinsta env logs get --apiKey <value> --environment_id <value> --file_name access|error|kinsta-cache-perf
-    --lines <value> [--format json|text]
+  $ iroots kinsta env logs get --apiKey <value> --file_name access|error|kinsta-cache-perf --lines <value> [--company
+    <value>] [--environment <value>] [--environment_id <value>] [--format json|text] [--infer_site] [--site <value>]
+    [--site_id <value>]
 
 FLAGS
   --apiKey=<value>          (required) [env: IROOTS_KINSTA_API_KEY] The API key
-  --environment_id=<value>  (required) [env: IROOTS_KINSTA_ENVIRONMENT_ID]
+  --company=<value>         [env: IROOTS_KINSTA_COMPANY_ID] Kinsta company ID (required when --environment_id is not
+                            resolved directly, or when combining --site with --site_id)
+  --environment=<value>     Environment name (case-insensitive exact match)
+  --environment_id=<value>  [env: IROOTS_KINSTA_ENVIRONMENT_ID] Environment ID (takes priority over inferred values)
   --file_name=<option>      (required) [default: error]
                             <options: access|error|kinsta-cache-perf>
   --format=<option>         [default: text]
                             <options: json|text>
+  --[no-]infer_site         Infer the site from the current directory (Trellis/Bedrock). Use --no-infer_site to always
+                            pick from the full site list.
   --lines=<value>           (required) [default: 1000]
+  --site=<value>            Site name (case-insensitive exact match)
+  --site_id=<value>         Site ID (takes priority over inferred values)
 
 DESCRIPTION
   Fetch logs for a Kinsta environment
