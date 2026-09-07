@@ -29,7 +29,7 @@
   "devDependencies": {
     "@eslint/compat": "^2",
     "@oclif/prettier-config": "^0.2.1",
-    "@oclif/test": "^4",
+    "@oclif/test": "^5",
     "@types/chai": "^5",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^26",
