@@ -21,7 +21,7 @@
     "@inquirer/prompts": "^8.7.1",
     "@oclif/core": "^5",
     "@oclif/plugin-help": "^7",
-    "@oclif/plugin-plugins": "^5",
+    "@oclif/plugin-plugins": "^6",
     "execa": "^10.0.1",
     "globby": "^16.2.4",
     "replace-in-file": "^9.0.0"
