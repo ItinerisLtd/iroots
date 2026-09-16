@@ -1,14 +1,10 @@
 import {Flags, ux} from '@oclif/core'
 
 import {KinstaCommand} from '../../../lib/commands/kinsta-command.js'
-import {findMatchingEnvironments, findMatchingSites, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
+import {compact, hasMatchingId, requireCompanyId, ResolveProgress, toLower, validateSiteIdAndNameMatch, withProgress} from '../../../lib/kinsta-resolution.js'
+import {findMatchingEnvironments, normalizeOptionalFlag, resolveEnvironment, resolveSite} from '../../../lib/kinsta-selectors.js'
 import {getAllSites, getSiteEnvironments, pushEnvironment} from '../../../lib/kinsta.js'
 import {inferKinstaFromTrellis} from '../../../lib/trellis-kinsta.js'
-
-type ResolveProgress = {
-  start: (label: string) => void
-  stop: (status?: string) => void
-}
 
 type ResolvePushTargetIdsInput = {
   apiKey: string
@@ -34,9 +30,6 @@ type ResolvePushTargetIdsOutput = {
   targetEnvName?: string
 }
 
-const compact = (values: Array<string | undefined>): string[] => values.filter((value): value is string => value !== undefined && value.length > 0)
-const toLower = (value: string): string => value.trim().toLowerCase()
-const hasMatchingId = (id: string, candidates: Array<{id: string}>): boolean => candidates.some((candidate) => toLower(candidate.id) === toLower(id))
 const findById = <T extends {id: string}>(id: string, candidates: T[]): T | undefined => candidates.find((candidate) => toLower(candidate.id) === toLower(id))
 const sourceEnvironmentOptions: {flagName: '--source_env'; selectionPrompt: string} = {
   flagName: '--source_env',
@@ -45,26 +38,6 @@ const sourceEnvironmentOptions: {flagName: '--source_env'; selectionPrompt: stri
 const targetEnvironmentOptions: {flagName: '--target_env'; selectionPrompt: string} = {
   flagName: '--target_env',
   selectionPrompt: 'Select the target environment to push TO:',
-}
-
-const withProgress = async <T>(
-  progress: ResolveProgress | undefined,
-  label: string,
-  action: () => Promise<T>,
-): Promise<T> => {
-  if (progress === undefined) {
-    return action()
-  }
-
-  progress.start(label)
-  try {
-    const result = await action()
-    progress.stop()
-    return result
-  } catch (error: unknown) {
-    progress.stop('failed')
-    throw error
-  }
 }
 
 type KinstaEnvironment = Awaited<ReturnType<typeof getSiteEnvironments>>[number]
@@ -80,40 +53,6 @@ const resolveAllIdsPath = (siteId: string | undefined, sourceEnvId: string | und
   }
 
   return {siteId, sourceEnvId, targetEnvId}
-}
-
-const requireCompanyId = (company: string): string => {
-  const normalizedCompany = company.trim()
-  if (normalizedCompany.length === 0) {
-    throw new Error('Provide --company or set IROOTS_KINSTA_COMPANY_ID.')
-  }
-
-  return normalizedCompany
-}
-
-const validateSiteIdAndNameMatch = async (input: ResolvePushTargetIdsInput, siteId: string, site: string | undefined): Promise<void> => {
-  const normalizedCompany = input.company.trim()
-  if (site === undefined) {
-    return
-  }
-
-  if (normalizedCompany.length === 0) {
-    throw new Error('Provide --company when using --site together with --site_id so the values can be validated.')
-  }
-
-  const sites = await withProgress(
-    input.progress,
-    'Validating site selection...',
-    async () => input.getAllSites(input.apiKey, normalizedCompany, false),
-  )
-  if (!hasMatchingId(siteId, sites)) {
-    throw new Error(`No Kinsta site matched --site_id "${siteId}".`)
-  }
-
-  const matchingSites = findMatchingSites(sites, site)
-  if (!matchingSites.some((matchingSite) => toLower(matchingSite.id) === toLower(siteId))) {
-    throw new Error(`--site_id "${siteId}" does not match --site "${site}".`)
-  }
 }
 
 const resolveSiteAndEnvironments = async (
