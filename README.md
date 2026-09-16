@@ -19,7 +19,7 @@ $ npm install -g iroots
 $ iroots COMMAND
 running command...
 $ iroots (--version|-h)
-iroots/0.0.0 linux-x64 node-v22.23.0
+iroots/0.0.0 linux-x64 node-v22.23.2
 $ iroots --help [COMMAND]
 USAGE
   $ iroots COMMAND
@@ -52,6 +52,7 @@ USAGE
 * [`iroots kinsta env logs get`](#iroots-kinsta-env-logs-get)
 * [`iroots kinsta env open`](#iroots-kinsta-env-open)
 * [`iroots kinsta env push`](#iroots-kinsta-env-push)
+* [`iroots kinsta env restart-php`](#iroots-kinsta-env-restart-php)
 * [`iroots kinsta env ssh allowlist get`](#iroots-kinsta-env-ssh-allowlist-get)
 * [`iroots kinsta env ssh allowlist set`](#iroots-kinsta-env-ssh-allowlist-set)
 * [`iroots kinsta env webroot`](#iroots-kinsta-env-webroot)
@@ -421,7 +422,7 @@ DESCRIPTION
   Display help for iroots.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.2.50/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/7.0.0/src/commands/help.ts)_
 
 ## `iroots kinsta backups create`
 
@@ -703,13 +704,15 @@ Push an existing environment
 ```
 USAGE
   $ iroots kinsta env push --apiKey <value> [--company <value>] [--site <value>] [--site_id <value>] [--source_env
-    <value>] [--source_env_id <value>] [--target_env <value>] [--target_env_id <value>] [--push_db] [--push_files]
-    [--push_files_option ALL_FILES|SPECIFIC_FILES] [--file_list <value>...] [--search_and_replace]
+    <value>] [--source_env_id <value>] [--target_env <value>] [--target_env_id <value>] [--infer_site] [--push_db]
+    [--push_files] [--push_files_option ALL_FILES|SPECIFIC_FILES] [--file_list <value>...] [--search_and_replace]
 
 FLAGS
   --apiKey=<value>              (required) [env: IROOTS_KINSTA_API_KEY] The API key
   --company=<value>             [env: IROOTS_KINSTA_COMPANY_ID]
   --file_list=<value>...
+  --[no-]infer_site             Infer the site from the current directory (Trellis/Bedrock). Use --no-infer_site to
+                                always pick from the full site list.
   --[no-]push_db
   --[no-]push_files
   --push_files_option=<option>  [default: ALL_FILES]
@@ -730,6 +733,35 @@ EXAMPLES
 ```
 
 _See code: [src/commands/kinsta/env/push.ts](https://github.com/itinerisltd/iroots/blob/v0.0.0/src/commands/kinsta/env/push.ts)_
+
+## `iroots kinsta env restart-php`
+
+Restart an environment's PHP engine
+
+```
+USAGE
+  $ iroots kinsta env restart-php --apiKey <value> [--company <value>] [--environment <value>] [--environment_id <value>]
+    [--infer_site] [--site <value>] [--site_id <value>]
+
+FLAGS
+  --apiKey=<value>          (required) [env: IROOTS_KINSTA_API_KEY] The API key
+  --company=<value>         [env: IROOTS_KINSTA_COMPANY_ID] Kinsta company ID (required when site/environment IDs are
+                            not resolved directly)
+  --environment=<value>     Environment name (case-insensitive exact match)
+  --environment_id=<value>  [env: IROOTS_KINSTA_ENVIRONMENT_ID] Environment ID (takes priority over inferred values)
+  --[no-]infer_site         Infer the site from the current directory (Trellis/Bedrock). Use --no-infer_site to always
+                            pick from the full site list.
+  --site=<value>            Site name (case-insensitive exact match)
+  --site_id=<value>         Site ID (takes priority over inferred values)
+
+DESCRIPTION
+  Restart an environment's PHP engine
+
+EXAMPLES
+  $ iroots kinsta env restart-php
+```
+
+_See code: [src/commands/kinsta/env/restart-php.ts](https://github.com/itinerisltd/iroots/blob/v0.0.0/src/commands/kinsta/env/restart-php.ts)_
 
 ## `iroots kinsta env ssh allowlist get`
 
@@ -1182,7 +1214,7 @@ EXAMPLES
   $ iroots plugins
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/5.4.74/src/commands/plugins/index.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/7.0.0/src/commands/plugins/index.ts)_
 
 ## `iroots plugins add PLUGIN`
 
@@ -1256,7 +1288,7 @@ EXAMPLES
   $ iroots plugins inspect myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/5.4.74/src/commands/plugins/inspect.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/7.0.0/src/commands/plugins/inspect.ts)_
 
 ## `iroots plugins install PLUGIN`
 
@@ -1305,7 +1337,7 @@ EXAMPLES
     $ iroots plugins install someuser/someplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/5.4.74/src/commands/plugins/install.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/7.0.0/src/commands/plugins/install.ts)_
 
 ## `iroots plugins link PATH`
 
@@ -1336,7 +1368,7 @@ EXAMPLES
   $ iroots plugins link myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/5.4.74/src/commands/plugins/link.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/7.0.0/src/commands/plugins/link.ts)_
 
 ## `iroots plugins remove [PLUGIN]`
 
@@ -1377,7 +1409,7 @@ FLAGS
   --reinstall  Reinstall all plugins after uninstalling.
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/5.4.74/src/commands/plugins/reset.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/7.0.0/src/commands/plugins/reset.ts)_
 
 ## `iroots plugins uninstall [PLUGIN]`
 
@@ -1405,7 +1437,7 @@ EXAMPLES
   $ iroots plugins uninstall myplugin
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/5.4.74/src/commands/plugins/uninstall.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/7.0.0/src/commands/plugins/uninstall.ts)_
 
 ## `iroots plugins unlink [PLUGIN]`
 
@@ -1449,7 +1481,7 @@ DESCRIPTION
   Update installed plugins.
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/5.4.74/src/commands/plugins/update.ts)_
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/7.0.0/src/commands/plugins/update.ts)_
 
 ## `iroots sendgrid access delete`
 

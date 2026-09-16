@@ -422,6 +422,21 @@ export async function setPhpVersion(
   return response
 }
 
+export async function restartPhpEngine(token: string, environmentId: string): Promise<KinstaBasicResponse> {
+  const response = await request<KinstaBasicResponse>(token, 'sites/tools/restart-php', {
+    body: JSON.stringify({
+      // eslint-disable-next-line camelcase
+      environment_id: environmentId,
+    }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  })
+
+  return response
+}
+
 export async function addDomainToEnvironment(
   token: string,
   environmentId: string,
