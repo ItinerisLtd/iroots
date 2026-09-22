@@ -417,7 +417,7 @@ describe('env logs get resolution', () => {
       message = error instanceof Error ? error.message : String(error)
     }
 
-    expect(message).to.equal('No environment matched --environment "Missing"')
+    expect(message).to.equal('No environment matched --env "Missing"')
     expect(events).to.deep.equal([
       'start:Fetching sites for company...',
       'stop',

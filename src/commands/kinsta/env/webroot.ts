@@ -6,9 +6,11 @@ import {setWebroot} from '../../../lib/kinsta.js'
 export default class ChangeWebrootSubfolder extends KinstaCommand {
   static description = 'Change the webroot for an environment.'
   static flags = {
-    env: Flags.string({
-      required: true,
+    // eslint-disable-next-line camelcase
+    env_id: Flags.string({
+      aliases: ['environment_id'],
       env: 'IROOTS_KINSTA_ENVIRONMENT_ID',
+      required: true,
     }),
     webroot: Flags.string({
       required: true,
@@ -27,7 +29,7 @@ export default class ChangeWebrootSubfolder extends KinstaCommand {
     const {flags} = await this.parse(ChangeWebrootSubfolder)
     const {
       apiKey,
-      env,
+      env_id: environmentId,
       webroot,
       'clear-all-cache': clearAllCache,
       'refresh-plugins-and-themes': refreshPluginsAndThemes,
@@ -35,7 +37,7 @@ export default class ChangeWebrootSubfolder extends KinstaCommand {
 
     ux.action.start(`Changing webroot to ${webroot}`)
 
-    const response = await setWebroot(apiKey, env, webroot, clearAllCache, refreshPluginsAndThemes)
+    const response = await setWebroot(apiKey, environmentId, webroot, clearAllCache, refreshPluginsAndThemes)
 
     ux.action.stop(response.message)
   }

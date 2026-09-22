@@ -232,7 +232,7 @@ describe('env restart-php resolution', () => {
     expect(message).to.equal('--site_id "site-1" does not match --site "Project B".')
   })
 
-  it('fails when --environment does not match any environment', async () => {
+  it('fails when --env does not match any environment', async () => {
     let message = ''
 
     try {
@@ -261,7 +261,7 @@ describe('env restart-php resolution', () => {
       message = error instanceof Error ? error.message : String(error)
     }
 
-    expect(message).to.equal('No environment matched --environment "Missing"')
+    expect(message).to.equal('No environment matched --env "Missing"')
   })
 
   it('skips fetching environments when preloaded on the site', async () => {

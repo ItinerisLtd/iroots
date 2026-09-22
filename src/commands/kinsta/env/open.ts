@@ -17,7 +17,8 @@ export default class Open extends KinstaCommand {
       env: 'IROOTS_KINSTA_COMPANY_ID',
       required: false,
     }),
-    environment: Flags.string({
+    env: Flags.string({
+      aliases: ['environment'],
       description: 'Environment name (case-insensitive exact match)',
       required: false,
     }),
@@ -43,7 +44,7 @@ export default class Open extends KinstaCommand {
     const {apiKey} = flags
     const company = normalizeOptionalFlag(flags.company)
     const site = normalizeOptionalFlag(flags.site)
-    const environment = normalizeOptionalFlag(flags.environment)
+    const environment = normalizeOptionalFlag(flags.env)
     const siteIdFlag = normalizeOptionalFlag(flags.site_id)
     const environmentIdFlag = normalizeOptionalFlag(flags.environment_id)
 

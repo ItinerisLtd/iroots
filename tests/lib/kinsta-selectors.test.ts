@@ -80,7 +80,27 @@ describe('kinsta-selectors', () => {
       message = error instanceof Error ? error.message : String(error)
     }
 
-    expect(message).to.equal('No environment matched --environment "nowhere"')
+    expect(message).to.equal('No environment matched --env "nowhere"')
+  })
+
+  it('resolves production/prod as aliases for the live environment', () => {
+    const envs = [
+      {id: 'env-1', name: 'live', display_name: 'Live'},
+      {id: 'env-2', name: 'staging', display_name: 'Staging'},
+    ]
+
+    expect(findMatchingEnvironments(envs as any, 'production').map(e => e.id)).to.deep.equal(['env-1'])
+    expect(findMatchingEnvironments(envs as any, 'prod').map(e => e.id)).to.deep.equal(['env-1'])
+    expect(findMatchingEnvironments(envs as any, 'PRODUCTION').map(e => e.id)).to.deep.equal(['env-1'])
+  })
+
+  it('prefers a literal production/prod environment over the live alias', () => {
+    const envs = [
+      {id: 'env-1', name: 'production', display_name: 'Production'},
+      {id: 'env-2', name: 'live', display_name: 'Live'},
+    ]
+
+    expect(findMatchingEnvironments(envs as any, 'production').map(e => e.id)).to.deep.equal(['env-1'])
   })
 
   it('uses unknown environment summary for site choice when environments are missing', () => {

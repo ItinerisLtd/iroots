@@ -87,7 +87,8 @@ export default class RestartPhp extends KinstaCommand {
       env: 'IROOTS_KINSTA_COMPANY_ID',
       required: false,
     }),
-    environment: Flags.string({
+    env: Flags.string({
+      aliases: ['environment'],
       description: 'Environment name (case-insensitive exact match)',
       required: false,
     }),
@@ -130,7 +131,7 @@ export default class RestartPhp extends KinstaCommand {
       environmentId = await resolveRestartPhpEnvironmentId({
         apiKey: flags.apiKey,
         company: normalizeOptionalFlag(flags.company) ?? '',
-        environment: flags.environment,
+        environment: flags.env,
         environmentId: environmentIdFlag,
         getAllSites,
         getSiteEnvironments,

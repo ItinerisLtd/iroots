@@ -147,7 +147,8 @@ export default class Get extends KinstaCommand {
       env: 'IROOTS_KINSTA_COMPANY_ID',
       required: false,
     }),
-    environment: Flags.string({
+    env: Flags.string({
+      aliases: ['environment'],
       description: 'Environment name (case-insensitive exact match)',
       required: false,
     }),
@@ -214,7 +215,7 @@ export default class Get extends KinstaCommand {
       environmentId = await resolveLogsEnvironmentId({
         apiKey,
         company: flags.company,
-        environment: flags.environment,
+        environment: flags.env,
         environmentId: flags.environment_id,
         getAllSites,
         getSiteEnvironments,
