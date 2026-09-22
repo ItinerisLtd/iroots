@@ -4,6 +4,11 @@ import {KinstaEnvironment, KinstaSite} from './kinsta.js'
 
 const normalize = (value: string): string => value.trim().toLowerCase()
 
+const ENVIRONMENT_NAME_ALIASES: Record<string, string> = {
+  prod: 'live',
+  production: 'live',
+}
+
 export function normalizeOptionalFlag(value: string | undefined): string | undefined {
   const normalized = value?.trim()
   return normalized !== undefined && normalized.length > 0 ? normalized : undefined
@@ -24,7 +29,11 @@ export function findMatchingEnvironments(environments: KinstaEnvironment[], cand
   if (idMatches.length > 0) return idMatches
   const displayMatches = environments.filter(environment => normalize(environment.display_name) === normalizedCandidate)
   if (displayMatches.length > 0) return displayMatches
-  return environments.filter(environment => normalize(environment.name) === normalizedCandidate)
+  const nameMatches = environments.filter(environment => normalize(environment.name) === normalizedCandidate)
+  if (nameMatches.length > 0) return nameMatches
+
+  const alias = ENVIRONMENT_NAME_ALIASES[normalizedCandidate]
+  return alias === undefined ? [] : findMatchingEnvironments(environments, alias)
 }
 
 export function formatSiteChoice(site: KinstaSite): string {
@@ -102,7 +111,7 @@ export async function resolveEnvironment(
   options: ResolveEnvironmentOptions = {},
 ): Promise<KinstaEnvironment> {
   const explicit = normalizeOptionalFlag(explicitEnvironment)
-  const flagName = options.flagName ?? '--environment'
+  const flagName = options.flagName ?? '--env'
   const selectionPrompt = options.selectionPrompt ?? 'Select an environment:'
 
   if (explicit !== undefined) {
